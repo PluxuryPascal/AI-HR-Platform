@@ -1,65 +1,199 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FileText, Award, Zap, ArrowRight } from "lucide-react";
+import { GlobalDotGridBg } from "@/components/ui/global-dot-grid-bg";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
+import { ModeToggle } from "@/components/ui/mode-toggle";
+import { motion, Variants } from "framer-motion";
+
+export default function LandingPage() {
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <>
+      <GlobalDotGridBg />
+
+      <div className="relative flex min-h-screen flex-col">
+        {/* Navbar */}
+        <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/50 backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:border-slate-800 dark:bg-slate-950/40">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                ResumeAI
+              </span>
+            </div>
+            <nav className="flex items-center gap-4">
+              <ModeToggle />
+              <Button variant="ghost" asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Link href="/dashboard">Get Started</Link>
+              </Button>
+            </nav>
+          </div>
+        </header>
+
+        <main className="flex-1">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            {/* Hero Section */}
+            <section className="container mx-auto flex flex-col items-center justify-center px-4 py-24 text-center md:py-32 lg:py-40">
+              <motion.div variants={itemVariants}>
+                <Badge
+                  variant="secondary"
+                  className="mb-6 rounded-full px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-100/50 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                >
+                  Powered by LLMs
+                </Badge>
+              </motion.div>
+
+              <motion.h1
+                variants={itemVariants}
+                className="mb-6 max-w-4xl text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl lg:text-7xl dark:text-slate-50"
+              >
+                Automate Resume Screening with{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                  AI Intelligence
+                </span>
+              </motion.h1>
+
+              <motion.p
+                variants={itemVariants}
+                className="mb-10 max-w-2xl text-lg text-slate-600 md:text-xl dark:text-slate-400"
+              >
+                Stop reading thousands of PDFs. Let our AI agents parse, rank, and analyze candidates in seconds with human-level understanding.
+              </motion.p>
+
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col gap-4 sm:flex-row"
+              >
+                <Button size="lg" className="h-12 min-w-[160px] text-base gap-2 bg-blue-600 hover:bg-blue-500" asChild>
+                  <Link href="/dashboard">
+                    Start Screening Now <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="h-12 min-w-[160px] text-base" asChild>
+                  <Link href="/demo">View Demo</Link>
+                </Button>
+              </motion.div>
+            </section>
+
+            {/* Features Section */}
+            <section className="container mx-auto px-4 py-16 md:py-24">
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {/* Feature 1 */}
+                <motion.div variants={itemVariants}>
+                  <SpotlightCard className="h-full">
+                    <CardHeader>
+                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <CardTitle className="text-xl">Smart Parsing</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-base">
+                        Automatically extract skills, work experience, and education from any resume format with high precision.
+                      </CardDescription>
+                    </CardContent>
+                  </SpotlightCard>
+                </motion.div>
+
+                {/* Feature 2 */}
+                <motion.div variants={itemVariants}>
+                  <SpotlightCard className="h-full">
+                    <CardHeader>
+                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                        <Award className="h-6 w-6" />
+                      </div>
+                      <CardTitle className="text-xl">Bias-Free Ranking</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-base">
+                        Objectively score candidates based purely on job requirements, eliminating unconscious bias from the process.
+                      </CardDescription>
+                    </CardContent>
+                  </SpotlightCard>
+                </motion.div>
+
+                {/* Feature 3 */}
+                <motion.div variants={itemVariants}>
+                  <SpotlightCard className="h-full">
+                    <CardHeader>
+                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                        <Zap className="h-6 w-6" />
+                      </div>
+                      <CardTitle className="text-xl">Instant Insights</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="text-base">
+                        Get immediate, plain-English summaries explaining why a candidate is a good fit or where they fall short.
+                      </CardDescription>
+                    </CardContent>
+                  </SpotlightCard>
+                </motion.div>
+              </div>
+            </section>
+          </motion.div>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-200 bg-white/50 backdrop-blur-sm py-12 dark:border-slate-800 dark:bg-slate-950/50">
+          <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 md:flex-row text-center md:text-left">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              © {new Date().getFullYear()} ResumeAI. All rights reserved.
+            </p>
+            <div className="flex gap-6 text-sm text-slate-500 dark:text-slate-400">
+              <Link href="#" className="hover:text-blue-600 hover:underline">
+                Privacy Policy
+              </Link>
+              <Link href="#" className="hover:text-blue-600 hover:underline">
+                Terms of Service
+              </Link>
+              <Link href="#" className="hover:text-blue-600 hover:underline">
+                Contact
+              </Link>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }
