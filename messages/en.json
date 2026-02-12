@@ -1,0 +1,40 @@
+{
+    "Landing": {
+        "heroTitle": "Automate Resume Screening with <span class=\"text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600\">AI Intelligence</span>",
+        "heroDescription": "Stop reading thousands of PDFs. Let our AI agents parse, rank, and analyze candidates in seconds with human-level understanding.",
+        "getStarted": "Start Screening Now",
+        "viewDemo": "View Demo",
+        "smartParsing": "Smart Parsing",
+        "smartParsingDesc": "Automatically extract skills, work experience, and education from any resume format with high precision.",
+        "biasFree": "Bias-Free Ranking",
+        "biasFreeDesc": "Objectively score candidates based purely on job requirements, eliminating unconscious bias from the process.",
+        "instantInsights": "Instant Insights",
+        "instantInsightsDesc": "Get immediate, plain-English summaries explaining why a candidate is a good fit or where they fall short."
+    },
+    "Dashboard": {
+        "nav": {
+            "dashboard": "Dashboard",
+            "jobs": "Jobs",
+            "candidates": "Candidates",
+            "screening": "Screening",
+            "settings": "Settings"
+        },
+        "header": {
+            "profile": "Profile",
+            "logout": "Log out"
+        }
+    },
+    "Stats": {
+        "activeJobs": "Total Active Jobs",
+        "totalCandidates": "Total Candidates",
+        "pendingScreenings": "Pending Screenings",
+        "fromLastMonth": "+{count} from last month",
+        "requiresAttention": "Requires attention"
+    },
+    "Settings": {
+        "title": "Settings",
+        "general": "General Settings",
+        "language": "Interface Language",
+        "languageDesc": "Select your preferred language for the application."
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "Landing": {
+        "heroTitle": "Automatiza la selección de currículums con <span class=\"text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600\">Inteligencia Artificial</span>",
+        "heroDescription": "Deja de leer miles de PDFs. Permite que nuestros agentes de IA analicen, clasifiquen y evalúen candidatos en segundos con un nivel de comprensión humano.",
+        "getStarted": "Empezar ahora",
+        "viewDemo": "Ver demo",
+        "smartParsing": "Análisis inteligente",
+        "smartParsingDesc": "Extrae automáticamente habilidades, experiencia laboral y educación de cualquier formato de currículum con alta precisión.",
+        "biasFree": "Clasificación imparcial",
+        "biasFreeDesc": "Puntúa objetivamente a los candidatos basándose puramente en los requisitos del trabajo, eliminando sesgos inconscientes.",
+        "instantInsights": "Insights instantáneos",
+        "instantInsightsDesc": "Obtén resúmenes inmediatos y claros explicando por qué un candidato es adecuado o dónde tiene carencias."
+    },
+    "Dashboard": {
+        "nav": {
+            "dashboard": "Tablero",
+            "jobs": "Empleos",
+            "candidates": "Candidatos",
+            "screening": "Selección",
+            "settings": "Configuración"
+        },
+        "header": {
+            "profile": "Perfil",
+            "logout": "Cerrar sesión"
+        }
+    },
+    "Stats": {
+        "activeJobs": "Empleos activos",
+        "totalCandidates": "Total de candidatos",
+        "pendingScreenings": "Selecciones pendientes",
+        "fromLastMonth": "+{count} desde el mes pasado",
+        "requiresAttention": "Requiere atención"
+    },
+    "Settings": {
+        "title": "Configuración",
+        "general": "Configuración general",
+        "language": "Idioma de la interfaz",
+        "languageDesc": "Selecciona tu idioma preferido para la aplicación."
+    }
+}
