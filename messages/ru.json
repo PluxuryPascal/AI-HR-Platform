@@ -31,6 +31,21 @@
         "chatPlaceholder": "Задайте вопрос о кандидате..."
     },
     "Dashboard": {
+        "welcome": "С возвращением, {name}!",
+        "stats": {
+            "applicants": "Всего кандидатов",
+            "interviews": "Предстоящие интервью",
+            "timeToHire": "Ср. время найма",
+            "activeJobs": "Активные вакансии"
+        },
+        "charts": {
+            "applicationsOverTime": "Динамика заявок",
+            "hiringFunnel": "Воронка найма"
+        },
+        "activity": {
+            "title": "Недавняя активность",
+            "empty": "Нет недавней активности."
+        },
         "nav": {
             "dashboard": "Дашборд",
             "jobs": "Вакансии",

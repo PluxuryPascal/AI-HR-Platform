@@ -31,6 +31,21 @@
         "chatPlaceholder": "Ask a question about this candidate..."
     },
     "Dashboard": {
+        "welcome": "Welcome back, {name}!",
+        "stats": {
+            "applicants": "Total Applicants",
+            "interviews": "Upcoming Interviews",
+            "timeToHire": "Avg. Time to Hire",
+            "activeJobs": "Active Jobs"
+        },
+        "charts": {
+            "applicationsOverTime": "Application Trends",
+            "hiringFunnel": "Hiring Funnel"
+        },
+        "activity": {
+            "title": "Recent Activity",
+            "empty": "No recent activity."
+        },
         "nav": {
             "dashboard": "Dashboard",
             "jobs": "Jobs",
