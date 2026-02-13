@@ -9,7 +9,11 @@
         "biasFree": "Объективное ранжирование",
         "biasFreeDesc": "Объективно оценивайте кандидатов исключительно на основе требований к вакансии, исключая неосознанную предвзятость.",
         "instantInsights": "Мгновенные инсайты",
-        "instantInsightsDesc": "Получайте мгновенные, понятные сводки, объясняющие, почему кандидат подходит или где ему не хватает навыков."
+        "instantInsightsDesc": "Получайте мгновенные, понятные сводки, объясняющие, почему кандидат подходит или где ему не хватает навыков.",
+        "allRightsReserved": "Все права защищены.",
+        "privacyPolicy": "Политика конфиденциальности",
+        "termsOfService": "Условия использования",
+        "contact": "Контакты"
     },
     "Dashboard": {
         "nav": {
@@ -30,6 +34,31 @@
         "pendingScreenings": "Ожидают скрининга",
         "fromLastMonth": "+{count} с прошлого месяца",
         "requiresAttention": "Требует внимания"
+    },
+    "DashboardPage": {
+        "title": "Дашборд",
+        "description": "Добро пожаловать в панель управления Resume Screener."
+    },
+    "Jobs": {
+        "title": "Обзор рекрутинга",
+        "create": "Создать вакансию",
+        "filterPlaceholder": "Фильтр вакансий...",
+        "statusPlaceholder": "Все статусы",
+        "statusAll": "Все статусы",
+        "statusActive": "Активные",
+        "statusClosed": "Закрытые",
+        "statusDraft": "Черновики",
+        "table": {
+            "title": "Название",
+            "department": "Отдел",
+            "created": "Создано",
+            "candidates": "Кандидаты",
+            "status": "Статус",
+            "actions": "Действия",
+            "viewCandidates": "Смотреть кандидатов",
+            "editJob": "Редактировать",
+            "archive": "Архивировать"
+        }
     },
     "Settings": {
         "title": "Настройки",

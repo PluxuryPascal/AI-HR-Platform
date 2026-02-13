@@ -177,17 +177,17 @@ export default function LandingPage() {
         <footer className="border-t border-slate-200 bg-white/50 backdrop-blur-sm py-12 dark:border-slate-800 dark:bg-black/80">
           <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 md:flex-row text-center md:text-left">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              © {new Date().getFullYear()} ResumeAI. All rights reserved.
+              © {new Date().getFullYear()} ResumeAI. {t("allRightsReserved")}
             </p>
             <div className="flex gap-6 text-sm text-slate-500 dark:text-slate-400">
               <Link href="#" className="hover:text-blue-600 hover:underline">
-                Privacy Policy
+                {t("privacyPolicy")}
               </Link>
               <Link href="#" className="hover:text-blue-600 hover:underline">
-                Terms of Service
+                {t("termsOfService")}
               </Link>
               <Link href="#" className="hover:text-blue-600 hover:underline">
-                Contact
+                {t("contact")}
               </Link>
             </div>
           </div>

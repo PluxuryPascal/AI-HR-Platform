@@ -30,7 +30,6 @@ export function LanguageSwitcher() {
                 <SelectItem value="en">English</SelectItem>
                 <SelectItem value="ru">Русский</SelectItem>
                 <SelectItem value="es">Español</SelectItem>
-                <SelectItem value="zh">中文</SelectItem>
             </SelectContent>
         </Select>
     );

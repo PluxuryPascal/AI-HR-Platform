@@ -9,7 +9,11 @@
         "biasFree": "Bias-Free Ranking",
         "biasFreeDesc": "Objectively score candidates based purely on job requirements, eliminating unconscious bias from the process.",
         "instantInsights": "Instant Insights",
-        "instantInsightsDesc": "Get immediate, plain-English summaries explaining why a candidate is a good fit or where they fall short."
+        "instantInsightsDesc": "Get immediate, plain-English summaries explaining why a candidate is a good fit or where they fall short.",
+        "allRightsReserved": "All rights reserved.",
+        "privacyPolicy": "Privacy Policy",
+        "termsOfService": "Terms of Service",
+        "contact": "Contact"
     },
     "Dashboard": {
         "nav": {
@@ -30,6 +34,31 @@
         "pendingScreenings": "Pending Screenings",
         "fromLastMonth": "+{count} from last month",
         "requiresAttention": "Requires attention"
+    },
+    "DashboardPage": {
+        "title": "Dashboard",
+        "description": "Welcome to your Resume Screener dashboard."
+    },
+    "Jobs": {
+        "title": "Recruitment Overview",
+        "create": "Create New Job",
+        "filterPlaceholder": "Filter jobs...",
+        "statusPlaceholder": "All Statuses",
+        "statusAll": "All Statuses",
+        "statusActive": "Active",
+        "statusClosed": "Closed",
+        "statusDraft": "Draft",
+        "table": {
+            "title": "Job Title",
+            "department": "Department",
+            "created": "Created",
+            "candidates": "Candidates",
+            "status": "Status",
+            "actions": "Actions",
+            "viewCandidates": "View Candidates",
+            "editJob": "Edit Job",
+            "archive": "Archive"
+        }
     },
     "Settings": {
         "title": "Settings",

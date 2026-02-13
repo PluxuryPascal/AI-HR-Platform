@@ -23,10 +23,14 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import React from "react";
+import { useTranslations } from "next-intl";
+import { dashboardConfig } from "@/config/nav";
 
 export function Header() {
     const pathname = usePathname();
     const segments = pathname.split("/").filter((item) => item !== "");
+    const t = useTranslations("Dashboard.header");
+    const tNav = useTranslations("Dashboard.nav");
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -44,14 +48,17 @@ export function Header() {
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href="/dashboard">Dashboard</Link>
+                                        <Link href="/dashboard">{tNav("dashboard")}</Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 {segments.length > 1 &&
                                     segments.slice(1).map((segment, index) => {
                                         const href = `/dashboard/${segments.slice(1, index + 2).join("/")}`;
                                         const isLast = index === segments.length - 2;
-                                        const title = segment.charAt(0).toUpperCase() + segment.slice(1);
+
+                                        // Check if the segment corresponds to a known navigation item
+                                        const navItem = dashboardConfig.find(item => item.key === segment);
+                                        const title = navItem ? tNav(navItem.key) : segment.charAt(0).toUpperCase() + segment.slice(1);
 
                                         return (
                                             <React.Fragment key={href}>
@@ -95,11 +102,11 @@ export function Header() {
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
                                     <User className="mr-2 h-4 w-4" />
-                                    <span>Profile</span>
+                                    <span>{t("profile")}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                     <LogOut className="mr-2 h-4 w-4" />
-                                    <span>Log out</span>
+                                    <span>{t("logout")}</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

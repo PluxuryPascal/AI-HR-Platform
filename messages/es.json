@@ -9,7 +9,11 @@
         "biasFree": "Clasificación imparcial",
         "biasFreeDesc": "Puntúa objetivamente a los candidatos basándose puramente en los requisitos del trabajo, eliminando sesgos inconscientes.",
         "instantInsights": "Insights instantáneos",
-        "instantInsightsDesc": "Obtén resúmenes inmediatos y claros explicando por qué un candidato es adecuado o dónde tiene carencias."
+        "instantInsightsDesc": "Obtén resúmenes inmediatos y claros explicando por qué un candidato es adecuado o dónde tiene carencias.",
+        "allRightsReserved": "Todos los derechos reservados.",
+        "privacyPolicy": "Política de privacidad",
+        "termsOfService": "Términos de servicio",
+        "contact": "Contacto"
     },
     "Dashboard": {
         "nav": {
@@ -30,6 +34,31 @@
         "pendingScreenings": "Selecciones pendientes",
         "fromLastMonth": "+{count} desde el mes pasado",
         "requiresAttention": "Requiere atención"
+    },
+    "DashboardPage": {
+        "title": "Tablero",
+        "description": "Bienvenido a tu panel de Resume Screener."
+    },
+    "Jobs": {
+        "title": "Resumen de reclutamiento",
+        "create": "Crear nuevo empleo",
+        "filterPlaceholder": "Filtrar empleos...",
+        "statusPlaceholder": "Todos los estados",
+        "statusAll": "Todos los estados",
+        "statusActive": "Activo",
+        "statusClosed": "Cerrado",
+        "statusDraft": "Borrador",
+        "table": {
+            "title": "Título del empleo",
+            "department": "Departamento",
+            "created": "Creado",
+            "candidates": "Candidatos",
+            "status": "Estado",
+            "actions": "Acciones",
+            "viewCandidates": "Ver candidatos",
+            "editJob": "Editar empleo",
+            "archive": "Archivar"
+        }
     },
     "Settings": {
         "title": "Configuración",

@@ -19,6 +19,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, FileText, Archive, Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type JobStatus = "Active" | "Closed" | "Draft";
 
@@ -75,23 +76,25 @@ const MOCK_JOBS: Job[] = [
 ];
 
 const StatusBadge = ({ status }: { status: JobStatus }) => {
+    const t = useTranslations("Jobs");
+
     switch (status) {
         case "Active":
             return (
                 <Badge className="bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200 shadow-none dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
-                    Active
+                    {t("statusActive")}
                 </Badge>
             );
         case "Closed":
             return (
                 <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100/80 border-slate-200 shadow-none dark:bg-slate-800 dark:text-slate-400 dark:border-slate-800">
-                    Closed
+                    {t("statusClosed")}
                 </Badge>
             );
         case "Draft":
             return (
                 <Badge variant="outline" className="text-slate-500 border-slate-300 dark:text-slate-400 dark:border-slate-700">
-                    Draft
+                    {t("statusDraft")}
                 </Badge>
             );
         default:
@@ -100,17 +103,19 @@ const StatusBadge = ({ status }: { status: JobStatus }) => {
 };
 
 export function JobsTable() {
+    const t = useTranslations("Jobs");
+
     return (
         <div className="rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Job Title</TableHead>
-                        <TableHead>Department</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Candidates</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>{t("table.title")}</TableHead>
+                        <TableHead>{t("table.department")}</TableHead>
+                        <TableHead>{t("table.created")}</TableHead>
+                        <TableHead>{t("table.candidates")}</TableHead>
+                        <TableHead>{t("table.status")}</TableHead>
+                        <TableHead className="text-right">{t("table.actions")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -132,19 +137,19 @@ export function JobsTable() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuLabel>{t("table.actions")}</DropdownMenuLabel>
                                         <DropdownMenuItem>
                                             <Eye className="mr-2 h-4 w-4" />
-                                            View Candidates
+                                            {t("table.viewCandidates")}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem>
                                             <FileText className="mr-2 h-4 w-4" />
-                                            Edit Job
+                                            {t("table.editJob")}
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem className="text-red-600">
                                             <Archive className="mr-2 h-4 w-4" />
-                                            Archive
+                                            {t("table.archive")}
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

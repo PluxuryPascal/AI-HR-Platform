@@ -4,9 +4,11 @@ import { Link, usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { dashboardConfig } from "@/config/nav";
+import { useTranslations } from "next-intl";
 
 export function SidebarNav({ className }: { className?: string }) {
     const pathname = usePathname();
+    const t = useTranslations("Dashboard.nav");
 
     return (
         <nav className={cn("grid items-start gap-2", className)}>
@@ -26,7 +28,7 @@ export function SidebarNav({ className }: { className?: string }) {
                             )}
                         >
                             <Icon className="mr-2 h-4 w-4" />
-                            <span>{item.title}</span>
+                            <span>{t(item.key)}</span>
                         </span>
                     </Link>
                 );

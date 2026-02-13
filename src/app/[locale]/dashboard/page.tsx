@@ -1,9 +1,13 @@
+import { useTranslations } from "next-intl";
+
 export default function DashboardPage() {
+    const t = useTranslations("DashboardPage");
+
     return (
         <div>
-            <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
             <p className="text-muted-foreground">
-                Welcome to your Resume Screener dashboard.
+                {t("description")}
             </p>
         </div>
     );
