@@ -11,6 +11,7 @@ import { Plus } from "lucide-react";
 import { JobsStats } from "@/features/jobs/components/jobs-stats";
 import { JobsTable } from "@/features/jobs/components/jobs-table";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 
 export default function JobsPage() {
     const t = useTranslations("Jobs");
@@ -20,9 +21,11 @@ export default function JobsPage() {
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
                 <div className="flex items-center space-x-2">
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" /> {t("create")}
-                    </Button>
+                    <Link href="/dashboard/jobs/new">
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" /> {t("create")}
+                        </Button>
+                    </Link>
                 </div>
             </div>
             <div className="space-y-4">

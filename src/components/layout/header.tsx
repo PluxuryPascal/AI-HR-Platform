@@ -58,7 +58,9 @@ export function Header() {
 
                                         // Check if the segment corresponds to a known navigation item
                                         const navItem = dashboardConfig.find(item => item.key === segment);
-                                        const title = navItem ? tNav(navItem.key) : segment.charAt(0).toUpperCase() + segment.slice(1);
+                                        const title = navItem
+                                            ? tNav(navItem.key)
+                                            : (segment === "new" ? tNav("new") : segment.charAt(0).toUpperCase() + segment.slice(1));
 
                                         return (
                                             <React.Fragment key={href}>

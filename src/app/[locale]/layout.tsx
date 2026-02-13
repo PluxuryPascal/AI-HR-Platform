@@ -7,6 +7,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,6 +56,7 @@ export default async function LocaleLayout({
             disableTransitionOnChange
           >
             <QueryProvider>{children}</QueryProvider>
+            <Toaster />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

@@ -21,7 +21,8 @@
             "jobs": "Empleos",
             "candidates": "Candidatos",
             "screening": "Selección",
-            "settings": "Configuración"
+            "settings": "Configuración",
+            "new": "Nuevo"
         },
         "header": {
             "profile": "Perfil",
@@ -65,5 +66,47 @@
         "general": "Configuración general",
         "language": "Idioma de la interfaz",
         "languageDesc": "Selecciona tu idioma preferido para la aplicación."
+    },
+    "JobWizard": {
+        "title": "Crear empleo",
+        "smartPasteLabel": "Pegado inteligente de descripción",
+        "smartPastePlaceholder": "Pega la descripción completa del trabajo aquí. Nuestra IA la analizará y completará el formulario por ti...",
+        "autoFillBtn": "Analizar y autocompletar",
+        "analyze": "Analizar y autocompletar",
+        "fields": {
+            "title": "Título del empleo",
+            "department": "Departamento",
+            "description": "Descripción",
+            "requirements": "Requisitos",
+            "type": "Tipo de empleo",
+            "location": "Ubicación"
+        },
+        "submitBtn": "Crear empleo",
+        "successMessage": "¡Empleo creado con éxito!",
+        "backToJobs": "Volver a Empleos",
+        "subtitle": "Crea una nueva oferta de trabajo manualmente o usa nuestro asistente de IA para redactarla por ti.",
+        "cancel": "Cancelar",
+        "titlePlaceholder": "ej. Ingeniero Frontend Senior",
+        "departmentPlaceholder": "Seleccionar departamento",
+        "descriptionPlaceholder": "Responsabilidades, requisitos y beneficios...",
+        "jobTypes": {
+            "Remote": "Remoto",
+            "Onsite": "Presencial",
+            "Hybrid": "Híbrido"
+        },
+        "departments": {
+            "Engineering": "Ingeniería",
+            "Design": "Diseño",
+            "Product": "Producto",
+            "Marketing": "Marketing",
+            "Sales": "Ventas",
+            "HR": "Recursos Humanos",
+            "Finance": "Finanzas",
+            "Other": "Otro"
+        },
+        "aiSuccess": "Análisis de IA completado",
+        "aiSuccessDesc": "Los campos del formulario se han completado automáticamente según su descripción.",
+        "aiError": "Error de análisis",
+        "aiErrorDesc": "No se pudo analizar la descripción del trabajo. Por favor, rellene manualmente."
     }
 }

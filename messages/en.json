@@ -15,13 +15,29 @@
         "termsOfService": "Terms of Service",
         "contact": "Contact"
     },
+    "CandidateProfile": {
+        "tabs": {
+            "overview": "Overview",
+            "chat": "AI Chat",
+            "resume": "Raw Resume"
+        },
+        "analysis": {
+            "summary": "Executive Summary",
+            "strengths": "Key Strengths",
+            "weaknesses": "Potential Risks",
+            "skills": "Extracted Skills",
+            "matchScore": "Match Score"
+        },
+        "chatPlaceholder": "Ask a question about this candidate..."
+    },
     "Dashboard": {
         "nav": {
             "dashboard": "Dashboard",
             "jobs": "Jobs",
             "candidates": "Candidates",
             "screening": "Screening",
-            "settings": "Settings"
+            "settings": "Settings",
+            "new": "New"
         },
         "header": {
             "profile": "Profile",
@@ -65,5 +81,60 @@
         "general": "General Settings",
         "language": "Interface Language",
         "languageDesc": "Select your preferred language for the application."
+    },
+    "JobWizard": {
+        "title": "Create Job",
+        "smartPasteLabel": "Smart Paste Job Description",
+        "smartPastePlaceholder": "Paste the full job description here. Our AI will analyze it and fill out the form for you...",
+        "autoFillBtn": "Analyze & Auto-fill",
+        "analyze": "Analyze & Auto-fill",
+        "fields": {
+            "title": "Job Title",
+            "department": "Department",
+            "description": "Description",
+            "requirements": "Requirements",
+            "type": "Job Type",
+            "location": "Location"
+        },
+        "submitBtn": "Create Job",
+        "successMessage": "Job created successfully!",
+        "backToJobs": "Back to Jobs",
+        "subtitle": "Create a new job posting manually or use our AI assistant to draft it for you.",
+        "cancel": "Cancel",
+        "titlePlaceholder": "e.g. Senior Frontend Engineer",
+        "departmentPlaceholder": "Select department",
+        "descriptionPlaceholder": "Job responsibilities, requirements, and benefits...",
+        "jobTypes": {
+            "Remote": "Remote",
+            "Onsite": "Onsite",
+            "Hybrid": "Hybrid"
+        },
+        "departments": {
+            "Engineering": "Engineering",
+            "Design": "Design",
+            "Product": "Product",
+            "Marketing": "Marketing",
+            "Sales": "Sales",
+            "HR": "HR",
+            "Finance": "Finance",
+            "Other": "Other"
+        },
+        "aiSuccess": "AI Analysis Complete",
+        "aiSuccessDesc": "Form fields have been auto-filled based on your description.",
+        "aiError": "Analysis Failed",
+        "aiErrorDesc": "Could not parse job description. Please fill manually."
+    },
+    "Candidates": {
+        "title": "Candidates",
+        "uploadBtn": "Upload Resumes",
+        "uploadModalTitle": "Upload Resumes",
+        "dropzoneText": "Drag & drop PDFs here, or click to select",
+        "table": {
+            "name": "Candidate",
+            "role": "Applied For",
+            "score": "Match Score",
+            "status": "Status",
+            "date": "Date"
+        }
     }
 }
