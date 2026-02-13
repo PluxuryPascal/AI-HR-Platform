@@ -151,5 +151,16 @@
             "status": "Status",
             "date": "Date"
         }
+    },
+    "Screening": {
+        "title": "Candidate Pipeline",
+        "columns": {
+            "new": "New Applications",
+            "screening": "AI Screening",
+            "interview": "Interview",
+            "offer": "Offer Sent",
+            "rejected": "Rejected"
+        },
+        "empty": "No candidates in this stage"
     }
 }
