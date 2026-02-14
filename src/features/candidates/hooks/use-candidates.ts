@@ -94,7 +94,7 @@ export function useCandidates() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setData(MOCK_CANDIDATES);
+            setData([]); // MOCK_CANDIDATES
             setIsLoading(false);
         }, 800);
 

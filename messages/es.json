@@ -13,7 +13,10 @@
         "allRightsReserved": "Todos los derechos reservados.",
         "privacyPolicy": "Política de privacidad",
         "termsOfService": "Términos de servicio",
-        "contact": "Contacto"
+        "contact": "Contacto",
+        "emptyState": {
+            "backToDashboard": "Volver al tablero"
+        }
     },
     "Dashboard": {
         "nav": {
@@ -108,5 +111,37 @@
         "aiSuccessDesc": "Los campos del formulario se han completado automáticamente según su descripción.",
         "aiError": "Error de análisis",
         "aiErrorDesc": "No se pudo analizar la descripción del trabajo. Por favor, rellene manualmente."
+    },
+    "Candidates": {
+        "title": "Candidatos",
+        "uploadBtn": "Subir currículums",
+        "uploadModalTitle": "Subir currículums",
+        "dropzoneText": "Arrastra y suelta PDFs aquí, o haz clic para seleccionar",
+        "table": {
+            "name": "Candidato",
+            "role": "Postulado para",
+            "score": "Puntuación",
+            "status": "Estado",
+            "date": "Fecha"
+        },
+        "empty": {
+            "title": "Aún no hay candidatos",
+            "desc": "Sube currículums o comparte el enlace de tu oferta para ver candidatos aquí.",
+            "button": "Subir currículums"
+        }
+    },
+    "Screening": {
+        "title": "Pipeline de Candidatos",
+        "columns": {
+            "new": "Nuevas Aplicaciones",
+            "screening": "Selección IA",
+            "interview": "Entrevista",
+            "offer": "Oferta Enviada",
+            "rejected": "Rechazado"
+        },
+        "empty": {
+            "title": "El pipeline está vacío",
+            "desc": "Mueve candidatos aquí desde la lista de candidatos para comenzar el proceso de selección."
+        }
     }
 }

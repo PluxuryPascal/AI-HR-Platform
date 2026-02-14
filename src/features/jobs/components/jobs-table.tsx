@@ -18,8 +18,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, FileText, Archive, Eye } from "lucide-react";
+import { MoreHorizontal, FileText, Archive, Eye, Briefcase } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { EmptyState } from "@/components/shared/empty-state";
+import { useRouter } from "@/i18n/routing";
 
 type JobStatus = "Active" | "Closed" | "Draft";
 
@@ -32,48 +34,49 @@ interface Job {
     status: JobStatus;
 }
 
-const MOCK_JOBS: Job[] = [
-    {
-        id: "1",
-        title: "Senior Frontend Engineer",
-        department: "Engineering",
-        createdDate: "2023-10-15",
-        candidatesCount: 45,
-        status: "Active",
-    },
-    {
-        id: "2",
-        title: "Product Manager",
-        department: "Product",
-        createdDate: "2023-10-10",
-        candidatesCount: 28,
-        status: "Active",
-    },
-    {
-        id: "3",
-        title: "UX Designer",
-        department: "Design",
-        createdDate: "2023-09-28",
-        candidatesCount: 12,
-        status: "Draft",
-    },
-    {
-        id: "4",
-        title: "Backend Developer",
-        department: "Engineering",
-        createdDate: "2023-09-15",
-        candidatesCount: 156,
-        status: "Closed",
-    },
-    {
-        id: "5",
-        title: "Marketing Specialist",
-        department: "Marketing",
-        createdDate: "2023-10-01",
-        candidatesCount: 8,
-        status: "Active",
-    },
-];
+const MOCK_JOBS: Job[] = [];
+// const MOCK_JOBS: Job[] = [
+//     {
+//         id: "1",
+//         title: "Senior Frontend Engineer",
+//         department: "Engineering",
+//         createdDate: "2023-10-15",
+//         candidatesCount: 45,
+//         status: "Active",
+//     },
+//     {
+//         id: "2",
+//         title: "Product Manager",
+//         department: "Product",
+//         createdDate: "2023-10-10",
+//         candidatesCount: 28,
+//         status: "Active",
+//     },
+//     {
+//         id: "3",
+//         title: "UX Designer",
+//         department: "Design",
+//         createdDate: "2023-09-28",
+//         candidatesCount: 12,
+//         status: "Draft",
+//     },
+//     {
+//         id: "4",
+//         title: "Backend Developer",
+//         department: "Engineering",
+//         createdDate: "2023-09-15",
+//         candidatesCount: 156,
+//         status: "Closed",
+//     },
+//     {
+//         id: "5",
+//         title: "Marketing Specialist",
+//         department: "Marketing",
+//         createdDate: "2023-10-01",
+//         candidatesCount: 8,
+//         status: "Active",
+//     },
+// ];
 
 const StatusBadge = ({ status }: { status: JobStatus }) => {
     const t = useTranslations("Jobs");
@@ -104,6 +107,19 @@ const StatusBadge = ({ status }: { status: JobStatus }) => {
 
 export function JobsTable() {
     const t = useTranslations("Jobs");
+    const router = useRouter();
+
+    if (MOCK_JOBS.length === 0) {
+        return (
+            <EmptyState
+                icon={Briefcase}
+                title={t("empty.title")}
+                description={t("empty.desc")}
+                actionLabel={t("empty.button")}
+                onAction={() => router.push("/dashboard/jobs/new")}
+            />
+        );
+    }
 
     return (
         <div className="rounded-md border">

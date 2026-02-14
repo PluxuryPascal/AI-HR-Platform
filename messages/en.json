@@ -14,7 +14,10 @@
         "privacyPolicy": "Privacy Policy",
         "termsOfService": "Terms of Service",
         "contact": "Contact",
-        "dashboard": "Dashboard"
+        "dashboard": "Dashboard",
+        "emptyState": {
+            "backToDashboard": "Back to Dashboard"
+        }
     },
     "Auth": {
         "logout": "Log out",
@@ -176,7 +179,10 @@
             "offer": "Offer Sent",
             "rejected": "Rejected"
         },
-        "empty": "No candidates in this stage"
+        "empty": {
+            "title": "Pipeline is empty",
+            "desc": "Move candidates here from the candidates list to start the screening process."
+        }
     },
     "Profile": {
         "title": "Profile Settings",

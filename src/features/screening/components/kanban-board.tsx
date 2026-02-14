@@ -23,13 +23,17 @@ import {
     arrayMove,
     sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { Layers } from "lucide-react";
+import { EmptyState } from "@/components/shared/empty-state";
 import { BoardColumn } from "./board-column";
 import { CandidateCard } from "./candidate-card";
 import { initialColumns } from "../utils/mock-board";
 import { CandidateCard as CandidateCardType, ColumnId } from "../types";
 
 export function KanbanBoard() {
+    const t = useTranslations("Screening");
     const [columns, setColumns] = useState(initialColumns);
     const [activeCard, setActiveCard] = useState<CandidateCardType | null>(null);
 
@@ -213,7 +217,23 @@ export function KanbanBoard() {
                 },
             },
         }),
+
     };
+
+    const isBoardEmpty = useMemo(() => {
+        return Object.values(columns).every(col => col.length === 0);
+    }, [columns]);
+
+    if (isBoardEmpty) {
+        return (
+            <EmptyState
+                icon={Layers}
+                title={t("empty.title")}
+                description={t("empty.desc")}
+                className="h-[600px] border rounded-md border-dashed"
+            />
+        );
+    }
 
     return (
         <DndContext

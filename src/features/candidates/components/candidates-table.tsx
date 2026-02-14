@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
-import { MoreHorizontal, FileText, Mail, User } from "lucide-react";
+import { MoreHorizontal, FileText, Mail, User, Users } from "lucide-react";
 
 import {
     Table,
@@ -24,12 +24,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/shared/empty-state";
+import { UploadResumeDialog } from "./upload-resume-dialog";
 
 import { useCandidates, Candidate } from "../hooks/use-candidates";
 import { CandidateScoreBadge } from "./candidate-score-badge";
 
 export function CandidatesTable() {
     const t = useTranslations("Candidates.table");
+    const tEmpty = useTranslations("Candidates.empty");
     const { data: candidates, isLoading } = useCandidates();
     const router = useRouter();
 
@@ -42,6 +45,25 @@ export function CandidatesTable() {
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
             </div>
+        );
+    }
+
+
+    if (candidates.length === 0) {
+        return (
+            <EmptyState
+                icon={Users}
+                title={tEmpty("title")}
+                description={tEmpty("desc")}
+                action={
+                    <UploadResumeDialog>
+                        <Button>
+                            {tEmpty("button")}
+                        </Button>
+                    </UploadResumeDialog>
+                }
+                className="border rounded-md"
+            />
         );
     }
 
