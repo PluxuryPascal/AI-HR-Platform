@@ -177,5 +177,24 @@
             "rejected": "Rejected"
         },
         "empty": "No candidates in this stage"
+    },
+    "Profile": {
+        "title": "Profile Settings",
+        "description": "Manage your account settings and preferences.",
+        "personalInfo": {
+            "title": "Personal Information",
+            "desc": "Update your name and email.",
+            "nameLabel": "Full Name",
+            "emailLabel": "Email Address",
+            "saveBtn": "Save Changes"
+        },
+        "security": {
+            "title": "Security",
+            "desc": "Change your password.",
+            "currentPass": "Current Password",
+            "newPass": "New Password",
+            "confirmPass": "Confirm Password",
+            "updatePassBtn": "Update Password"
+        }
     }
 }

@@ -104,9 +104,11 @@ export function Header() {
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                    <User className="mr-2 h-4 w-4" />
-                                    <span>{t("profile")}</span>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/profile" className="cursor-pointer flex items-center">
+                                        <User className="mr-2 h-4 w-4" />
+                                        <span>{t("profile")}</span>
+                                    </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={logout}>
                                     <LogOut className="mr-2 h-4 w-4" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
@@ -18,9 +18,8 @@ export function MobileNav() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="pr-0">
-                <div className="px-7">
-                    <span className="font-bold text-lg">Resume Screener</span>
-                </div>
+                <SheetTitle className="px-7 font-bold text-lg">Resume Screener</SheetTitle>
+                <SheetDescription className="sr-only">Mobile navigation menu</SheetDescription>
                 <div className="my-4 px-7">
                     <SidebarNav />
                 </div>
