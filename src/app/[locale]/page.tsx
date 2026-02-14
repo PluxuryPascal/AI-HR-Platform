@@ -9,15 +9,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FileText, Award, Zap, ArrowRight } from "lucide-react";
+import { FileText, Award, Zap, ArrowRight, User, LogOut, LayoutDashboard } from "lucide-react";
 import { GlobalDotGridBg } from "@/components/ui/global-dot-grid-bg";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { motion, Variants } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/store/use-auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function LandingPage() {
   const t = useTranslations("Landing");
+  const tAuth = useTranslations("Auth");
+  const { isAuthenticated, user, logout } = useAuth();
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -60,12 +72,57 @@ export default function LandingPage() {
             </div>
             <nav className="flex items-center gap-4">
               <ModeToggle />
-              <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                <Link href="/dashboard">{t("getStarted")}</Link>
-              </Button>
+
+              {isAuthenticated ? (
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" asChild className="hidden sm:flex">
+                    <Link href="/dashboard">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      {t("dashboard")}
+                    </Link>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user?.avatar} alt={user?.name} />
+                          <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">{user?.name}</p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard">
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          {t("dashboard")}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={logout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>{tAuth("logout") || "Log out"}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
+                <>
+                  <Button variant="ghost" asChild>
+                    <Link href="/auth?mode=login">{tAuth("signIn")}</Link>
+                  </Button>
+                  <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                    <Link href="/auth?mode=register">{tAuth("signUp")}</Link>
+                  </Button>
+                </>
+              )}
             </nav>
           </div>
         </header>
@@ -105,7 +162,7 @@ export default function LandingPage() {
                 className="flex flex-col gap-4 sm:flex-row"
               >
                 <Button size="lg" className="h-12 min-w-[160px] text-base gap-2 bg-blue-600 hover:bg-blue-500" asChild>
-                  <Link href="/dashboard">
+                  <Link href={isAuthenticated ? "/dashboard" : "/auth?mode=register"}>
                     {t("getStarted")} <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -196,3 +253,4 @@ export default function LandingPage() {
     </>
   );
 }
+

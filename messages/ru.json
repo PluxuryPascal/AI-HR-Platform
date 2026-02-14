@@ -13,7 +13,22 @@
         "allRightsReserved": "Все права защищены.",
         "privacyPolicy": "Политика конфиденциальности",
         "termsOfService": "Условия использования",
-        "contact": "Контакты"
+        "contact": "Контакты",
+        "dashboard": "Дашборд"
+    },
+    "Auth": {
+        "logout": "Выйти",
+        "signIn": "Вход",
+        "signInDesc": "Введите email для входа в аккаунт",
+        "email": "Email",
+        "password": "Пароль",
+        "signInBtn": "Войти",
+        "noAccount": "Нет аккаунта?",
+        "signUp": "Регистрация",
+        "signUpDesc": "Создайте аккаунт, чтобы начать скрининг",
+        "fullName": "Имя Фамилия",
+        "signUpBtn": "Создать аккаунт",
+        "hasAccount": "Уже есть аккаунт?"
     },
     "CandidateProfile": {
         "tabs": {

@@ -13,7 +13,22 @@
         "allRightsReserved": "All rights reserved.",
         "privacyPolicy": "Privacy Policy",
         "termsOfService": "Terms of Service",
-        "contact": "Contact"
+        "contact": "Contact",
+        "dashboard": "Dashboard"
+    },
+    "Auth": {
+        "logout": "Log out",
+        "signIn": "Sign In",
+        "signInDesc": "Enter your email below to login to your account",
+        "email": "Email",
+        "password": "Password",
+        "signInBtn": "Sign In",
+        "noAccount": "Don't have an account?",
+        "signUp": "Sign Up",
+        "signUpDesc": "Create an account to start screening resumes",
+        "fullName": "Full Name",
+        "signUpBtn": "create account",
+        "hasAccount": "Already has an account?"
     },
     "CandidateProfile": {
         "tabs": {
