@@ -44,6 +44,12 @@
         "header": {
             "profile": "Perfil",
             "logout": "Cerrar sesión"
+        },
+        "tabs": {
+            "overview": "Visión general",
+            "chat": "Chat IA",
+            "resume": "Currículum",
+            "interview": "Preparación de entrevista"
         }
     },
     "Stats": {
@@ -204,6 +210,75 @@
             "jobsLabel": "Asignar empleos",
             "searchJobs": "Buscar vacantes...",
             "sendBtn": "Enviar invitación"
+        }
+    },
+    "InterviewPrep": {
+        "title": "Guía de Entrevista",
+        "expertLevel": "Nivel Experto",
+        "foundationalLevel": "Verificación Fundamental",
+        "description": "Preguntas generadas por IA basadas en puntos débiles y habilidades faltantes.",
+        "loading": "Redactando preguntas...",
+        "loadingDesc": "Analizando brechas en el currículum y generando desafíos técnicos...",
+        "regenerate": "Regenerar Preguntas",
+        "card": {
+            "context": "Contexto",
+            "expected": "Qué buscar en la respuesta"
+        },
+        "mockQuestions": {
+            "expert": {
+                "q1": {
+                    "title": "Explique cómo diagnosticaría una fuga de memoria en una aplicación Node.js en producción sin detener el proceso.",
+                    "context": "Falta experiencia en depuración de alto rendimiento.",
+                    "expected": "Mencionar heap snapshots, Chrome DevTools protocol, o 'heapdump'. Análisis de comparación de instantáneas."
+                },
+                "q2": {
+                    "title": "Describa un escenario donde elegiría consistencia eventual sobre consistencia fuerte.",
+                    "context": "Experiencia centrada en monolitos.",
+                    "expected": "Teorema CAP. Ejemplo: Feed de redes sociales vs Transacción bancaria."
+                },
+                "q3": {
+                    "title": "Cómo funciona el algoritmo de reconciliación React Fiber?",
+                    "context": "No se mencionan internos de React.",
+                    "expected": "Dividir trabajo en chunks, 'requestIdleCallback', pausar renderizado."
+                },
+                "q4": {
+                    "title": "Implicaciones de seguridad de JWT vs sesiones del lado del servidor.",
+                    "context": "Faltan prácticas de seguridad.",
+                    "expected": "Invalidación de tokens, almacenamiento (XSS vs CSRF)."
+                },
+                "q5": {
+                    "title": "Diseñe una estrategia de limitación de tasa para una API pública.",
+                    "context": "Experiencia en diseño de sistemas no clara.",
+                    "expected": "Token Bucket o Leaky Bucket. Estado distribuido (Redis)."
+                }
+            },
+            "foundational": {
+                "q1": {
+                    "title": "¿Cuál es la diferencia en especificidad en CSS?",
+                    "context": "Verificación básica de frontend.",
+                    "expected": "Sistema de pesos: Inline > IDs > Classes > Elements."
+                },
+                "q2": {
+                    "title": "Explique el concepto de closures en JavaScript.",
+                    "context": "Verificación de conceptos JS.",
+                    "expected": "Función que retiene acceso a variables de su ámbito exterior."
+                },
+                "q3": {
+                    "title": "Diferencias clave entre SQL y NoSQL.",
+                    "context": "Fundamentos de bases de datos.",
+                    "expected": "Datos estructurados vs no estructurados, ACID vs BASE."
+                },
+                "q4": {
+                    "title": "¿Cómo funciona el Event Loop del navegador?",
+                    "context": "Programación asíncrona.",
+                    "expected": "Call Stack, Web APIs, Callback Queue. Orden de ejecución."
+                },
+                "q5": {
+                    "title": "¿Cuál es el propósito de la prop 'key' en listas de React?",
+                    "context": "Fundamentos de React.",
+                    "expected": "Identificar cambios en elementos para optimizar la reconciliación."
+                }
+            }
         }
     }
 }

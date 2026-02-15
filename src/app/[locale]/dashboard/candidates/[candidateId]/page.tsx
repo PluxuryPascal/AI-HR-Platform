@@ -17,6 +17,7 @@ import { AIAnalysisTab } from "@/features/candidates/components/ai-analysis-tab"
 import { AIChatTab } from "@/features/candidates/components/ai-chat-tab";
 import { useParams } from "next/navigation";
 import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
+import { InterviewGuide } from "@/features/candidates/components/interview-guide";
 
 export default function CandidatePage() {
     const params = useParams();
@@ -97,6 +98,12 @@ export default function CandidatePage() {
                                         >
                                             {t("tabs.chat")}
                                         </TabsTrigger>
+                                        <TabsTrigger
+                                            value="interview"
+                                            className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 pt-2"
+                                        >
+                                            {t("tabs.interview")}
+                                        </TabsTrigger>
                                     </TabsList>
                                 </div>
 
@@ -108,6 +115,9 @@ export default function CandidatePage() {
                                         <WidgetErrorBoundary>
                                             <AIChatTab />
                                         </WidgetErrorBoundary>
+                                    </TabsContent>
+                                    <TabsContent value="interview" className="h-full m-0 p-0 border-none select-text data-[state=active]:flex data-[state=active]:flex-col overflow-y-auto">
+                                        <InterviewGuide matchScore={profile.aiAnalysis.score} />
                                     </TabsContent>
                                 </div>
                             </Tabs>

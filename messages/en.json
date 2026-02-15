@@ -51,7 +51,8 @@
         "tabs": {
             "overview": "Overview",
             "chat": "AI Chat",
-            "resume": "Raw Resume"
+            "resume": "Raw Resume",
+            "interview": "Interview Prep"
         },
         "analysis": {
             "summary": "Executive Summary",
@@ -263,6 +264,75 @@
             "jobsLabel": "Assign Jobs",
             "searchJobs": "Search vacancies...",
             "sendBtn": "Send Invitation"
+        }
+    },
+    "InterviewPrep": {
+        "title": "Interview Guide",
+        "expertLevel": "Expert Level",
+        "foundationalLevel": "Foundational Checks",
+        "description": "AI-generated questions based on candidate's weak points and missing skills.",
+        "loading": "Drafting Question Set...",
+        "loadingDesc": "Analyzing resume gaps and generating technical challenges...",
+        "regenerate": "Regenerate Questions",
+        "card": {
+            "context": "Context",
+            "expected": "What to look for in the answer"
+        },
+        "mockQuestions": {
+            "expert": {
+                "q1": {
+                    "title": "Explain how you would diagnose a memory leak in a Node.js production application without stopping the process.",
+                    "context": "Candidate lacks specific experience with high-load Node.js debugging.",
+                    "expected": "Look for mention of heap snapshots, Chrome DevTools protocol, or using 'heapdump'/'v8-profiler'. A good answer should explain how to analyze the snapshot comparison to find detached DOM nodes or growing closures."
+                },
+                "q2": {
+                    "title": "Describe a scenario where you would choose eventual consistency over strong consistency in a distributed system.",
+                    "context": "Resume focuses on monolithic architectures.",
+                    "expected": "Candidate should discuss CAP theorem trade-offs. Example: Social media feed (eventual) vs. Bank transaction (strong). Key concepts: Availability and Partition Tolerance vs. Consistency."
+                },
+                "q3": {
+                    "title": "How does the React Fiber reconciliation algorithm work, and how does it enable features like Time Slicing?",
+                    "context": "Deep React internals not mentioned in skills.",
+                    "expected": "Mentions splitting work into chunks, 'requestIdleCallback' (or scheduler), and the ability to pause/abort rendering work. Shows understanding of the render vs. commit phases."
+                },
+                "q4": {
+                    "title": "What are the security implications of using JWTs for session management compared to server-side sessions?",
+                    "context": "Security best practices missing from project descriptions.",
+                    "expected": "Discussion on token invalidation (blacklisting), storage risks (XSS in localStorage vs CSRF in HttpOnly cookies), and the inability to instantly revoke access without short expiry times."
+                },
+                "q5": {
+                    "title": "Design a rate-limiting strategy for a public API that handles burst traffic.",
+                    "context": "System design experience is unclear.",
+                    "expected": "Mentions algorithms like Token Bucket or Leaky Bucket. Discusses distributed state (Redis/Memcached) for tracking counts across multiple server instances."
+                }
+            },
+            "foundational": {
+                "q1": {
+                    "title": "What is the difference between specificty in CSS and how is it calculated?",
+                    "context": "Frontend basics check.",
+                    "expected": "Explanation of the weighting system: Inline styles > IDs > Classes > Elements. Should mention how `!important` overrides this."
+                },
+                "q2": {
+                    "title": "Explain the concept of closures in JavaScript with a practical example.",
+                    "context": "Core JS concept verification.",
+                    "expected": "A specific example showing a function retaining access to variables from its outer scope even after the outer function has returned."
+                },
+                "q3": {
+                    "title": "What are the key differences between SQL and NoSQL databases?",
+                    "context": "Database fundamentals check.",
+                    "expected": "Structured vs. Unstructured data, Schema scaling (Vertical vs. Horizontal), and ACID properties (SQL) vs. BASE (NoSQL)."
+                },
+                "q4": {
+                    "title": "How does the browser event loop work?",
+                    "context": "Async programming check.",
+                    "expected": "Explanation of Call Stack, Web APIs, Callback Queue, and Microtask Queue. Correct order of execution (Sync -> Microtasks -> Macrotasks)."
+                },
+                "q5": {
+                    "title": "What is the purpose of the 'key' prop in React lists?",
+                    "context": "React basics check.",
+                    "expected": "It helps React identify which items have changed, are added, or are removed, optimizing the reconciliation process and preventing bugs with component state."
+                }
+            }
         }
     }
 }
