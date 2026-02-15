@@ -198,6 +198,7 @@
             "title": "Pipeline is empty",
             "desc": "Move candidates here from the candidates list to start the screening process."
         },
+        "columnEmpty": "No candidates",
         "bar": {
             "selected": "Selected {count} of 10",
             "compareBtn": "Compare Candidates",
@@ -334,5 +335,35 @@
                 }
             }
         }
+    },
+    "Outreach": {
+        "title": {
+            "rejected": "Personalized Rejection",
+            "invited": "Interview Invitation"
+        },
+        "description": "Customize the AI-generated email before sending.",
+        "badges": {
+            "rejection": "Rejection",
+            "invitation": "Invitation"
+        },
+        "to": "To",
+        "tone": {
+            "label": "Tone",
+            "professional": "Professional",
+            "friendly": "Friendly",
+            "brief": "Brief"
+        },
+        "placeholder": "AI is drafting the email...",
+        "generating": "Generating draft...",
+        "reasoning": {
+            "prefix": "AI generated this based on the profile:"
+        },
+        "mockReason": {
+            "rejection": "Lack of specific experience matching job requirements.",
+            "invitation": "Strong match with required skills and experience."
+        },
+        "regenerate": "Regenerate",
+        "copy": "Copy to Clipboard",
+        "sendBtn": "Send Email"
     }
 }

@@ -34,6 +34,7 @@ import { CandidateCard as CandidateCardType, ColumnId } from "../types";
 
 import { FloatingComparisonBar } from "./floating-comparison-bar";
 import { ComparisonModal } from "./comparison-modal";
+import { OutreachDrawer } from "./outreach-drawer";
 
 import { Button } from "@/components/ui/button";
 
@@ -44,6 +45,17 @@ export function KanbanBoard() {
     const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
     const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [outreachState, setOutreachState] = useState<{
+        isOpen: boolean;
+        candidate: CandidateCardType | null;
+        type: "rejection" | "invitation";
+    }>({
+        isOpen: false,
+        candidate: null,
+        type: "rejection",
+    });
+
+    const [activeColumn, setActiveColumn] = useState<ColumnId | null>(null);
 
     const handleToggleSelection = (id: string) => {
         setSelectedCandidateIds((prev) =>
@@ -98,9 +110,10 @@ export function KanbanBoard() {
         if (isSelectionMode) return;
         const { active } = event;
         const { id } = active;
-        const activeColumn = findContainer(id as string);
-        if (activeColumn) {
-            const card = columns[activeColumn].find((c) => c.id === id);
+        const activeContainer = findContainer(id as string);
+        if (activeContainer) {
+            setActiveColumn(activeContainer);
+            const card = columns[activeContainer].find((c) => c.id === id);
             if (card) {
                 setActiveCard(card);
             }
@@ -175,6 +188,7 @@ export function KanbanBoard() {
 
         if (!overId) {
             setActiveCard(null);
+            setActiveColumn(null);
             return;
         }
 
@@ -205,7 +219,28 @@ export function KanbanBoard() {
             }
         }
 
+        // Trigger outreach drawer if moved to a different column
+        if (activeColumn && overContainer && activeColumn !== overContainer) {
+            const card = columns[overContainer].find((c) => c.id === id);
+            if (card) {
+                if (overContainer === "rejected") {
+                    setOutreachState({
+                        isOpen: true,
+                        candidate: card,
+                        type: "rejection",
+                    });
+                } else if (overContainer === "interview") {
+                    setOutreachState({
+                        isOpen: true,
+                        candidate: card,
+                        type: "invitation",
+                    });
+                }
+            }
+        }
+
         setActiveCard(null);
+        setActiveColumn(null);
     };
 
     const collisionDetectionStrategy: CollisionDetection = useCallback(
@@ -326,6 +361,13 @@ export function KanbanBoard() {
                     isOpen={isComparisonModalOpen}
                     onClose={() => setIsComparisonModalOpen(false)}
                     candidates={getSelectedCandidates}
+                />
+
+                <OutreachDrawer
+                    isOpen={outreachState.isOpen}
+                    onClose={() => setOutreachState(prev => ({ ...prev, isOpen: false }))}
+                    candidate={outreachState.candidate}
+                    type={outreachState.type}
                 />
             </DndContext>
         </div>

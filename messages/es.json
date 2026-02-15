@@ -163,6 +163,7 @@
             "title": "El pipeline está vacío",
             "desc": "Mueve candidatos aquí desde la lista de candidatos para comenzar el proceso de selección."
         },
+        "columnEmpty": "No hay candidatos",
         "bar": {
             "selected": "Seleccionado {count} de 10",
             "compareBtn": "Comparar candidatos",
@@ -280,5 +281,35 @@
                 }
             }
         }
+    },
+    "Outreach": {
+        "title": {
+            "rejected": "Rechazo personalizado",
+            "invited": "Invitación a entrevista"
+        },
+        "description": "Edite el correo generado antes de enviarlo.",
+        "badges": {
+            "rejection": "Rechazo",
+            "invitation": "Invitación"
+        },
+        "to": "Para",
+        "tone": {
+            "label": "Tono",
+            "professional": "Profesional",
+            "friendly": "Amigable",
+            "brief": "Breve"
+        },
+        "placeholder": "La IA está redactando el correo...",
+        "generating": "Generando borrador...",
+        "reasoning": {
+            "prefix": "IA generada basada en el perfil:"
+        },
+        "mockReason": {
+            "rejection": "Falta de experiencia específica en los requisitos.",
+            "invitation": "Fuerte coincidencia con las habilidades requeridas."
+        },
+        "regenerate": "Regenerar",
+        "copy": "Copiar",
+        "sendBtn": "Enviar correo"
     }
 }

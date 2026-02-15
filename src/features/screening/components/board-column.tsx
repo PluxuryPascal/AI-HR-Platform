@@ -51,7 +51,7 @@ export function BoardColumn({ id, candidates, selectedCandidateIds, onToggleSele
                 </SortableContext>
                 {candidates.length === 0 && (
                     <div className="flex items-center justify-center h-20 border-2 border-dashed rounded-md border-muted-foreground/20 text-muted-foreground text-xs">
-                        {t('empty')}
+                        {t('columnEmpty')}
                     </div>
                 )}
             </div>
