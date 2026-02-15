@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FileText, Award, Zap, ArrowRight, User, LogOut, LayoutDashboard } from "lucide-react";
+import { FileText, Award, Zap, ArrowRight, User, LogOut, LayoutDashboard, BrainCircuit, Wand2, MailCheck, KanbanSquare, Users, MoonStar } from "lucide-react";
 import { GlobalDotGridBg } from "@/components/ui/global-dot-grid-bg";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { ModeToggle } from "@/components/ui/mode-toggle";
@@ -207,82 +207,110 @@ export default function LandingPage() {
             {/* Features Section */}
             <section className="container mx-auto px-4 py-16 md:py-24">
               <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {/* Feature 1 */}
-                <motion.div variants={itemVariants}>
-                  <SpotlightCard className="h-full">
-                    <CardHeader>
-                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                        <FileText className="h-6 w-6" />
-                      </div>
-                      <CardTitle className="text-xl">{t("smartParsing")}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-base">
-                        {t("smartParsingDesc")}
-                      </CardDescription>
-                    </CardContent>
-                  </SpotlightCard>
-                </motion.div>
-
-                {/* Feature 2 */}
-                <motion.div variants={itemVariants}>
-                  <SpotlightCard className="h-full">
-                    <CardHeader>
-                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-                        <Award className="h-6 w-6" />
-                      </div>
-                      <CardTitle className="text-xl">{t("biasFree")}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-base">
-                        {t("biasFreeDesc")}
-                      </CardDescription>
-                    </CardContent>
-                  </SpotlightCard>
-                </motion.div>
-
-                {/* Feature 3 */}
-                <motion.div variants={itemVariants}>
-                  <SpotlightCard className="h-full">
-                    <CardHeader>
-                      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
-                        <Zap className="h-6 w-6" />
-                      </div>
-                      <CardTitle className="text-xl">{t("instantInsights")}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-base">
-                        {t("instantInsightsDesc")}
-                      </CardDescription>
-                    </CardContent>
-                  </SpotlightCard>
-                </motion.div>
+                {[
+                  {
+                    icon: BrainCircuit,
+                    titleKey: "explainableAI",
+                    descKey: "explainableAIDesc",
+                    styles: {
+                      border: "hover:border-blue-500/30",
+                      shadow: "hover:shadow-[0_0_40px_-15px_rgba(59,130,246,0.3)]",
+                      glow: "bg-blue-500/5 group-hover:bg-blue-500/10",
+                      iconBg: "bg-blue-500/10 dark:bg-blue-900/20",
+                      iconText: "text-blue-600 dark:text-blue-400",
+                      iconRing: "ring-blue-500/20 dark:ring-blue-400/20",
+                    }
+                  },
+                  {
+                    icon: Wand2,
+                    titleKey: "smartJobParsing",
+                    descKey: "smartJobParsingDesc",
+                    styles: {
+                      border: "hover:border-indigo-500/30",
+                      shadow: "hover:shadow-[0_0_40px_-15px_rgba(99,102,241,0.3)]",
+                      glow: "bg-indigo-500/5 group-hover:bg-indigo-500/10",
+                      iconBg: "bg-indigo-500/10 dark:bg-indigo-900/20",
+                      iconText: "text-indigo-600 dark:text-indigo-400",
+                      iconRing: "ring-indigo-500/20 dark:ring-indigo-400/20",
+                    }
+                  },
+                  {
+                    icon: MailCheck,
+                    titleKey: "contextualAIEmails",
+                    descKey: "contextualAIEmailsDesc",
+                    styles: {
+                      border: "hover:border-violet-500/30",
+                      shadow: "hover:shadow-[0_0_40px_-15px_rgba(139,92,246,0.3)]",
+                      glow: "bg-violet-500/5 group-hover:bg-violet-500/10",
+                      iconBg: "bg-violet-500/10 dark:bg-violet-900/20",
+                      iconText: "text-violet-600 dark:text-violet-400",
+                      iconRing: "ring-violet-500/20 dark:ring-violet-400/20",
+                    }
+                  },
+                  {
+                    icon: KanbanSquare,
+                    titleKey: "interactiveKanban",
+                    descKey: "interactiveKanbanDesc",
+                    styles: {
+                      border: "hover:border-blue-500/30",
+                      shadow: "hover:shadow-[0_0_40px_-15px_rgba(59,130,246,0.3)]",
+                      glow: "bg-blue-500/5 group-hover:bg-blue-500/10",
+                      iconBg: "bg-blue-500/10 dark:bg-blue-900/20",
+                      iconText: "text-blue-600 dark:text-blue-400",
+                      iconRing: "ring-blue-500/20 dark:ring-blue-400/20",
+                    }
+                  },
+                  {
+                    icon: Users,
+                    titleKey: "teamManagement",
+                    descKey: "teamManagementDesc",
+                    styles: {
+                      border: "hover:border-indigo-500/30",
+                      shadow: "hover:shadow-[0_0_40px_-15px_rgba(99,102,241,0.3)]",
+                      glow: "bg-indigo-500/5 group-hover:bg-indigo-500/10",
+                      iconBg: "bg-indigo-500/10 dark:bg-indigo-900/20",
+                      iconText: "text-indigo-600 dark:text-indigo-400",
+                      iconRing: "ring-indigo-500/20 dark:ring-indigo-400/20",
+                    }
+                  },
+                  {
+                    icon: MoonStar,
+                    titleKey: "smartPDFWorkspace",
+                    descKey: "smartPDFWorkspaceDesc",
+                    styles: {
+                      border: "hover:border-violet-500/30",
+                      shadow: "hover:shadow-[0_0_40px_-15px_rgba(139,92,246,0.3)]",
+                      glow: "bg-violet-500/5 group-hover:bg-violet-500/10",
+                      iconBg: "bg-violet-500/10 dark:bg-violet-900/20",
+                      iconText: "text-violet-600 dark:text-violet-400",
+                      iconRing: "ring-violet-500/20 dark:ring-violet-400/20",
+                    }
+                  },
+                ].map((feature, index) => (
+                  <motion.div key={index} variants={itemVariants} className="group">
+                    <SpotlightCard className={`h-full relative overflow-hidden rounded-2xl border border-slate-200/50 bg-white/50 p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 ${feature.styles.border} ${feature.styles.shadow} dark:border-slate-800/50 dark:bg-slate-900/50`}>
+                      <div className={`absolute -right-10 -top-10 h-32 w-32 rounded-full blur-3xl transition-all duration-500 ${feature.styles.glow}`} />
+                      <CardHeader className="p-0 mb-6">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${feature.styles.iconBg} ${feature.styles.iconText} ring-1 ${feature.styles.iconRing}`}>
+                          <feature.icon className="h-6 w-6" />
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <CardTitle className="text-xl font-semibold text-slate-900 dark:text-slate-50 mb-3">
+                          {t(feature.titleKey)}
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground leading-relaxed text-sm">
+                          {t(feature.descKey)}
+                        </CardDescription>
+                      </CardContent>
+                    </SpotlightCard>
+                  </motion.div>
+                ))}
               </div>
             </section>
           </motion.div>
         </main>
-
-        {/* Footer */}
-        <footer className="border-t border-slate-200 bg-white/50 backdrop-blur-sm py-12 dark:border-slate-800 dark:bg-black/80">
-          <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 md:flex-row text-center md:text-left">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              © {new Date().getFullYear()} ResumeAI. {t("allRightsReserved")}
-            </p>
-            <div className="flex gap-6 text-sm text-slate-500 dark:text-slate-400">
-              <Link href="#" className="hover:text-blue-600 hover:underline">
-                {t("privacyPolicy")}
-              </Link>
-              <Link href="#" className="hover:text-blue-600 hover:underline">
-                {t("termsOfService")}
-              </Link>
-              <Link href="#" className="hover:text-blue-600 hover:underline">
-                {t("contact")}
-              </Link>
-            </div>
-          </div>
-        </footer>
       </div>
     </>
   );
 }
-
