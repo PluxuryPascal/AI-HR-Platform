@@ -142,7 +142,10 @@
             "role": "Postulado para",
             "score": "Puntuación",
             "status": "Estado",
-            "date": "Fecha"
+            "date": "Fecha",
+            "action": {
+                "bulkReject": "Rechazo Masivo ({count})"
+            }
         },
         "empty": {
             "title": "Aún no hay candidatos",
@@ -310,6 +313,15 @@
         },
         "regenerate": "Regenerar",
         "copy": "Copiar",
-        "sendBtn": "Enviar correo"
+        "sendBtn": "Enviar correo",
+        "action": {
+            "sendResponse": "Enviar respuesta",
+            "bulkReject": "Rechazo masivo ({count})"
+        },
+        "bulk": {
+            "title": "Revisar rechazos individuales de IA",
+            "sendAll": "Confirmar y enviar todo",
+            "description": "La IA ha redactado razones únicas para cada candidato para garantizar un toque personalizado."
+        }
     }
 }

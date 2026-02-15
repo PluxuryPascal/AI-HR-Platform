@@ -28,7 +28,7 @@ import { useLocale } from "next-intl";
 interface OutreachDrawerProps {
     isOpen: boolean;
     onClose: () => void;
-    candidate: CandidateCard | null;
+    candidate: CandidateCard | CandidateCard[] | null;
     type: "rejection" | "invitation";
 }
 
@@ -43,29 +43,17 @@ export function OutreachDrawer({
     const [tone, setTone] = useState("professional");
     const [content, setContent] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
+    const [width, setWidth] = useState(600);
+    const [isResizing, setIsResizing] = useState(false);
+
+    const candidates = Array.isArray(candidate) ? candidate : (candidate ? [candidate] : []);
+    const isBulk = candidates.length > 1;
 
     useEffect(() => {
-        if (isOpen && candidate) {
+        if (isOpen && candidates.length > 0) {
             handleGenerate();
         }
     }, [isOpen, candidate, type, tone]);
-
-    const handleGenerate = () => {
-        if (!candidate) return;
-        setIsGenerating(true);
-
-        // Simulate AI delay
-        setTimeout(() => {
-            const newContent = generateOutreachEmail(candidate, type, tone, locale);
-            setContent(newContent);
-            setIsGenerating(false);
-        }, 600);
-    };
-
-    if (!candidate) return null;
-
-    const [width, setWidth] = useState(600);
-    const [isResizing, setIsResizing] = useState(false);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -95,7 +83,32 @@ export function OutreachDrawer({
         };
     }, [isResizing]);
 
-    if (!candidate) return null;
+    const handleGenerate = () => {
+        if (candidates.length === 0) return;
+        setIsGenerating(true);
+
+        // Simulate AI delay
+        setTimeout(() => {
+            if (isBulk) {
+                // For bulk, we'll generate a summary report or individual drafts
+                // For this MVP, let's generate a merged string or just the first one as an example
+                // Ideally, this should show a list of drafts. 
+                // Let's generate a simple bulk message for now or iterate.
+
+                const drafts = candidates.map(c => {
+                    return `--- Role: ${c.role} ---\n${generateOutreachEmail(c, type, tone, locale)}`;
+                }).join("\n\n");
+
+                setContent(`${t("bulk.description")}\n\n${drafts}`);
+            } else {
+                const newContent = generateOutreachEmail(candidates[0], type, tone, locale);
+                setContent(newContent);
+            }
+            setIsGenerating(false);
+        }, 600);
+    };
+
+    if (candidates.length === 0) return null;
 
     const isRejection = type === "rejection";
 
@@ -123,14 +136,17 @@ export function OutreachDrawer({
                                 {isRejection ? t("badges.rejection") : t("badges.invitation")}
                             </Badge>
                             <span className="text-sm text-muted-foreground">
-                                {t("to")}: {candidate.name}
+                                {!isBulk && <>{t("to")}: {candidates[0].name}</>}
+                                {isBulk && `${candidates.length} candidates selected`}
                             </span>
                         </div>
                         <SheetTitle>
-                            {isRejection ? t("title.rejected") : t("title.invited")}
+                            {isBulk
+                                ? t("bulk.title")
+                                : (isRejection ? t("title.rejected") : t("title.invited"))}
                         </SheetTitle>
                         <SheetDescription>
-                            {t("description")}
+                            {isBulk ? t("bulk.description") : t("description")}
                         </SheetDescription>
                     </SheetHeader>
 
@@ -186,7 +202,7 @@ export function OutreachDrawer({
                         </Button>
                         <Button onClick={onClose}>
                             <Mail className="w-4 h-4 mr-2" />
-                            {t("sendBtn")}
+                            {isBulk ? t("bulk.sendAll") : t("sendBtn")}
                         </Button>
                     </SheetFooter>
                 </div>

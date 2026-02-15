@@ -5,12 +5,17 @@ import { useTranslations } from "next-intl";
 import { CheckCircle2, XCircle, Zap } from "lucide-react";
 import { Profile } from "../utils/mock-profile";
 
+import { Button } from "@/components/ui/button";
+import { MessageSquare } from "lucide-react";
+
 interface AIAnalysisTabProps {
     data: Profile["aiAnalysis"];
+    onOutreach?: () => void;
 }
 
-export const AIAnalysisTab = ({ data }: AIAnalysisTabProps) => {
+export const AIAnalysisTab = ({ data, onOutreach }: AIAnalysisTabProps) => {
     const t = useTranslations("CandidateProfile.analysis");
+    const tOutreach = useTranslations("Outreach");
 
     return (
         <ScrollArea className="h-full">
@@ -58,6 +63,14 @@ export const AIAnalysisTab = ({ data }: AIAnalysisTabProps) => {
                     <p className="text-muted-foreground leading-relaxed">
                         {data.summary}
                     </p>
+                    <Button
+                        onClick={onOutreach}
+                        className="w-full mt-4"
+                        variant="outline"
+                    >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        {tOutreach("action.sendResponse")}
+                    </Button>
                 </div>
 
                 {/* Strengths */}

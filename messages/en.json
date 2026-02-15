@@ -182,7 +182,10 @@
             "role": "Applied For",
             "score": "Match Score",
             "status": "Status",
-            "date": "Date"
+            "date": "Date",
+            "action": {
+                "bulkReject": "Bulk Reject ({count})"
+            }
         }
     },
     "Screening": {
@@ -364,6 +367,15 @@
         },
         "regenerate": "Regenerate",
         "copy": "Copy to Clipboard",
-        "sendBtn": "Send Email"
+        "sendBtn": "Send Email",
+        "action": {
+            "sendResponse": "Send Response",
+            "bulkReject": "Bulk Reject ({count})"
+        },
+        "bulk": {
+            "title": "Review Individual AI Rejections",
+            "sendAll": "Confirm and Send All",
+            "description": "AI has drafted unique reasons for each candidate to ensure a personalized touch."
+        }
     }
 }

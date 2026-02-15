@@ -19,10 +19,14 @@ import { useParams } from "next/navigation";
 import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
 import { InterviewGuide } from "@/features/candidates/components/interview-guide";
 
+import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
+import { useState } from "react";
+
 export default function CandidatePage() {
     const params = useParams();
     const t = useTranslations("CandidateProfile");
     const profile = getCandidateProfile(params.candidateId as string);
+    const [isOutreachOpen, setIsOutreachOpen] = useState(false);
 
     return (
         <div className="h-full flex flex-col bg-background">
@@ -109,7 +113,10 @@ export default function CandidatePage() {
 
                                 <div className="flex-1 overflow-hidden">
                                     <TabsContent value="overview" className="h-full m-0 p-0 border-none select-text data-[state=active]:flex data-[state=active]:flex-col">
-                                        <AIAnalysisTab data={profile.aiAnalysis} />
+                                        <AIAnalysisTab
+                                            data={profile.aiAnalysis}
+                                            onOutreach={() => setIsOutreachOpen(true)}
+                                        />
                                     </TabsContent>
                                     <TabsContent value="chat" className="h-full m-0 p-0 border-none data-[state=active]:flex data-[state=active]:flex-col">
                                         <WidgetErrorBoundary>
@@ -126,6 +133,19 @@ export default function CandidatePage() {
 
                 </ResizablePanelGroup>
             </div>
+
+            <OutreachDrawer
+                isOpen={isOutreachOpen}
+                onClose={() => setIsOutreachOpen(false)}
+                candidate={{
+                    id: profile.id,
+                    name: profile.personal.name,
+                    role: profile.personal.role,
+                    score: profile.aiAnalysis.score,
+                    // Avatar URL is not in profile, can be omitted or mocked
+                }}
+                type="invitation" // Defaulting to invitation, could be dynamic based on status
+            />
         </div>
     );
 }
