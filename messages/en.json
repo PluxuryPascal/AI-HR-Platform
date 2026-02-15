@@ -33,6 +33,12 @@
             "fetchFailed": "Failed to load data from server."
         }
     },
+    "UploadStages": {
+        "stage1": "Uploading file...",
+        "stage2": "Extracting text from PDF...",
+        "stage3": "AI analyzing skills and experience...",
+        "stage4": "Finalizing match score..."
+    },
     "Auth": {
         "logout": "Log out",
         "signIn": "Sign In",
@@ -175,6 +181,7 @@
     "Candidates": {
         "title": "Candidates",
         "uploadBtn": "Upload Resumes",
+        "processingTitle": "Processing Candidate",
         "uploadModalTitle": "Upload Resumes",
         "dropzoneText": "Drag & drop PDFs here, or click to select",
         "table": {

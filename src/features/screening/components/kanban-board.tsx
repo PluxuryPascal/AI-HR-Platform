@@ -23,7 +23,7 @@ import {
     arrayMove,
     sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Layers } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -31,6 +31,9 @@ import { BoardColumn } from "./board-column";
 import { CandidateCard } from "./candidate-card";
 import { initialColumns } from "../utils/mock-board";
 import { CandidateCard as CandidateCardType, ColumnId } from "../types";
+import { useGetCandidates } from "../../candidates/api/use-get-candidates";
+import { useMoveCandidate } from "../../candidates/api/use-move-candidate";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { FloatingComparisonBar } from "./floating-comparison-bar";
 import { ComparisonModal } from "./comparison-modal";
@@ -40,7 +43,14 @@ import { Button } from "@/components/ui/button";
 
 export function KanbanBoard() {
     const t = useTranslations("Screening");
-    const [columns, setColumns] = useState(initialColumns);
+    const queryClient = useQueryClient();
+    const { data: columns = initialColumns } = useGetCandidates();
+    const { mutate: moveCandidate } = useMoveCandidate();
+
+    // Track original state for rollback
+    const previousColumnsRef = useRef<Record<ColumnId, CandidateCardType[]> | null>(null);
+
+    // const [columns, setColumns] = useState(initialColumns); // Removed
     const [activeCard, setActiveCard] = useState<CandidateCardType | null>(null);
     const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
     const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
@@ -117,8 +127,13 @@ export function KanbanBoard() {
             if (card) {
                 setActiveCard(card);
             }
+            // Snapshot current state for rollback
+            if (columns) {
+                previousColumnsRef.current = columns;
+            }
         }
     };
+
 
     const handleDragOver = (event: DragOverEvent) => {
         if (isSelectionMode) return;
@@ -139,11 +154,14 @@ export function KanbanBoard() {
             return;
         }
 
-        setColumns((prev) => {
+        queryClient.setQueryData<Record<ColumnId, CandidateCardType[]>>(["candidates"], (prev) => {
+            if (!prev) return prev;
             const activeItems = prev[activeContainer];
             const overItems = prev[overContainer];
             const activeIndex = activeItems.findIndex((item) => item.id === id);
             const overIndex = overItems.findIndex((item) => item.id === overId);
+
+            if (activeIndex === -1) return prev;
 
             let newIndex;
 
@@ -208,14 +226,35 @@ export function KanbanBoard() {
             );
 
             if (activeIndex !== overIndex) {
-                setColumns((prev) => ({
-                    ...prev,
-                    [activeContainer]: arrayMove(
-                        prev[activeContainer],
-                        activeIndex,
-                        overIndex
-                    ),
-                }));
+                queryClient.setQueryData<Record<ColumnId, CandidateCardType[]>>(["candidates"], (prev) => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        [activeContainer]: arrayMove(
+                            prev[activeContainer],
+                            activeIndex,
+                            overIndex
+                        ),
+                    };
+                });
+            }
+        }
+
+        // Trigger mutation to persist changes
+        if (activeColumn && overContainer) {
+            // Get the latest state from cache to find the final index
+            const currentColumns = queryClient.getQueryData<Record<ColumnId, CandidateCardType[]>>(["candidates"]);
+            if (currentColumns) {
+                const finalIndex = currentColumns[overContainer].findIndex((c) => c.id === id);
+                if (finalIndex !== -1) {
+                    moveCandidate({
+                        candidateId: id as string,
+                        sourceColumnId: activeColumn,
+                        targetColumnId: overContainer,
+                        newIndex: finalIndex,
+                        optimisticSnapshot: previousColumnsRef.current || undefined,
+                    });
+                }
             }
         }
 

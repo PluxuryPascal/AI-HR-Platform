@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ColumnId, CandidateCard as CandidateCardType } from "../types";
@@ -20,6 +22,15 @@ export function BoardColumn({ id, candidates, selectedCandidateIds, onToggleSele
         id: id,
     });
 
+    const parentRef = useRef<HTMLDivElement>(null);
+
+    const rowVirtualizer = useVirtualizer({
+        count: candidates.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 120, // Estimate row height for accurate scrollbar
+        overscan: 5,
+    });
+
     return (
         <div
             ref={setNodeRef}
@@ -34,23 +45,51 @@ export function BoardColumn({ id, candidates, selectedCandidateIds, onToggleSele
                 </span>
             </div>
 
-            <div className="flex-1 flex flex-col gap-3 min-h-[100px]">
+            <div
+                ref={parentRef}
+                className="flex-1 overflow-y-auto min-h-[100px]"
+            >
                 <SortableContext
                     items={candidates.map((c) => c.id)}
                     strategy={verticalListSortingStrategy}
                 >
-                    {candidates.map((candidate) => (
-                        <CandidateCard
-                            key={candidate.id}
-                            candidate={candidate}
-                            isSelected={selectedCandidateIds.includes(candidate.id)}
-                            onToggleSelection={onToggleSelection}
-                            isSelectionMode={isSelectionMode}
-                        />
-                    ))}
+                    <div
+                        style={{
+                            height: `${rowVirtualizer.getTotalSize()}px`,
+                            width: '100%',
+                            position: 'relative',
+                        }}
+                    >
+                        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+                            const candidate = candidates[virtualItem.index];
+                            if (!candidate) return null;
+
+                            return (
+                                <div
+                                    key={candidate.id}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: `${virtualItem.size}px`,
+                                        transform: `translateY(${virtualItem.start}px)`,
+                                    }}
+                                >
+                                    <CandidateCard
+                                        candidate={candidate}
+                                        isSelected={selectedCandidateIds.includes(candidate.id)}
+                                        onToggleSelection={onToggleSelection}
+                                        isSelectionMode={isSelectionMode}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
                 </SortableContext>
+
                 {candidates.length === 0 && (
-                    <div className="flex items-center justify-center h-20 border-2 border-dashed rounded-md border-muted-foreground/20 text-muted-foreground text-xs">
+                    <div className="flex items-center justify-center h-20 border-2 border-dashed rounded-md border-muted-foreground/20 text-muted-foreground text-xs mt-4">
                         {t('columnEmpty')}
                     </div>
                 )}

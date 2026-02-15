@@ -32,6 +32,12 @@
             "fetchFailed": "Error al cargar datos del servidor."
         }
     },
+    "UploadStages": {
+        "stage1": "Subiendo archivo...",
+        "stage2": "Extrayendo texto del PDF...",
+        "stage3": "IA analizando habilidades y experiencia...",
+        "stage4": "Finalizando puntuación de coincidencia..."
+    },
     "Auth": {
         "nav": {
             "dashboard": "Tablero",
@@ -164,6 +170,7 @@
     "Candidates": {
         "title": "Candidatos",
         "uploadBtn": "Subir currículums",
+        "processingTitle": "Procesando candidato",
         "uploadModalTitle": "Subir currículums",
         "dropzoneText": "Arrastra y suelta PDFs aquí, o haz clic para seleccionar",
         "table": {
