@@ -19,6 +19,20 @@
             "backToDashboard": "Back to Dashboard"
         }
     },
+    "Errors": {
+        "Global": {
+            "title": "Something went wrong",
+            "desc": "A critical error occurred.",
+            "retry": "Try again"
+        },
+        "Widget": {
+            "title": "Widget error",
+            "retry": "Refresh Widget"
+        },
+        "Api": {
+            "fetchFailed": "Failed to load data from server."
+        }
+    },
     "Auth": {
         "logout": "Log out",
         "signIn": "Sign In",
@@ -182,6 +196,26 @@
         "empty": {
             "title": "Pipeline is empty",
             "desc": "Move candidates here from the candidates list to start the screening process."
+        },
+        "bar": {
+            "selected": "Selected {count} of 10",
+            "compareBtn": "Compare Candidates",
+            "clear": "Clear",
+            "selectCandidates": "Select Candidates",
+            "cancelSelection": "Cancel Selection"
+        },
+        "modal": {
+            "title": "AI Talent Comparison",
+            "loading": "AI is analyzing profiles...",
+            "description": "Comparing {count} candidates based on skills, experience, and potential fit.",
+            "exportBtn": "Export to CSV"
+        },
+        "criteria": {
+            "skills": "Skills",
+            "risks": "Risks",
+            "salary": "Salary",
+            "summary": "Summary",
+            "experience": "Experience"
         }
     },
     "Profile": {
@@ -201,6 +235,34 @@
             "newPass": "New Password",
             "confirmPass": "Confirm Password",
             "updatePassBtn": "Update Password"
+        }
+    },
+    "Team": {
+        "title": "Team Management",
+        "description": "Invite your colleagues and manage their permissions.",
+        "inviteBtn": "Invite Member",
+        "table": {
+            "name": "Member",
+            "role": "Role",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "roles": {
+            "owner": "Owner",
+            "recruiter": "Recruiter",
+            "manager": "Manager"
+        },
+        "status": {
+            "active": "Active",
+            "pending": "Pending"
+        },
+        "inviteModal": {
+            "title": "Invite colleague",
+            "emailLabel": "Email Address",
+            "roleLabel": "Select Role",
+            "jobsLabel": "Assign Jobs",
+            "searchJobs": "Search vacancies...",
+            "sendBtn": "Send Invitation"
         }
     }
 }

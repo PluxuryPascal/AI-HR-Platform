@@ -18,7 +18,21 @@
             "backToDashboard": "Volver al tablero"
         }
     },
-    "Dashboard": {
+    "Errors": {
+        "Global": {
+            "title": "Algo salió mal",
+            "desc": "Ocurrió un error crítico.",
+            "retry": "Intentar de nuevo"
+        },
+        "Widget": {
+            "title": "Error del widget",
+            "retry": "Actualizar widget"
+        },
+        "Api": {
+            "fetchFailed": "Error al cargar datos del servidor."
+        }
+    },
+    "Auth": {
         "nav": {
             "dashboard": "Tablero",
             "jobs": "Empleos",
@@ -142,6 +156,54 @@
         "empty": {
             "title": "El pipeline está vacío",
             "desc": "Mueve candidatos aquí desde la lista de candidatos para comenzar el proceso de selección."
+        },
+        "bar": {
+            "selected": "Seleccionado {count} de 10",
+            "compareBtn": "Comparar candidatos",
+            "clear": "Borrar",
+            "selectCandidates": "Seleccionar candidatos",
+            "cancelSelection": "Cancelar selección"
+        },
+        "modal": {
+            "title": "Comparación de talentos con IA",
+            "loading": "IA analizando perfiles...",
+            "description": "Comparando {count} candidatos basados en habilidades, experiencia y ajuste potencial.",
+            "exportBtn": "Exportar a CSV"
+        },
+        "criteria": {
+            "skills": "Habilidades",
+            "risks": "Riesgos",
+            "salary": "Salario",
+            "summary": "Resumen",
+            "experience": "Experiencia"
+        }
+    },
+    "Team": {
+        "title": "Gestión del equipo",
+        "description": "Invita a tus colegas y gestiona sus permisos.",
+        "inviteBtn": "Invitar miembro",
+        "table": {
+            "name": "Miembro",
+            "role": "Rol",
+            "status": "Estado",
+            "actions": "Acciones"
+        },
+        "roles": {
+            "owner": "Propietario",
+            "recruiter": "Reclutador",
+            "manager": "Gerente"
+        },
+        "status": {
+            "active": "Activo",
+            "pending": "Pendiente"
+        },
+        "inviteModal": {
+            "title": "Invitar colega",
+            "emailLabel": "Dirección de correo",
+            "roleLabel": "Seleccionar rol",
+            "jobsLabel": "Asignar empleos",
+            "searchJobs": "Buscar vacantes...",
+            "sendBtn": "Enviar invitación"
         }
     }
 }

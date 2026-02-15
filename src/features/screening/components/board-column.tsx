@@ -9,9 +9,12 @@ import { useTranslations } from "next-intl";
 interface BoardColumnProps {
     id: ColumnId;
     candidates: CandidateCardType[];
+    selectedCandidateIds: string[];
+    onToggleSelection: (id: string) => void;
+    isSelectionMode: boolean;
 }
 
-export function BoardColumn({ id, candidates }: BoardColumnProps) {
+export function BoardColumn({ id, candidates, selectedCandidateIds, onToggleSelection, isSelectionMode }: BoardColumnProps) {
     const t = useTranslations('Screening');
     const { setNodeRef } = useDroppable({
         id: id,
@@ -37,7 +40,13 @@ export function BoardColumn({ id, candidates }: BoardColumnProps) {
                     strategy={verticalListSortingStrategy}
                 >
                     {candidates.map((candidate) => (
-                        <CandidateCard key={candidate.id} candidate={candidate} />
+                        <CandidateCard
+                            key={candidate.id}
+                            candidate={candidate}
+                            isSelected={selectedCandidateIds.includes(candidate.id)}
+                            onToggleSelection={onToggleSelection}
+                            isSelectionMode={isSelectionMode}
+                        />
                     ))}
                 </SortableContext>
                 {candidates.length === 0 && (

@@ -32,10 +32,46 @@ import { CandidateCard } from "./candidate-card";
 import { initialColumns } from "../utils/mock-board";
 import { CandidateCard as CandidateCardType, ColumnId } from "../types";
 
+import { FloatingComparisonBar } from "./floating-comparison-bar";
+import { ComparisonModal } from "./comparison-modal";
+
+import { Button } from "@/components/ui/button";
+
 export function KanbanBoard() {
     const t = useTranslations("Screening");
     const [columns, setColumns] = useState(initialColumns);
     const [activeCard, setActiveCard] = useState<CandidateCardType | null>(null);
+    const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
+    const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+    const handleToggleSelection = (id: string) => {
+        setSelectedCandidateIds((prev) =>
+            prev.includes(id)
+                ? prev.filter((candidateId) => candidateId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const handleClearSelection = () => {
+        setSelectedCandidateIds([]);
+    }
+
+    const toggleSelectionMode = () => {
+        setIsSelectionMode(!isSelectionMode);
+        if (isSelectionMode) {
+            handleClearSelection();
+        }
+    };
+
+    // Helper to find selected candidate objects
+    const getSelectedCandidates = useMemo(() => {
+        const allCandidates: CandidateCardType[] = [];
+        Object.values(columns).forEach(col => {
+            allCandidates.push(...col);
+        });
+        return allCandidates.filter(c => selectedCandidateIds.includes(c.id));
+    }, [columns, selectedCandidateIds]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -59,6 +95,7 @@ export function KanbanBoard() {
     };
 
     const handleDragStart = (event: DragStartEvent) => {
+        if (isSelectionMode) return;
         const { active } = event;
         const { id } = active;
         const activeColumn = findContainer(id as string);
@@ -71,6 +108,7 @@ export function KanbanBoard() {
     };
 
     const handleDragOver = (event: DragOverEvent) => {
+        if (isSelectionMode) return;
         const { active, over } = event;
         const { id } = active;
         const overId = over?.id;
@@ -130,6 +168,7 @@ export function KanbanBoard() {
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
+        if (isSelectionMode) return;
         const { active, over } = event;
         const { id } = active;
         const overId = over?.id;
@@ -236,30 +275,59 @@ export function KanbanBoard() {
     }
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={collisionDetectionStrategy}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-            measuring={{
-                droppable: {
-                    strategy: MeasuringStrategy.Always,
-                },
-            }}
-        >
-            <div className="flex h-full gap-4 overflow-x-auto pb-4">
-                {(Object.keys(columns) as ColumnId[]).map((columnId) => (
-                    <BoardColumn
-                        key={columnId}
-                        id={columnId}
-                        candidates={columns[columnId]}
-                    />
-                ))}
+        <div className="flex flex-col h-full gap-4">
+            <div className="flex justify-end px-2">
+                <Button
+                    variant={isSelectionMode ? "secondary" : "outline"}
+                    onClick={toggleSelectionMode}
+                    size="sm"
+                >
+                    {isSelectionMode ? t("bar.cancelSelection") : t("bar.selectCandidates")}
+                </Button>
             </div>
-            <DragOverlay dropAnimation={dropAnimation}>
-                {activeCard ? <CandidateCard candidate={activeCard} isOverlay /> : null}
-            </DragOverlay>
-        </DndContext>
+
+            <DndContext
+                sensors={sensors}
+                collisionDetection={collisionDetectionStrategy}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+                measuring={{
+                    droppable: {
+                        strategy: MeasuringStrategy.Always,
+                    },
+                }}
+            >
+                <div className="flex h-full gap-4 overflow-x-auto pb-4 relative">
+                    {(Object.keys(columns) as ColumnId[]).map((columnId) => (
+                        <BoardColumn
+                            key={columnId}
+                            id={columnId}
+                            candidates={columns[columnId]}
+                            selectedCandidateIds={selectedCandidateIds}
+                            onToggleSelection={handleToggleSelection}
+                            isSelectionMode={isSelectionMode}
+                        />
+                    ))}
+                </div>
+                <DragOverlay dropAnimation={dropAnimation}>
+                    {activeCard ? <CandidateCard candidate={activeCard} isOverlay /> : null}
+                </DragOverlay>
+
+                {isSelectionMode && (
+                    <FloatingComparisonBar
+                        selectedCount={selectedCandidateIds.length}
+                        onCompare={() => setIsComparisonModalOpen(true)}
+                        onClear={handleClearSelection}
+                    />
+                )}
+
+                <ComparisonModal
+                    isOpen={isComparisonModalOpen}
+                    onClose={() => setIsComparisonModalOpen(false)}
+                    candidates={getSelectedCandidates}
+                />
+            </DndContext>
+        </div>
     );
 }

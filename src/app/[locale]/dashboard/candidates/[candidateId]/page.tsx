@@ -16,6 +16,7 @@ import { PDFViewer } from "@/features/candidates/components/pdf-viewer";
 import { AIAnalysisTab } from "@/features/candidates/components/ai-analysis-tab";
 import { AIChatTab } from "@/features/candidates/components/ai-chat-tab";
 import { useParams } from "next/navigation";
+import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
 
 export default function CandidatePage() {
     const params = useParams();
@@ -69,7 +70,9 @@ export default function CandidatePage() {
                                 </div>
                             </div>
                             <div className="flex-1 overflow-hidden relative">
-                                <PDFViewer url={profile.pdfUrl} />
+                                <WidgetErrorBoundary>
+                                    <PDFViewer url={profile.pdfUrl} />
+                                </WidgetErrorBoundary>
                             </div>
                         </div>
                     </ResizablePanel>
@@ -102,7 +105,9 @@ export default function CandidatePage() {
                                         <AIAnalysisTab data={profile.aiAnalysis} />
                                     </TabsContent>
                                     <TabsContent value="chat" className="h-full m-0 p-0 border-none data-[state=active]:flex data-[state=active]:flex-col">
-                                        <AIChatTab />
+                                        <WidgetErrorBoundary>
+                                            <AIChatTab />
+                                        </WidgetErrorBoundary>
                                     </TabsContent>
                                 </div>
                             </Tabs>

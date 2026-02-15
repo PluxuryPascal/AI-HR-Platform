@@ -6,13 +6,17 @@ import { CandidateCard as CandidateCardType } from "../types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface CandidateCardProps {
     candidate: CandidateCardType;
     isOverlay?: boolean;
+    isSelected?: boolean;
+    onToggleSelection?: (id: string) => void;
+    isSelectionMode?: boolean;
 }
 
-export function CandidateCard({ candidate, isOverlay }: CandidateCardProps) {
+export function CandidateCard({ candidate, isOverlay, isSelected, onToggleSelection, isSelectionMode }: CandidateCardProps) {
     const {
         attributes,
         listeners,
@@ -20,7 +24,11 @@ export function CandidateCard({ candidate, isOverlay }: CandidateCardProps) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: candidate.id, data: { ...candidate } });
+    } = useSortable({
+        id: candidate.id,
+        data: { ...candidate },
+        disabled: isSelectionMode
+    });
 
     const style = {
         transform: CSS.Translate.toString(transform),
@@ -52,11 +60,30 @@ export function CandidateCard({ candidate, isOverlay }: CandidateCardProps) {
     }
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="group relative">
             <Card
-                className={`cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow`}
+                onClick={() => {
+                    if (isSelectionMode && onToggleSelection) {
+                        onToggleSelection(candidate.id);
+                    }
+                }}
+                className={`transition-shadow ${isSelectionMode
+                        ? 'cursor-pointer hover:ring-2 hover:ring-primary/50'
+                        : 'cursor-grab active:cursor-grabbing hover:shadow-md'
+                    } ${isSelected ? 'ring-2 ring-primary' : ''}`}
             >
                 <CardContent className="p-3 flex items-center space-x-4">
+                    {onToggleSelection && isSelectionMode && (
+                        <div className="absolute top-2 right-2 z-10 data-[state=checked]:opacity-100">
+                            <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => onToggleSelection(candidate.id)}
+                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                className="data-[state=checked]:opacity-100 bg-background"
+                            />
+                        </div>
+                    )}
+
                     <Avatar>
                         <AvatarImage src={candidate.avatarUrl} alt={candidate.name} />
                         <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
