@@ -40,6 +40,7 @@ import { ComparisonModal } from "./comparison-modal";
 import { OutreachDrawer } from "./outreach-drawer";
 
 import { Button } from "@/components/ui/button";
+import { fireOfferConfetti } from "@/lib/confetti";
 
 export function KanbanBoard() {
     const t = useTranslations("Screening");
@@ -254,6 +255,11 @@ export function KanbanBoard() {
                         newIndex: finalIndex,
                         optimisticSnapshot: previousColumnsRef.current || undefined,
                     });
+
+                    // Fire confetti if moved to "offer" column
+                    if (overContainer === "offer" && activeColumn !== "offer") {
+                        fireOfferConfetti();
+                    }
                 }
             }
         }

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
 
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
@@ -32,7 +31,12 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { UploadResumeDialog } from "./upload-resume-dialog";
 
 import { useCandidates, Candidate } from "../hooks/use-candidates";
-import { CandidateScoreBadge } from "./candidate-score-badge";
+import { useBulkUpdateCandidates } from "../api/use-bulk-update-candidates";
+import { BulkActionBar } from "./bulk-action-bar";
+import { MatchScoreBadge } from "./match-score-badge";
+import { ColumnId } from "@/features/screening/types";
+
+import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
 
 export function CandidatesTable() {
     const t = useTranslations("Candidates.table");
@@ -41,7 +45,9 @@ export function CandidatesTable() {
     const router = useRouter();
 
     const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(new Set());
-    const [isOutreachOpen, setIsOutreachOpen] = useState(false);
+    const [bulkActionType, setBulkActionType] = useState<"rejection" | "invitation" | null>(null);
+
+    const { mutate: bulkUpdate } = useBulkUpdateCandidates();
 
     const toggleSelection = (id: string) => {
         const newSelection = new Set(selectedCandidates);
@@ -62,7 +68,33 @@ export function CandidatesTable() {
     };
 
     const handleBulkReject = () => {
-        setIsOutreachOpen(true);
+        setBulkActionType("rejection");
+    };
+
+    const handleBulkMove = (status: string) => {
+        if (status === "interview") {
+            setBulkActionType("invitation");
+            return;
+        }
+
+        bulkUpdate({
+            candidateIds: Array.from(selectedCandidates),
+            newStatus: status as ColumnId
+        });
+        setSelectedCandidates(new Set());
+    };
+
+    const handleSendEmail = (content: string) => {
+        // In a real app, we would send the email here using the 'content'
+        // For now, we just update the status
+        const newStatus = bulkActionType === "rejection" ? "rejected" : "interview";
+
+        bulkUpdate({
+            candidateIds: Array.from(selectedCandidates),
+            newStatus: newStatus
+        });
+        setSelectedCandidates(new Set());
+        setBulkActionType(null);
     };
 
     const selectedCandidatesList = candidates.filter(c => selectedCandidates.has(c.id));
@@ -99,26 +131,7 @@ export function CandidatesTable() {
     }
 
     return (
-        <div className="space-y-4">
-            {selectedCandidates.size > 0 && (
-                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-                    <div className="flex items-center gap-2">
-                        <Badge variant="default" className="bg-primary text-primary-foreground">
-                            {selectedCandidates.size}
-                        </Badge>
-                        <span className="text-sm font-medium text-primary">Selected</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button size="sm" variant="destructive" onClick={handleBulkReject}>
-                            {t("action.bulkReject", { count: selectedCandidates.size })}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setSelectedCandidates(new Set())}>
-                            Cancel
-                        </Button>
-                    </div>
-                </div>
-            )}
-
+        <div className="space-y-4 pb-20"> {/* Added padding bottom for FAB */}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -157,10 +170,10 @@ export function CandidatesTable() {
                                         </div>
                                     </Link>
                                 </TableCell>
-                                <TableCell>{candidate.appliedRole}</TableCell>
+                                <TableCell>{candidate.role}</TableCell>
                                 <TableCell>
                                     <div className="flex flex-col gap-1">
-                                        <CandidateScoreBadge score={candidate.score} />
+                                        <MatchScoreBadge score={candidate.score} breakdown={candidate.scoreBreakdown} candidateId={candidate.id} />
                                         <span className="text-xs text-muted-foreground max-w-[200px] truncate" title={candidate.matchSummary}>
                                             {candidate.matchSummary}
                                         </span>
@@ -199,17 +212,19 @@ export function CandidatesTable() {
                 </Table>
             </div>
 
+            <BulkActionBar
+                selectedCount={selectedCandidates.size}
+                onClear={() => setSelectedCandidates(new Set())}
+                onRejectAll={handleBulkReject}
+                onMoveTo={handleBulkMove}
+            />
+
             <OutreachDrawer
-                isOpen={isOutreachOpen}
-                onClose={() => setIsOutreachOpen(false)}
-                candidate={selectedCandidatesList.map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    role: c.appliedRole,
-                    score: c.score,
-                    // Avatar URL not in Candidate type
-                }))}
-                type="rejection"
+                isOpen={!!bulkActionType}
+                onClose={() => setBulkActionType(null)}
+                candidate={selectedCandidatesList}
+                type={bulkActionType || "rejection"}
+                onSend={handleSendEmail}
             />
         </div>
     );

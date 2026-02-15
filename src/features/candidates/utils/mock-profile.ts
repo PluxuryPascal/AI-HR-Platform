@@ -1,3 +1,10 @@
+export type ScoreFactor = {
+    id: string;
+    type: "positive" | "negative" | "neutral";
+    text: string;
+    impact: string;
+};
+
 export type Profile = {
     id: string;
     personal: {
@@ -9,6 +16,7 @@ export type Profile = {
     };
     aiAnalysis: {
         score: number;
+        scoreBreakdown?: ScoreFactor[];
         summary: string;
         strengths: string[];
         weaknesses: string[];
@@ -31,6 +39,11 @@ export const getCandidateProfile = (id: string): Profile => {
             },
             aiAnalysis: {
                 score: 45,
+                scoreBreakdown: [
+                    { id: "1", type: "negative", text: "No production experience", impact: "-20%" },
+                    { id: "2", type: "negative", text: "Weak algorithm skills", impact: "-15%" },
+                    { id: "3", type: "positive", text: "Fast learner", impact: "+10%" },
+                ],
                 summary: "Enthusiastic learner with some bootcamp experience. Lacks commercial experience and depth in core concepts.",
                 strengths: ["Fast learner", "Good communicator", "Team player"],
                 weaknesses: ["No production experience", "Weak algorithm skills", "Unfamiliar with testing"],
@@ -52,6 +65,11 @@ export const getCandidateProfile = (id: string): Profile => {
             },
             aiAnalysis: {
                 score: 72,
+                scoreBreakdown: [
+                    { id: "1", type: "positive", text: "Solid React knowledge", impact: "+20%" },
+                    { id: "2", type: "positive", text: "Good API integration skills", impact: "+15%" },
+                    { id: "3", type: "negative", text: "Weak system design", impact: "-10%" },
+                ],
                 summary: "Solid contribution to previous projects. Good grasp of React but needs improvement in system design and performance optimization.",
                 strengths: ["React Functional Components", "Redux Toolkit", "API Integration"],
                 weaknesses: ["Performance profiling", "Advanced TypeScript types"],
@@ -73,6 +91,11 @@ export const getCandidateProfile = (id: string): Profile => {
         },
         aiAnalysis: {
             score: 88,
+            scoreBreakdown: [
+                { id: "1", type: "positive", text: "Led a team of 5", impact: "+25%" },
+                { id: "2", type: "positive", text: "Optimized Web Vitals by 40%", impact: "+20%" },
+                { id: "3", type: "neutral", text: "Limited backend experience", impact: "0%" },
+            ],
             summary: "Candidate shows strong proficiency in React ecosystem and modern frontend architecture. Previous experience leading small teams is a plus. Lacks deep backend knowledge but demonstrates quick learning ability.",
             strengths: [
                 "Led a team of 5",

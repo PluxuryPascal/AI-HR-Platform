@@ -371,5 +371,15 @@
             "sendAll": "Confirmar y enviar todo",
             "description": "La IA ha redactado razones únicas para cada candidato para garantizar un toque personalizado."
         }
+    },
+    "MatchScore": {
+        "analysisTitle": "Análisis de IA",
+        "viewFullAnalysis": "Ver análisis completo"
+    },
+    "BulkActions": {
+        "selectedCount": "{count} seleccionados",
+        "rejectAll": "Rechazar todos",
+        "moveTo": "Mover a...",
+        "clear": "Limpiar selección"
     }
 }

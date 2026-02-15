@@ -396,5 +396,15 @@
             "sendAll": "Confirm and Send All",
             "description": "AI has drafted unique reasons for each candidate to ensure a personalized touch."
         }
+    },
+    "MatchScore": {
+        "analysisTitle": "AI Analysis",
+        "viewFullAnalysis": "View full analysis"
+    },
+    "BulkActions": {
+        "selectedCount": "{count} selected",
+        "rejectAll": "Reject All",
+        "moveTo": "Move to...",
+        "clear": "Clear Selection"
     }
 }

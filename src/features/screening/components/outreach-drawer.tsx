@@ -30,6 +30,7 @@ interface OutreachDrawerProps {
     onClose: () => void;
     candidate: CandidateCard | CandidateCard[] | null;
     type: "rejection" | "invitation";
+    onSend?: (content: string) => void;
 }
 
 export function OutreachDrawer({
@@ -37,6 +38,7 @@ export function OutreachDrawer({
     onClose,
     candidate,
     type,
+    onSend,
 }: OutreachDrawerProps) {
     const t = useTranslations("Outreach");
     const locale = useLocale();
@@ -200,7 +202,10 @@ export function OutreachDrawer({
                             <Copy className="w-4 h-4 mr-2" />
                             {t("copy")}
                         </Button>
-                        <Button onClick={onClose}>
+                        <Button onClick={() => {
+                            if (onSend) onSend(content);
+                            onClose();
+                        }}>
                             <Mail className="w-4 h-4 mr-2" />
                             {isBulk ? t("bulk.sendAll") : t("sendBtn")}
                         </Button>

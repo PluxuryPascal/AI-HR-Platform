@@ -18,6 +18,8 @@ import { AIChatTab } from "@/features/candidates/components/ai-chat-tab";
 import { useParams } from "next/navigation";
 import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
 import { InterviewGuide } from "@/features/candidates/components/interview-guide";
+import { MatchScoreBadge } from "@/features/candidates/components/match-score-badge";
+
 
 import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
 import { useState } from "react";
@@ -44,6 +46,7 @@ export default function CandidatePage() {
                             <Badge variant="outline" className="text-xs font-normal">
                                 {profile.personal.role}
                             </Badge>
+                            <MatchScoreBadge score={profile.aiAnalysis.score} breakdown={profile.aiAnalysis.scoreBreakdown} className="ml-2" />
                         </div>
                         <p className="text-xs text-muted-foreground">
                             Applied 2 days ago • {profile.personal.location}
