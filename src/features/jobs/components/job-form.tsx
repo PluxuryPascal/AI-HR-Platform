@@ -133,14 +133,14 @@ export function JobForm() {
             <Separator className="my-6" />
 
             {/* Main Form */}
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
-                    <CardContent className="pt-6 space-y-6">
+                    <CardContent className="p-8 space-y-8">
 
                         {/* Title & Department Row */}
                         <div className="grid gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="title">{t("fields.title")}</Label>
+                            <div className="space-y-3">
+                                <Label htmlFor="title" className="mb-2 block">{t("fields.title")}</Label>
                                 <div className="relative">
                                     <Briefcase className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -155,8 +155,8 @@ export function JobForm() {
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="department">{t("fields.department")}</Label>
+                            <div className="space-y-3">
+                                <Label htmlFor="department" className="mb-2 block">{t("fields.department")}</Label>
                                 <Select
                                     onValueChange={(val) => form.setValue("department", val as any)}
                                     defaultValue={form.getValues("department")}
@@ -180,8 +180,8 @@ export function JobForm() {
                         </div>
 
                         {/* Job Type */}
-                        <div className="space-y-2">
-                            <Label>{t("fields.type")}</Label>
+                        <div className="space-y-3">
+                            <Label className="mb-2 block">{t("fields.type")}</Label>
                             <div className="flex gap-4">
                                 {Object.values(JobType).map((type) => (
                                     <label
@@ -210,8 +210,8 @@ export function JobForm() {
                         </div>
 
                         {/* Description */}
-                        <div className="space-y-2">
-                            <Label htmlFor="description">{t("fields.description")}</Label>
+                        <div className="space-y-3">
+                            <Label htmlFor="description" className="mb-2 block">{t("fields.description")}</Label>
                             <Textarea
                                 id="description"
                                 placeholder={t("descriptionPlaceholder")}

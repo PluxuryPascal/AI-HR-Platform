@@ -10,8 +10,8 @@ export default function CreateJobPage() {
 
     return (
         <div className="relative min-h-screen">
-            <div className="container relative z-10 max-w-3xl py-10">
-                <div className="mb-6">
+            <div className="container relative z-10 max-w-7xl w-full py-10 px-4 sm:px-6 lg:px-8">
+                <div className="mb-8">
                     <Link href="/dashboard/jobs">
                         <Button variant="ghost" className="pl-0 hover:pl-2 transition-all gap-2 text-muted-foreground hover:text-foreground">
                             <ChevronLeft className="h-4 w-4" />

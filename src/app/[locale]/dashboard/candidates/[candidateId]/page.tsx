@@ -62,16 +62,16 @@ export default function CandidatePage() {
             </div>
 
             {/* Main Content - Split View */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden bg-background">
                 <ResizablePanelGroup direction="horizontal" className="h-full w-full rounded-none border-0">
 
-                    {/* Left Panel - PDF Viewer */}
                     <ResizablePanel defaultSize={50} minSize={30}>
-                        <div className="h-full bg-gray-100 flex flex-col">
-                            <div className="bg-white border-b px-4 py-2 flex items-center justify-between text-sm text-gray-500 shadow-sm z-10 shrink-0">
-                                <span className="font-medium text-gray-700">{t("tabs.resume")}</span>
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="secondary" className="text-[10px] h-5">PDF</Badge>
+                        <div className="h-full bg-background flex flex-col transition-colors duration-300">
+                            {/* PDF Header - Synchronized with Right Panel */}
+                            <div className="h-12 bg-background/80 backdrop-blur-md border-b border-border/50 px-4 flex items-center justify-between shrink-0 z-10">
+                                <span className="font-medium text-sm text-foreground/80 pt-2">{t("tabs.resume")}</span>
+                                <div className="flex items-center gap-2 pt-2">
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-transparent border-foreground/20 text-muted-foreground">PDF</Badge>
                                 </div>
                             </div>
                             <div className="flex-1 overflow-hidden relative">
@@ -88,8 +88,8 @@ export default function CandidatePage() {
                     <ResizablePanel defaultSize={50} minSize={30}>
                         <div className="h-full flex flex-col bg-background">
                             <Tabs defaultValue="overview" className="flex-1 flex flex-col h-full">
-                                <div className="border-b px-4 bg-background shrink-0">
-                                    <TabsList className="h-12 w-full justify-start bg-transparent p-0 gap-6">
+                                <div className="h-12 border-b border-border/50 px-4 bg-background/80 backdrop-blur-md shrink-0 flex items-center">
+                                    <TabsList className="h-full w-full justify-start bg-transparent p-0 gap-6">
                                         <TabsTrigger
                                             value="overview"
                                             className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 pt-2"

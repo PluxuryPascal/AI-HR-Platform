@@ -36,7 +36,7 @@ export const getCandidateProfile = (id: string): Profile => {
                 weaknesses: ["No production experience", "Weak algorithm skills", "Unfamiliar with testing"],
                 skills: ["HTML", "CSS", "Basic JavaScript"],
             },
-            pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+            pdfUrl: "/dummy.pdf",
         };
     }
 
@@ -57,7 +57,7 @@ export const getCandidateProfile = (id: string): Profile => {
                 weaknesses: ["Performance profiling", "Advanced TypeScript types"],
                 skills: ["React", "TypeScript", "Redux", "SASS"],
             },
-            pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+            pdfUrl: "/dummy.pdf",
         };
     }
 
@@ -86,6 +86,6 @@ export const getCandidateProfile = (id: string): Profile => {
             ],
             skills: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Redux", "GraphQL"],
         },
-        pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        pdfUrl: "/dummy.pdf",
     };
 };

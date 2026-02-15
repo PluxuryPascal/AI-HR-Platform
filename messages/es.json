@@ -196,6 +196,18 @@
             "desc": "Mueve candidatos aquí desde la lista de candidatos para comenzar el proceso de selección."
         },
         "columnEmpty": "No hay candidatos",
+        "pdfViewer": {
+            "loading": "Cargando documento...",
+            "error": "Error al cargar PDF.",
+            "page": "Página",
+            "of": "de",
+            "previous": "Anterior",
+            "next": "Siguiente",
+            "zoomIn": "Acercar",
+            "zoomOut": "Alejar",
+            "rotate": "Rotar",
+            "download": "Descargar"
+        },
         "bar": {
             "selected": "Seleccionado {count} de 10",
             "compareBtn": "Comparar candidatos",

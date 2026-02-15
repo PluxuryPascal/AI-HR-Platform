@@ -81,8 +81,8 @@ export function UploadResumeDialog({ children }: UploadResumeDialogProps) {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-md bg-white dark:bg-zinc-950 border border-border shadow-2xl p-8 z-[51] !opacity-100 block">
+                <DialogHeader className="mb-6">
                     <DialogTitle>{t("uploadModalTitle")}</DialogTitle>
                 </DialogHeader>
 
