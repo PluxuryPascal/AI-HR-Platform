@@ -58,7 +58,39 @@ export default function LandingPage() {
     <>
       <GlobalDotGridBg />
 
-      <div className="relative flex min-h-screen flex-col">
+      <div className="relative flex min-h-screen flex-col overflow-hidden selection:bg-blue-500/30">
+        {/* Background Spheres */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          {/* Sphere 1 (Top Left) */}
+          <motion.div
+            initial={{ scale: 1, x: "-50%", y: "-50%" }}
+            animate={{
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              repeatType: "mirror",
+              ease: "easeInOut",
+            }}
+            className="absolute top-[15%] left-[20%] h-[500px] w-[500px] rounded-full bg-indigo-500/40 blur-[120px] mix-blend-multiply dark:bg-indigo-500/20 dark:mix-blend-normal"
+          />
+
+          {/* Sphere 2 (Bottom Right) */}
+          <motion.div
+            initial={{ scale: 1, x: "50%", y: "50%" }}
+            animate={{
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              repeatType: "mirror",
+              ease: "easeInOut",
+            }}
+            className="absolute bottom-[15%] right-[20%] h-[400px] w-[400px] rounded-full bg-purple-500/40 blur-[120px] mix-blend-multiply dark:bg-purple-500/20 dark:mix-blend-normal"
+          />
+        </div>
         {/* Navbar */}
         <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/50 backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:border-slate-800 dark:bg-black/80">
           <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">

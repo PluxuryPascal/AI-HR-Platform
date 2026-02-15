@@ -25,10 +25,42 @@ export default function AuthPage() {
     }, [mode]);
 
     return (
-        <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-background selection:bg-blue-500/30">
+        <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-slate-50 dark:bg-neutral-950 selection:bg-blue-500/30">
             {/* Background with z-index -1 to sit behind content */}
-            <div className="absolute inset-0 z-0">
+
+            <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 <GlobalDotGridBg />
+
+                {/* Sphere 1 (Top Left) */}
+
+                <motion.div
+                    initial={{ scale: 1, x: "-50%", y: "-50%" }}
+                    animate={{
+                        scale: [1, 1.1, 1],
+                    }}
+                    transition={{
+                        duration: 8,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut",
+                    }}
+                    className="absolute top-[15%] left-[20%] h-[500px] w-[500px] rounded-full bg-indigo-500/40 blur-[120px] mix-blend-multiply dark:bg-indigo-500/20 dark:mix-blend-normal"
+                />
+
+                {/* Sphere 2 (Bottom Right) */}
+                <motion.div
+                    initial={{ scale: 1, x: "50%", y: "50%" }}
+                    animate={{
+                        scale: [1, 1.2, 1],
+                    }}
+                    transition={{
+                        duration: 10,
+                        repeat: Infinity,
+                        repeatType: "mirror",
+                        ease: "easeInOut",
+                    }}
+                    className="absolute bottom-[15%] right-[20%] h-[400px] w-[400px] rounded-full bg-purple-500/40 blur-[120px] mix-blend-multiply dark:bg-purple-500/20 dark:mix-blend-normal"
+                />
             </div>
 
             {/* Back Button */}
@@ -47,10 +79,12 @@ export default function AuthPage() {
                     layout
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     style={{
-                        backdropFilter: "blur(4px)",
-                        WebkitBackdropFilter: "blur(4px)"
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        backdropFilter: 'blur(4px)',
+                        WebkitBackdropFilter: 'blur(4px)',
+                        boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                     }}
-                    className="relative z-10 w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/50 bg-slate-900/5 shadow-[0_20px_50px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-white/5 dark:shadow-2xl"
+                    className="relative z-10 w-full max-w-md overflow-hidden rounded-[2.5rem] border border-white/20 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04),0_20px_40px_rgba(0,0,0,0.04)]"
                 >
                     {/* 3D Glare Overlay */}
                     <div className="pointer-events-none absolute inset-0 z-0 rounded-[2.5rem] bg-gradient-to-br from-white/50 via-white/10 to-transparent shadow-[inset_0_3px_20px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,1),inset_0_-1px_2px_rgba(0,0,0,0.05)] dark:from-white/15 dark:via-transparent dark:to-transparent dark:shadow-[inset_0_3px_20px_rgba(255,255,255,0.2),inset_0_1px_2px_rgba(255,255,255,0.8)]" />

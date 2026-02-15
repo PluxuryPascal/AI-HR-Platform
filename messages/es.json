@@ -59,6 +59,35 @@
         "fromLastMonth": "+{count} desde el mes pasado",
         "requiresAttention": "Requiere atención"
     },
+    "Dashboard": {
+        "welcome": "¡Bienvenido de nuevo, {name}!",
+        "stats": {
+            "applicants": "Total de solicitantes",
+            "interviews": "Próximas entrevistas",
+            "timeToHire": "Tiempo medio de contratación",
+            "activeJobs": "Empleos activos"
+        },
+        "charts": {
+            "applicationsOverTime": "Tendencias de solicitud",
+            "hiringFunnel": "Embudo de contratación"
+        },
+        "activity": {
+            "title": "Actividad reciente",
+            "empty": "Sin actividad reciente."
+        },
+        "nav": {
+            "dashboard": "Tablero",
+            "jobs": "Empleos",
+            "candidates": "Candidatos",
+            "screening": "Selección",
+            "settings": "Configuración",
+            "new": "Nuevo"
+        },
+        "header": {
+            "profile": "Perfil",
+            "logout": "Cerrar sesión"
+        }
+    },
     "DashboardPage": {
         "title": "Tablero",
         "description": "Bienvenido a tu panel de Resume Screener."
