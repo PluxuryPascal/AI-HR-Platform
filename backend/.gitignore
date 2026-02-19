@@ -1,0 +1,22 @@
+# Binaries and standard Go ignores
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Dependency directories
+vendor/
+
+# User specific configurations and secrets
+tls/
+secret/
+config.yaml
+
+# OS and IDE specific
+.DS_Store
+.idea/
+.vscode/
