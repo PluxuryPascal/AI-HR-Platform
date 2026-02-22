@@ -11,11 +11,11 @@ import (
 
 type JWTtoken struct {
 	Issuer   string
-	ExpireAt time.Time
+	ExpireAt time.Duration
 	PrvKey   jwk.Key
 }
 
-func NewJWTtoken(issuer string, expireAt time.Time, prvKey jwk.Key) *JWTtoken {
+func NewJWTtoken(issuer string, expireAt time.Duration, prvKey jwk.Key) *JWTtoken {
 	return &JWTtoken{
 		Issuer:   issuer,
 		ExpireAt: expireAt,
@@ -28,7 +28,7 @@ func (t *JWTtoken) GenerateToken(subject string) ([]byte, error) {
 		Issuer(t.Issuer).
 		Subject(subject).
 		IssuedAt(time.Now()).
-		Expiration(t.ExpireAt)
+		Expiration(time.Now().Add(t.ExpireAt))
 
 	token, err := tokenPrepare.Build()
 	if err != nil {

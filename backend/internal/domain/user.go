@@ -1,12 +1,12 @@
 package domain
 
 type User struct {
-	ID         int64  `json:"id"`
+	ID         string `json:"id"`
 	GroupAlias string `json:"group_alias"`
 }
 
 type UserLogin struct {
-	UserID     string `json:"user_id"`
+	ID         string `json:"user_id"`
 	Password   string `json:"password"`
 	GroupAlias string `json:"group_alias"`
 }

@@ -14,6 +14,27 @@ type Config struct {
 	Database Database `yaml:"database"`
 	Redis    Redis    `yaml:"redis"`
 	Hash     Hash     `yaml:"hash"`
+	Logger   Logger   `yaml:"logger"`
+	Token    Token    `yaml:"token"`
+}
+
+type Token struct {
+	Issuer     string        `yaml:"issuer"`
+	ExpireAt   time.Duration `yaml:"expire-at"`
+	PrivateKey PrivateKey    `yaml:"private-key"`
+}
+
+type PrivateKey struct {
+	Path string `yaml:"path"`
+}
+type Logger struct {
+	StdOut bool   `yaml:"stdout"`
+	Level  string `yaml:"level"`
+	File   File   `yaml:"file"`
+}
+
+type File struct {
+	Path string `yaml:"path"`
 }
 
 type Hash struct {
