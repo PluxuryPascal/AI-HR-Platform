@@ -20,9 +20,16 @@ func NewUserRepo(dbClient *db.Client) UserRepository {
 }
 
 func (r *userRepo) Login(ctx context.Context, login string) (*domain.UserLogin, error) {
-	return nil, nil
+	return &domain.UserLogin{
+		ID:         "mock-id-123",
+		Password:   "$argon2id$v=19$m=65536,t=1,p=4$4wDt2Cx/ryTr0/THdujebA$hCLlQYObN74RQSKB9ZXImegzFOV+UdWdHvi+9iDiV0g", // argon2 hash of 'password123'
+		GroupAlias: "admin",
+	}, nil
 }
 
 func (r *userRepo) Register(ctx context.Context, user *domain.UserRegister) (*domain.User, error) {
-	return nil, nil
+	return &domain.User{
+		ID:         "mock-id-123",
+		GroupAlias: "admin",
+	}, nil
 }

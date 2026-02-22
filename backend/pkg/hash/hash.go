@@ -83,7 +83,7 @@ func decodeHash(encoded string) (p *Argon2, salt, hash []byte, err error) {
 
 	var version int
 
-	if _, err := fmt.Sscanf(vals[1], "v=%d", &version); err != nil {
+	if _, err := fmt.Sscanf(vals[2], "v=%d", &version); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to parse version: %w", err)
 	}
 
@@ -93,7 +93,7 @@ func decodeHash(encoded string) (p *Argon2, salt, hash []byte, err error) {
 
 	p = &Argon2{}
 
-	if _, err := fmt.Sscanf(vals[2], "m=%d,t=%d,p=%d", &p.memory, &p.time, &p.threads); err != nil {
+	if _, err := fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.memory, &p.time, &p.threads); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to parse parameters: %w", err)
 	}
 

@@ -37,13 +37,13 @@ func NewAuthHandler(log *zap.Logger, repo repo.UserRepository, cacheManager *cac
 }
 
 type loginRequest struct {
-	Mail     string `json:"mail"`
-	Password string `json:"password"`
+	Mail     string `json:"mail" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 type registerRequest struct {
-	Mail     string `json:"mail"`
-	Password string `json:"password"`
+	Mail     string `json:"mail" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 type sessionSubject struct {
@@ -68,7 +68,7 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Errorf("user not found: %w", err))
 		}
 
-		verified, err := a.hash.Verify(user.Password, req.Password)
+		verified, err := a.hash.Verify(req.Password, user.Password)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("compare password error: %w", err))
 		}
