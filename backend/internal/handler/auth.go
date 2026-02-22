@@ -1,38 +1,25 @@
 package handler
 
 import (
-	"backend/internal/cache"
-	"backend/internal/domain"
-	"backend/internal/repo"
-	"backend/pkg/hash"
-	"backend/pkg/token"
-	"encoding/json"
+	"backend/internal/usecase"
+	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
-	log          *zap.Logger
-	repo         repo.UserRepository
-	cacheManager *cache.Manager
-
-	token *token.JWTtoken
-	hash  hash.Hash
+	log     *zap.Logger
+	usecase usecase.AuthUseCase
 }
 
-func NewAuthHandler(log *zap.Logger, repo repo.UserRepository, cacheManager *cache.Manager, token *token.JWTtoken, hash hash.Hash) *AuthHandler {
+func NewAuthHandler(log *zap.Logger, usecase usecase.AuthUseCase) *AuthHandler {
 	return &AuthHandler{
-		log:          log,
-		repo:         repo,
-		cacheManager: cacheManager,
-		token:        token,
-		hash:         hash,
+		log:     log,
+		usecase: usecase,
 	}
 }
 
@@ -63,44 +50,24 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
 		}
 
-		user, err := a.repo.Login(c.Request().Context(), req.Mail)
+		token, expireAt, err := a.usecase.Login(c.Request().Context(), req.Mail, req.Password)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Errorf("user not found: %w", err))
+			if errors.Is(err, usecase.ErrInvalidCredentials) {
+				return echo.NewHTTPError(http.StatusUnauthorized, "invalid credentials")
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("login error: %w", err))
 		}
 
-		verified, err := a.hash.Verify(req.Password, user.Password)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("compare password error: %w", err))
-		}
-
-		if !verified {
-			return echo.NewHTTPError(http.StatusUnauthorized, "incorrect password")
-		}
-
-		subject, err := json.Marshal(sessionSubject{
-			UserID: user.ID,
-			Group:  user.GroupAlias,
-		})
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("marshal subject error: %w", err))
-		}
-
-		sessionID := uuid.New().String()
-
-		if err := cache.SetWithTTL(c.Request().Context(), a.cacheManager, cache.SessionKey, sessionID, string(subject), a.token.ExpireAt); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("set session error: %w", err))
-		}
-
-		t, err := a.token.GenerateToken(sessionID)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("generate token error: %w", err))
+		if token == nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "token generation failed")
 		}
 
 		c.SetCookie(&http.Cookie{
 			Name:     "access_token",
 			SameSite: http.SameSiteLaxMode,
-			Value:    string(t),
-			Expires:  time.Now().Add(a.token.ExpireAt),
+			Value:    *token,
+			Expires:  time.Now().Add(expireAt),
 			Path:     "/",
 			Secure:   false,
 			HttpOnly: true,
@@ -122,49 +89,24 @@ func (a *AuthHandler) PostRegister() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
 		}
 
-		hashedPassword, err := a.hash.Hash(req.Password)
+		token, expireAt, err := a.usecase.Register(c.Request().Context(), req.Mail, req.Password)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("hash password error: %w", err))
-		}
-
-		user := &domain.UserRegister{
-			Mail:     req.Mail,
-			Password: hashedPassword,
-		}
-
-		userData, err := a.repo.Register(c.Request().Context(), user)
-		if err != nil {
-			if strings.Contains(err.Error(), "duplicate key") {
+			if errors.Is(err, usecase.ErrUserAlreadyExists) {
 				return echo.NewHTTPError(http.StatusConflict, "user already exists")
 			}
 
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("register error: %w", err))
 		}
 
-		subject, err := json.Marshal(sessionSubject{
-			UserID: userData.ID,
-			Group:  userData.GroupAlias,
-		})
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("marshal subject error: %w", err))
-		}
-
-		sessionID := uuid.New().String()
-
-		if err := cache.SetWithTTL(c.Request().Context(), a.cacheManager, cache.SessionKey, sessionID, string(subject), a.token.ExpireAt); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("set session error: %w", err))
-		}
-
-		t, err := a.token.GenerateToken(sessionID)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("generate token error: %w", err))
+		if token == nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "token generation failed")
 		}
 
 		c.SetCookie(&http.Cookie{
 			Name:     "access_token",
 			SameSite: http.SameSiteLaxMode,
-			Value:    string(t),
-			Expires:  time.Now().Add(a.token.ExpireAt),
+			Value:    *token,
+			Expires:  time.Now().Add(expireAt),
 			Path:     "/",
 			Secure:   false,
 			HttpOnly: true,
@@ -181,8 +123,8 @@ func (a *AuthHandler) PostLogout() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, "cookie not found")
 		}
 
-		if err := cache.Delete(c.Request().Context(), a.cacheManager, cache.SessionKey, cookie.Value); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("delete session error: %w", err))
+		if err := a.usecase.Logout(c.Request().Context(), cookie.Value); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("logout error: %w", err))
 		}
 
 		c.SetCookie(&http.Cookie{

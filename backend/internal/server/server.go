@@ -10,15 +10,17 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
 )
 
 type Api struct {
+	log  *zap.Logger
 	api  *echo.Echo
 	port int
 }
 
 func (a *Api) DependsOn() []string {
-	return []string{"logger"}
+	return []string{"logger", "db", "redis"}
 }
 
 func (a *Api) HealthCheck(ctx context.Context) error {
@@ -42,8 +44,6 @@ func (a *Api) Run(ctx context.Context) error {
 }
 
 func (a *Api) Stop(ctx context.Context) error {
-	<-ctx.Done()
-
 	if err := a.api.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown API server gracefully: %w", err)
 	}

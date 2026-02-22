@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type Client struct {
+type PostgresClient struct {
 	log  *zap.Logger
 	cfg  *pgxpool.Config
 	Pool *pgxpool.Pool
@@ -19,11 +19,11 @@ type Client struct {
 	afterRunFuncs []AfterRun
 }
 
-func (c *Client) DependsOn() []string {
+func (c *PostgresClient) DependsOn() []string {
 	return []string{"logger"}
 }
 
-func (c *Client) HealthCheck(ctx context.Context) error {
+func (c *PostgresClient) HealthCheck(ctx context.Context) error {
 	if c.Pool == nil {
 		return errors.New("database pool is not initialized")
 	}
@@ -37,7 +37,7 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Init(ctx context.Context) error {
+func (c *PostgresClient) Init(ctx context.Context) error {
 	pool, err := pgxpool.NewWithConfig(ctx, c.cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create database pool: %w", err)
@@ -57,16 +57,14 @@ func (c *Client) Init(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Name() string {
+func (c *PostgresClient) Name() string {
 	return "db"
 }
-func (c *Client) Run(ctx context.Context) error {
+func (c *PostgresClient) Run(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Stop(ctx context.Context) error {
-	<-ctx.Done()
-
+func (c *PostgresClient) Stop(ctx context.Context) error {
 	if c.Pool == nil {
 		return fmt.Errorf("database pool is empty")
 	}
@@ -80,7 +78,7 @@ func (c *Client) Stop(ctx context.Context) error {
 
 type AfterRun func(ctx context.Context, pool *pgxpool.Pool) error
 
-func NewDb(log *zap.Logger, conf *config.Config) (*Client, error) {
+func NewDb(log *zap.Logger, conf *config.Config) (*PostgresClient, error) {
 	cfg, err := pgxpool.ParseConfig(conf.Database.Host)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
@@ -88,15 +86,15 @@ func NewDb(log *zap.Logger, conf *config.Config) (*Client, error) {
 
 	cfg.ConnConfig.ConnectTimeout = conf.Database.ConnectionTimeout
 
-	return &Client{
+	return &PostgresClient{
 		log:           log,
 		cfg:           cfg,
 		afterRunFuncs: make([]AfterRun, 0),
 	}, nil
 }
 
-func (c *Client) AddAfterRun(f ...AfterRun) {
+func (c *PostgresClient) AddAfterRun(f ...AfterRun) {
 	c.afterRunFuncs = append(c.afterRunFuncs, f...)
 }
 
-var _ svc.Service = (*Client)(nil)
+var _ svc.Service = (*PostgresClient)(nil)

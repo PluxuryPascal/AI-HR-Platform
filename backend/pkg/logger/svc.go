@@ -27,7 +27,6 @@ func (l *Log) Init(ctx context.Context) error {
 }
 
 func (l *Log) Run(ctx context.Context) error {
-	<-ctx.Done()
 	return nil
 }
 

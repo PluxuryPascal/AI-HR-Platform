@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -66,10 +67,17 @@ func Run(ctx context.Context, services []Service) error {
 		})
 	}
 
+	// Ожидаем сигнала об остановке сервера
+	<-ctx.Done()
+
+	// Получаем новый контекст с таймаутом, чтобы не зависнуть при остановке
+	stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer stopCancel()
+
 	for i := len(services) - 1; i >= 0; i-- {
 		s := services[i]
 
-		if err := s.Stop(ctx); err != nil {
+		if err := s.Stop(stopCtx); err != nil {
 			return fmt.Errorf("[STOP] %s: %w", s.Name(), err)
 		}
 
@@ -84,7 +92,7 @@ func Run(ctx context.Context, services []Service) error {
 }
 
 // sortTopologically выполняет топологическую сортировку списка сервисов
-// на основе графа зависимостей с помощью алгоритма Кана (Kahn's algorithm).
+// на основе графа зависимостей с помощью алгоритма Кана.
 func sortTopologically(services []Service) ([]Service, error) {
 	// serviceMap хранит сервисы по их именам для быстрого доступа.
 	serviceMap := make(map[string]Service)

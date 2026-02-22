@@ -7,6 +7,7 @@ import (
 	"backend/internal/repo"
 	"backend/internal/server"
 	"backend/internal/server/router/user"
+	"backend/internal/usecase"
 	"backend/pkg/config"
 	"backend/pkg/hash"
 	"backend/pkg/logger"
@@ -25,6 +26,10 @@ type repos struct {
 	user repo.UserRepository
 }
 
+type usecases struct {
+	auth usecase.AuthUseCase
+}
+
 type handlers struct {
 	auth *handler.AuthHandler
 }
@@ -32,7 +37,7 @@ type handlers struct {
 type infrastructureComponents struct {
 	cfg       *config.Config
 	log       *logger.Log
-	pool      *db.Client
+	pool      *db.PostgresClient
 	redisPool *db.RedisClient
 }
 
@@ -64,7 +69,8 @@ func run(ctx context.Context) error {
 	}
 
 	repos := initRepositories(infra)
-	handlers, sessionMiddleware := initHandlers(infra, utils, repos)
+	usecases := initUseCases(utils, repos)
+	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
 
 	apiServer := createApiServer(ctx, infra.cfg, infra.log, handlers, sessionMiddleware)
 
@@ -136,14 +142,20 @@ func initRepositories(infra *infrastructureComponents) repos {
 	}
 }
 
-func initHandlers(infra *infrastructureComponents, utils *utilityComponents, r repos) (handlers, middleware.SessionMiddleware) {
+func initUseCases(utils *utilityComponents, r repos) usecases {
+	return usecases{
+		auth: usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h),
+	}
+}
+
+func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases) (handlers, middleware.SessionMiddleware) {
 	sessionMiddleware := middleware.NewSessionMiddleware(
 		infra.redisPool,
 		utils.cacheManager,
 	)
 
 	h := handlers{
-		auth: handler.NewAuthHandler(infra.log.Log, r.user, utils.cacheManager, utils.t, utils.h),
+		auth: handler.NewAuthHandler(infra.log.Log, u.auth),
 	}
 
 	return h, sessionMiddleware

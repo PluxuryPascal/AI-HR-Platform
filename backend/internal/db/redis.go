@@ -56,8 +56,6 @@ func (r *RedisClient) Run(ctx context.Context) error {
 }
 
 func (r *RedisClient) Stop(ctx context.Context) error {
-	<-ctx.Done()
-
 	if r.Pool == nil {
 		return fmt.Errorf("redis pool is empty")
 	}

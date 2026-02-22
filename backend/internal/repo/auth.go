@@ -4,6 +4,7 @@ import (
 	"backend/internal/db"
 	"backend/internal/domain"
 	"context"
+	"errors"
 )
 
 type UserRepository interface {
@@ -11,11 +12,13 @@ type UserRepository interface {
 	Register(ctx context.Context, user *domain.UserRegister) (*domain.User, error)
 }
 
+var ErrUserNotFound = errors.New("user not found")
+
 type userRepo struct {
-	dbClient *db.Client
+	dbClient *db.PostgresClient
 }
 
-func NewUserRepo(dbClient *db.Client) UserRepository {
+func NewUserRepo(dbClient *db.PostgresClient) UserRepository {
 	return &userRepo{dbClient: dbClient}
 }
 
