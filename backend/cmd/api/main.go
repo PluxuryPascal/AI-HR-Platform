@@ -29,11 +29,14 @@ type handlers struct {
 	auth *handler.AuthHandler
 }
 
-type coreComponents struct {
-	cfg          *config.Config
-	log          *logger.Log
-	pool         *db.Client
-	redisPool    *db.RedisClient
+type infrastructureComponents struct {
+	cfg       *config.Config
+	log       *logger.Log
+	pool      *db.Client
+	redisPool *db.RedisClient
+}
+
+type utilityComponents struct {
 	cacheManager *cache.Manager
 	t            *token.JWTtoken
 	h            *hash.Argon2
@@ -50,19 +53,25 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	core, err := initCoreComponents()
+	infra, err := initInfrastructure()
 	if err != nil {
-		return fmt.Errorf("init core components error: %w", err)
+		return fmt.Errorf("init infrastructure error: %w", err)
 	}
 
-	handlers, middleware := initServices(core)
+	utils, err := initUtilities(infra)
+	if err != nil {
+		return fmt.Errorf("init utilities error: %w", err)
+	}
 
-	apiServer := createApiServer(ctx, core, handlers, middleware)
+	repos := initRepositories(infra)
+	handlers, sessionMiddleware := initHandlers(infra, utils, repos)
+
+	apiServer := createApiServer(ctx, infra.cfg, infra.log, handlers, sessionMiddleware)
 
 	if err := svc.Run(ctx, []svc.Service{
-		core.log,
-		core.pool,
-		core.redisPool,
+		infra.log,
+		infra.pool,
+		infra.redisPool,
 		apiServer,
 	}); err != nil {
 		return fmt.Errorf("run service error: %w", err)
@@ -71,7 +80,7 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func initCoreComponents() (*coreComponents, error) {
+func initInfrastructure() (*infrastructureComponents, error) {
 	conf, err := config.LoadConfig("config.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("load config error: %w", err)
@@ -96,51 +105,56 @@ func initCoreComponents() (*coreComponents, error) {
 		return nil, fmt.Errorf("create redis error: %w", err)
 	}
 
-	prvKey, err := loadKey(conf.Token.PrivateKey.Path)
+	return &infrastructureComponents{
+		cfg:       conf,
+		log:       zapLog,
+		pool:      pool,
+		redisPool: redisPool,
+	}, nil
+}
+
+func initUtilities(infra *infrastructureComponents) (*utilityComponents, error) {
+	prvKey, err := loadKey(infra.cfg.Token.PrivateKey.Path)
 	if err != nil {
 		return nil, fmt.Errorf("load key error: %w", err)
 	}
 
-	t := token.NewJWTtoken(conf.Token.Issuer, conf.Token.ExpireAt, prvKey)
+	t := token.NewJWTtoken(infra.cfg.Token.Issuer, infra.cfg.Token.ExpireAt, prvKey)
+	h := hash.NewArgon2(infra.cfg.Hash)
+	cacheManager := cache.NewManager(infra.redisPool, cache.WithPrefix("ai_hr"))
 
-	h := hash.NewArgon2(conf.Hash)
-
-	cacheManager := cache.NewManager(redisPool, cache.WithPrefix("ai_hr"))
-
-	return &coreComponents{
-		cfg:          conf,
-		log:          zapLog,
-		pool:         pool,
-		redisPool:    redisPool,
+	return &utilityComponents{
 		cacheManager: cacheManager,
 		t:            t,
 		h:            h,
 	}, nil
 }
 
-func initServices(c *coreComponents) (handlers, middleware.SessionMiddleware) {
-	sessionMiddleware := middleware.NewSessionMiddleware(
-		c.redisPool,
-		c.cacheManager,
-	)
-
-	repos := repos{
-		user: repo.NewUserRepo(c.pool),
+func initRepositories(infra *infrastructureComponents) repos {
+	return repos{
+		user: repo.NewUserRepo(infra.pool),
 	}
-
-	handlers := handlers{
-		auth: handler.NewAuthHandler(c.log.Log, repos.user, c.cacheManager, c.t, c.h),
-	}
-
-	return handlers, sessionMiddleware
 }
 
-func createApiServer(ctx context.Context, core *coreComponents, handlers handlers, middleware middleware.SessionMiddleware) *server.Api {
+func initHandlers(infra *infrastructureComponents, utils *utilityComponents, r repos) (handlers, middleware.SessionMiddleware) {
+	sessionMiddleware := middleware.NewSessionMiddleware(
+		infra.redisPool,
+		utils.cacheManager,
+	)
+
+	h := handlers{
+		auth: handler.NewAuthHandler(infra.log.Log, r.user, utils.cacheManager, utils.t, utils.h),
+	}
+
+	return h, sessionMiddleware
+}
+
+func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h handlers, sessionMiddleware middleware.SessionMiddleware) *server.Api {
 	return server.NewApiServer(
-		core.cfg.Server.Port,
-		server.WithLogger(core.log.Log),
+		cfg.Server.Port,
+		server.WithLogger(log.Log),
 		server.WithRouter(ctx,
-			user.NewRouter(handlers.auth, middleware.RateLimit(5, 5*time.Minute)),
+			user.NewRouter(h.auth, sessionMiddleware.RateLimit(5, 5*time.Minute)),
 		),
 	)
 }

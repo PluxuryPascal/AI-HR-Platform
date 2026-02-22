@@ -76,7 +76,7 @@ func generateSalt(saltLen int) ([]byte, error) {
 }
 
 func decodeHash(encoded string) (p *Argon2, salt, hash []byte, err error) {
-	vals := strings.Split(encoded, "$")
+	vals := strings.SplitN(encoded, "$", 7)
 	if len(vals) != 6 {
 		return nil, nil, nil, fmt.Errorf("invalid hash format")
 	}
@@ -102,7 +102,7 @@ func decodeHash(encoded string) (p *Argon2, salt, hash []byte, err error) {
 		return nil, nil, nil, fmt.Errorf("failed to decode salt: %w", err)
 	}
 
-	if len(salt) > math.MaxUint32 {
+	if len(salt) < 8 || len(salt) > math.MaxUint32 {
 		return nil, nil, nil, fmt.Errorf("invalid salt length: %d", len(salt))
 	}
 
@@ -113,7 +113,7 @@ func decodeHash(encoded string) (p *Argon2, salt, hash []byte, err error) {
 		return nil, nil, nil, fmt.Errorf("failed to decode hash: %w", err)
 	}
 
-	if len(hash) > math.MaxUint32 {
+	if len(hash) < 16 || len(hash) > math.MaxUint32 {
 		return nil, nil, nil, fmt.Errorf("invalid hash length: %d", len(hash))
 	}
 

@@ -74,6 +74,26 @@ func Incr[T any](ctx context.Context, m *Manager, k Key[T], id string) (int64, e
 	return count, nil
 }
 
+func IncrWithTTL[T any](ctx context.Context, m *Manager, k Key[T], id string, ttl time.Duration) (int64, error) {
+	key := fullKey(m, k, id)
+
+	pipe := m.client.Pool.TxPipeline()
+
+	incr, err := pipe.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, wrap("INCR_WITH_TTL", key, err)
+	}
+
+	pipe.Expire(ctx, key, ttl)
+
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return 0, wrap("INCR_WITH_TTL", key, err)
+	}
+
+	return incr, nil
+}
+
 func Delete[T any](ctx context.Context, m *Manager, k Key[T], id string) error {
 	key := fullKey(m, k, id)
 

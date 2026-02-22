@@ -32,21 +32,23 @@ func (m *middleware) RateLimit(requests int, window time.Duration) echo.Middlewa
 		return func(c echo.Context) error {
 			ipKey := c.RealIP()
 
-			count, err := cache.Incr(c.Request().Context(), m.cacheManager, cache.RateLimitKey, ipKey)
+			count, err := cache.IncrWithTTL(c.Request().Context(), m.cacheManager, cache.RateLimitKey, ipKey, window)
 			if err != nil {
 				return next(c)
 			}
 
 			if count == 1 {
-				if err := cache.SetWithTTL(c.Request().Context(), m.cacheManager, cache.RateLimitKey, ipKey, count, window); err != nil {
-					return next(c)
-				}
-
 				c.Response().Header().Set("X-RateLimit-Reset", strconv.FormatInt(time.Now().Add(window).Unix(), 10))
 			}
 
 			c.Response().Header().Set("X-RateLimit-Limit", strconv.Itoa(requests))
-			c.Response().Header().Set("X-RateLimit-Remaining", strconv.Itoa(requests-int(count)))
+
+			remaining := requests - int(count)
+			if remaining < 0 {
+				remaining = 0
+			}
+
+			c.Response().Header().Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
 
 			if count > int64(requests) {
 				return echo.NewHTTPError(http.StatusTooManyRequests, map[string]string{
