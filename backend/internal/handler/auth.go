@@ -36,11 +36,6 @@ type registerRequest struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
-type sessionSubject struct {
-	UserID string `json:"user_id"`
-	Group  string `json:"group"`
-}
-
 func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var req loginRequest
@@ -64,11 +59,11 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 
 		c.SetCookie(&http.Cookie{
 			Name:     "access_token",
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteStrictMode,
 			Value:    *token,
 			Expires:  time.Now().Add(expireAt),
 			Path:     "/",
-			Secure:   false,
+			Secure:   a.cfg.SecureCookie,
 			HttpOnly: true,
 		})
 

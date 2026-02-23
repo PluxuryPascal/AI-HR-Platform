@@ -1,7 +1,6 @@
 package user
 
 import (
-	"backend/internal/handler"
 	"backend/pkg/router"
 	"net/http"
 
@@ -26,7 +25,7 @@ func (r *userRouter) Routes() []router.Route {
 
 var _ router.Router = (*userRouter)(nil)
 
-func NewRouter(h *handler.AuthHandler, m echo.MiddlewareFunc) router.Router {
+func NewRouter(h UserRoutes, m echo.MiddlewareFunc) router.Router {
 	r := &userRouter{
 		handler:    h,
 		middleware: m,

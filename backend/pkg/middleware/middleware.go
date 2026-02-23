@@ -4,6 +4,7 @@ import (
 	"backend/internal/cache"
 	"backend/internal/db"
 	"backend/pkg/config"
+	"backend/pkg/logger"
 	"backend/pkg/token"
 	"net/http"
 	"strconv"
@@ -89,8 +90,9 @@ func (m *middleware) Session(t *token.JWTtoken) echo.MiddlewareFunc {
 	}
 }
 
-func NewSessionMiddleware(redisClient *db.RedisClient, cacheManager *cache.Manager) SessionMiddleware {
+func NewSessionMiddleware(log *logger.Log, redisClient *db.RedisClient, cacheManager *cache.Manager) SessionMiddleware {
 	return &middleware{
+		log:          log.Log,
 		redisClient:  redisClient,
 		cacheManager: cacheManager,
 	}

@@ -89,7 +89,7 @@ func Run(ctx context.Context, log *zap.Logger, services []Service) error {
 		log.Info("[STOP]", zap.String("service", s.Name()))
 	}
 
-	if err := g.Wait(); err != nil {
+	if err := g.Wait(); err != nil && !errors.Is(err, context.Canceled) {
 		return errors.Join(fmt.Errorf("exit reason from service: %w", err), stopErrs)
 	}
 

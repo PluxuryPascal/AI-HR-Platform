@@ -153,6 +153,7 @@ func initUseCases(utils *utilityComponents, r repos) usecases {
 
 func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases) (handlers, middleware.SessionMiddleware) {
 	sessionMiddleware := middleware.NewSessionMiddleware(
+		infra.log,
 		infra.redisPool,
 		utils.cacheManager,
 	)

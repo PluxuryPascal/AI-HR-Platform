@@ -33,10 +33,6 @@ func (l *Log) Run(ctx context.Context) error {
 func (l *Log) Stop(ctx context.Context) error {
 	err := l.Log.Sync()
 
-	for _, file := range l.files {
-		_ = file.Close()
-	}
-
 	if err != nil && !errors.Is(err, syscall.EINVAL) {
 		return fmt.Errorf("failed to sync logger: %w", err)
 	}
