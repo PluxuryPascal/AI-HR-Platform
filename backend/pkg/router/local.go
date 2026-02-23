@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/labstack/echo/v4"
 )
@@ -20,9 +21,11 @@ func (r *route) Register(ctx context.Context, e *echo.Echo) {
 var _ Route = (*route)(nil)
 
 func NewRoute(method, path string, handler func() echo.HandlerFunc, middlewares ...echo.MiddlewareFunc) Route {
+	fullPath := fmt.Sprintf("/api%s", path)
+
 	return &route{
 		method:      method,
-		path:        path,
+		path:        fullPath,
 		handler:     handler,
 		middlewares: middlewares,
 	}

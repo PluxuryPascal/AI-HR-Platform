@@ -9,7 +9,7 @@ import (
 func Get[T any](ctx context.Context, m *Manager, k Key[T], id string) (T, error) {
 	key := fullKey(m, k, id)
 
-	raw, err := m.client.Pool.Get(ctx, key).Result()
+	raw, err := m.client.Pool.Get(ctx, key).Bytes()
 	if err != nil {
 		var zero T
 		return zero, wrap("GET", key, err)
@@ -34,7 +34,12 @@ func SetWithTTL[T any](ctx context.Context, m *Manager, k Key[T], id string, v T
 }
 
 func Set[T any](ctx context.Context, m *Manager, k Key[T], id string, v T) error {
-	return SetWithTTL(ctx, m, k, id, v, k.ttl)
+	ttl := k.ttl
+	if ttl == 0 {
+		ttl = m.defaultTTL
+	}
+
+	return SetWithTTL(ctx, m, k, id, v, ttl)
 }
 
 func Scan[T any](ctx context.Context, m *Manager, k Key[T]) (int64, error) {
@@ -46,6 +51,12 @@ func Scan[T any](ctx context.Context, m *Manager, k Key[T]) (int64, error) {
 	pattern := fullKey(m, k, "*")
 
 	for {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		default:
+		}
+
 		keys, c, err := m.client.Pool.Scan(ctx, cursor, pattern, 100).Result()
 		if err != nil {
 			return 0, wrap("SCAN", pattern, err)
@@ -78,20 +89,20 @@ func IncrWithTTL[T any](ctx context.Context, m *Manager, k Key[T], id string, tt
 	key := fullKey(m, k, id)
 
 	pipe := m.client.Pool.TxPipeline()
+	incr := pipe.Incr(ctx, key)
+	pipe.ExpireNX(ctx, key, ttl)
 
-	incr, err := pipe.Incr(ctx, key).Result()
+	_, err := pipe.Exec(ctx)
 	if err != nil {
 		return 0, wrap("INCR_WITH_TTL", key, err)
 	}
 
-	pipe.Expire(ctx, key, ttl)
-
-	_, err = pipe.Exec(ctx)
+	count, err := incr.Result()
 	if err != nil {
 		return 0, wrap("INCR_WITH_TTL", key, err)
 	}
 
-	return incr, nil
+	return count, nil
 }
 
 func Delete[T any](ctx context.Context, m *Manager, k Key[T], id string) error {

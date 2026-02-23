@@ -73,6 +73,7 @@ func WithFile(path string) Option {
 		)
 
 		l.cores = append(l.cores, core)
+		l.files = append(l.files, file)
 
 		return nil
 	}

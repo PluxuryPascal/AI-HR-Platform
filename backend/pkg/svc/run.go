@@ -2,12 +2,14 @@ package svc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -25,7 +27,7 @@ import (
 // функция вернёт ошибку до запуска.
 //
 // Run блокирует выполнение до завершения всех сервисов или возникновения ошибки.
-func Run(ctx context.Context, services []Service) error {
+func Run(ctx context.Context, log *zap.Logger, services []Service) error {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -36,28 +38,28 @@ func Run(ctx context.Context, services []Service) error {
 	services = sorted
 
 	for _, s := range services {
-		fmt.Printf("[INIT] %s\n", s.Name())
+		log.Info("[INIT]", zap.String("service", s.Name()))
 
 		if err := s.Init(ctx); err != nil {
 			return fmt.Errorf("[INIT] %s: %w", s.Name(), err)
 		}
 	}
 
-	g, ctx := errgroup.WithContext(ctx)
-
 	for _, s := range services {
-		fmt.Printf("[HEALTHCHECK] %s\n", s.Name())
+		log.Info("[HEALTHCHECK]", zap.String("service", s.Name()))
 
 		if err := s.HealthCheck(ctx); err != nil {
 			return fmt.Errorf("[HEALTHCHECK] %s: %w", s.Name(), err)
 		}
 	}
 
+	g, ctx := errgroup.WithContext(ctx)
+
 	for _, s := range services {
 		s := s
 
 		g.Go(func() error {
-			fmt.Printf("[RUN] %s\n", s.Name())
+			log.Info("[RUN]", zap.String("service", s.Name()))
 
 			if err := s.Run(ctx); err != nil {
 				return fmt.Errorf("[RUN] %s: %w", s.Name(), err)
@@ -69,23 +71,30 @@ func Run(ctx context.Context, services []Service) error {
 
 	// Ожидаем сигнала об остановке сервера
 	<-ctx.Done()
+	stop()
 
 	// Получаем новый контекст с таймаутом, чтобы не зависнуть при остановке
 	stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer stopCancel()
 
+	var stopErrs error
 	for i := len(services) - 1; i >= 0; i-- {
 		s := services[i]
 
 		if err := s.Stop(stopCtx); err != nil {
-			return fmt.Errorf("[STOP] %s: %w", s.Name(), err)
+			stopErrs = errors.Join(stopErrs, fmt.Errorf("[STOP] %s: %w", s.Name(), err))
+			continue
 		}
 
-		fmt.Printf("[STOP] %s\n", s.Name())
+		log.Info("[STOP]", zap.String("service", s.Name()))
 	}
 
 	if err := g.Wait(); err != nil {
-		return fmt.Errorf("exit reason from service: %w", err)
+		return errors.Join(fmt.Errorf("exit reason from service: %w", err), stopErrs)
+	}
+
+	if stopErrs != nil {
+		return errors.Join(fmt.Errorf("graceful stop failed: %w", stopErrs))
 	}
 
 	return nil

@@ -3,12 +3,12 @@ package logger
 import (
 	"backend/pkg/svc"
 	"context"
+	"errors"
 	"fmt"
+	"syscall"
 )
 
 var _ svc.Service = (*Log)(nil)
-
-const errSync = "sync /dev/stdout: invalid argument; sync /dev/stderr: invalid argument"
 
 func (l *Log) DependsOn() []string {
 	return nil
@@ -31,8 +31,15 @@ func (l *Log) Run(ctx context.Context) error {
 }
 
 func (l *Log) Stop(ctx context.Context) error {
-	if err := l.Log.Sync(); err != nil && err.Error() != errSync {
+	err := l.Log.Sync()
+
+	for _, file := range l.files {
+		_ = file.Close()
+	}
+
+	if err != nil && !errors.Is(err, syscall.EINVAL) {
 		return fmt.Errorf("failed to sync logger: %w", err)
 	}
+
 	return nil
 }

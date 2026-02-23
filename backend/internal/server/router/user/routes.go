@@ -8,9 +8,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type UserRoutes interface {
+	PostLogin() echo.HandlerFunc
+	PostRegister() echo.HandlerFunc
+	PostLogout() echo.HandlerFunc
+}
+
 type userRouter struct {
 	routes     []router.Route
-	handler    *handler.AuthHandler
+	handler    UserRoutes
 	middleware echo.MiddlewareFunc
 }
 

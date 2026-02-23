@@ -10,12 +10,18 @@ import (
 )
 
 type Config struct {
-	Server   Server   `yaml:"server"`
-	Database Database `yaml:"database"`
-	Redis    Redis    `yaml:"redis"`
-	Hash     Hash     `yaml:"hash"`
-	Logger   Logger   `yaml:"logger"`
-	Token    Token    `yaml:"token"`
+	Server    Server               `yaml:"server"`
+	Database  Database             `yaml:"database"`
+	Redis     Redis                `yaml:"redis"`
+	Hash      Hash                 `yaml:"hash"`
+	Logger    Logger               `yaml:"logger"`
+	Token     Token                `yaml:"token"`
+	RateLimit map[string]RateLimit `yaml:"rate-limit"`
+}
+
+type RateLimit struct {
+	Requests int           `yaml:"requests"`
+	Window   time.Duration `yaml:"window"`
 }
 
 type Token struct {
@@ -27,6 +33,7 @@ type Token struct {
 type PrivateKey struct {
 	Path string `yaml:"path"`
 }
+
 type Logger struct {
 	StdOut bool   `yaml:"stdout"`
 	Level  string `yaml:"level"`
@@ -51,12 +58,19 @@ type Redis struct {
 }
 
 type Server struct {
-	Port int `yaml:"port"`
+	Port         int           `yaml:"port"`
+	SecureCookie bool          `yaml:"secure-cookie"`
+	ReadTimeout  time.Duration `yaml:"read-timeout"`
+	WriteTimeout time.Duration `yaml:"write-timeout"`
+	IdleTimeout  time.Duration `yaml:"idle-timeout"`
 }
 
 type Database struct {
 	Host              string        `yaml:"host"`
 	ConnectionTimeout time.Duration `yaml:"connection-timeout"`
+	MaxConns          int32         `yaml:"max-conns"`
+	MinConns          int32         `yaml:"min-conns"`
+	MaxConnLifetime   time.Duration `yaml:"max-conn-lifetime"`
 }
 
 func LoadConfig(path string) (*Config, error) {

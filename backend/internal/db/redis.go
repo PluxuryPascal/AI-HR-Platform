@@ -29,20 +29,15 @@ func (r *RedisClient) HealthCheck(ctx context.Context) error {
 		return fmt.Errorf("ping redis: %w", err)
 	}
 
-	r.log.Info("redis connection is healthy")
+	r.log.Debug("redis connection is healthy")
 
 	return nil
 }
 
 func (r *RedisClient) Init(ctx context.Context) error {
-	pool := redis.NewClient(r.cfg)
-	if pool == nil {
-		return fmt.Errorf("in memory pool is nil")
-	}
+	r.Pool = redis.NewClient(r.cfg)
 
-	r.Pool = pool
-
-	r.log.Info("redis initialized")
+	r.log.Debug("redis initialized")
 
 	return nil
 }
@@ -64,7 +59,7 @@ func (r *RedisClient) Stop(ctx context.Context) error {
 		return fmt.Errorf("close redis pool: %w", err)
 	}
 
-	r.log.Info("redis pool closed successfully")
+	r.log.Debug("redis pool closed successfully")
 
 	return nil
 }

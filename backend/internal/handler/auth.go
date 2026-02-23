@@ -2,6 +2,7 @@ package handler
 
 import (
 	"backend/internal/usecase"
+	"backend/pkg/config"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,12 +13,14 @@ import (
 )
 
 type AuthHandler struct {
+	cfg     *config.Server
 	log     *zap.Logger
 	usecase usecase.AuthUseCase
 }
 
-func NewAuthHandler(log *zap.Logger, usecase usecase.AuthUseCase) *AuthHandler {
+func NewAuthHandler(cfg *config.Server, log *zap.Logger, usecase usecase.AuthUseCase) *AuthHandler {
 	return &AuthHandler{
+		cfg:     cfg,
 		log:     log,
 		usecase: usecase,
 	}
@@ -59,10 +62,6 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("login error: %w", err))
 		}
 
-		if token == nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "token generation failed")
-		}
-
 		c.SetCookie(&http.Cookie{
 			Name:     "access_token",
 			SameSite: http.SameSiteLaxMode,
@@ -98,21 +97,17 @@ func (a *AuthHandler) PostRegister() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("register error: %w", err))
 		}
 
-		if token == nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "token generation failed")
-		}
-
 		c.SetCookie(&http.Cookie{
 			Name:     "access_token",
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteStrictMode,
 			Value:    *token,
 			Expires:  time.Now().Add(expireAt),
 			Path:     "/",
-			Secure:   false,
+			Secure:   a.cfg.SecureCookie,
 			HttpOnly: true,
 		})
 
-		return c.NoContent(http.StatusOK)
+		return c.NoContent(http.StatusCreated)
 	}
 }
 
@@ -129,11 +124,11 @@ func (a *AuthHandler) PostLogout() echo.HandlerFunc {
 
 		c.SetCookie(&http.Cookie{
 			Name:     "access_token",
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteStrictMode,
 			Value:    "",
 			Expires:  time.Now().Add(-time.Hour),
 			Path:     "/",
-			Secure:   false,
+			Secure:   a.cfg.SecureCookie,
 			HttpOnly: true,
 		})
 

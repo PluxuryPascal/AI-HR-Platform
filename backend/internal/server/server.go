@@ -2,6 +2,7 @@ package server
 
 import (
 	"backend/internal/server/validator"
+	"backend/pkg/config"
 	"backend/pkg/svc"
 	"context"
 	"errors"
@@ -51,15 +52,18 @@ func (a *Api) Stop(ctx context.Context) error {
 	return nil
 }
 
-func NewApiServer(port int, opts ...func(*Api)) *Api {
+func NewApiServer(cfg *config.Server, opts ...func(*Api)) *Api {
 	e := echo.New()
 
 	e.Validator = validator.NewValidator()
 	e.Use(middleware.Recover())
+	e.Server.ReadTimeout = cfg.ReadTimeout
+	e.Server.WriteTimeout = cfg.WriteTimeout
+	e.Server.IdleTimeout = cfg.IdleTimeout
 
 	api := &Api{
 		api:  e,
-		port: port,
+		port: cfg.Port,
 	}
 
 	for _, opt := range opts {

@@ -7,13 +7,12 @@ import (
 	"backend/pkg/hash"
 	"backend/pkg/token"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var (
@@ -34,18 +33,8 @@ type authUseCase struct {
 	hash         hash.Hash
 }
 
-type sessionSubject struct {
-	UserID string `json:"user_id"`
-	Group  string `json:"group"`
-}
-
 func (a *authUseCase) Logout(ctx context.Context, tokenStr string) error {
-	pubKey, err := a.token.PrvKey.PublicKey()
-	if err != nil {
-		return fmt.Errorf("public key error: %w", err)
-	}
-
-	token, err := a.token.VerifyToken([]byte(tokenStr), pubKey)
+	token, err := a.token.VerifyToken([]byte(tokenStr))
 	if err != nil {
 		return fmt.Errorf("verify token: %w", err)
 	}
@@ -72,33 +61,29 @@ func (a *authUseCase) Register(ctx context.Context, email string, password strin
 
 	userData, err := a.repo.Register(ctx, user)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, 0, ErrUserAlreadyExists
 		}
 
 		return nil, 0, fmt.Errorf("repo register: %w", err)
 	}
 
-	subject, err := json.Marshal(sessionSubject{
-		UserID: userData.ID,
-		Group:  userData.GroupAlias,
-	})
-	if err != nil {
-		return nil, 0, fmt.Errorf("marshal subject: %w", err)
-	}
-
 	sessionID := uuid.New().String()
 
-	if err := cache.SetWithTTL(ctx, a.cacheManager, cache.SessionKey, sessionID, string(subject), a.token.ExpireAt); err != nil {
+	if err := cache.SetWithTTL(ctx, a.cacheManager, cache.SessionKey, sessionID, domain.Session{
+		UserID: userData.ID,
+		Group:  userData.GroupAlias,
+	}, a.token.ExpireAt); err != nil {
 		return nil, 0, fmt.Errorf("set session: %w", err)
 	}
 
-	token, err := a.token.GenerateToken(sessionID)
+	signed, err := a.token.GenerateToken(sessionID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("generate token: %w", err)
 	}
 
-	tokenString := string(token)
+	tokenString := string(signed)
 	return &tokenString, a.token.ExpireAt, nil
 }
 
@@ -113,30 +98,29 @@ func (a *authUseCase) Login(ctx context.Context, email string, password string) 
 	}
 
 	verified, err := a.hash.Verify(password, user.Password)
-	if err != nil || !verified {
-		return nil, 0, ErrInvalidCredentials
+	if err != nil {
+		return nil, 0, fmt.Errorf("verify password hash: %w", err)
 	}
 
-	subject, err := json.Marshal(sessionSubject{
-		UserID: user.ID,
-		Group:  user.GroupAlias,
-	})
-	if err != nil {
-		return nil, 0, fmt.Errorf("marshal subject: %w", err)
+	if !verified {
+		return nil, 0, ErrInvalidCredentials
 	}
 
 	sessionID := uuid.New().String()
 
-	if err := cache.SetWithTTL(ctx, a.cacheManager, cache.SessionKey, sessionID, string(subject), a.token.ExpireAt); err != nil {
+	if err := cache.SetWithTTL(ctx, a.cacheManager, cache.SessionKey, sessionID, domain.Session{
+		UserID: user.ID,
+		Group:  user.GroupAlias,
+	}, a.token.ExpireAt); err != nil {
 		return nil, 0, fmt.Errorf("set session: %w", err)
 	}
 
-	token, err := a.token.GenerateToken(sessionID)
+	signed, err := a.token.GenerateToken(sessionID)
 	if err != nil {
 		return nil, 0, fmt.Errorf("generate token: %w", err)
 	}
 
-	tokenString := string(token)
+	tokenString := string(signed)
 	return &tokenString, a.token.ExpireAt, nil
 
 }

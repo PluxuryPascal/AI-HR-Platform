@@ -32,7 +32,7 @@ func (c *PostgresClient) HealthCheck(ctx context.Context) error {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	c.log.Info("database connection is healthy")
+	c.log.Debug("database connection is healthy")
 
 	return nil
 }
@@ -52,7 +52,7 @@ func (c *PostgresClient) Init(ctx context.Context) error {
 	c.afterRunFuncs = nil
 	c.Pool = pool
 
-	c.log.Info("database initialized")
+	c.log.Debug("database initialized")
 
 	return nil
 }
@@ -71,7 +71,7 @@ func (c *PostgresClient) Stop(ctx context.Context) error {
 
 	c.Pool.Close()
 
-	c.log.Info("database pool closed successfully")
+	c.log.Debug("database pool closed successfully")
 
 	return nil
 }
@@ -85,6 +85,9 @@ func NewDb(log *zap.Logger, conf *config.Config) (*PostgresClient, error) {
 	}
 
 	cfg.ConnConfig.ConnectTimeout = conf.Database.ConnectionTimeout
+	cfg.MaxConns = conf.Database.MaxConns
+	cfg.MinConns = conf.Database.MinConns
+	cfg.MaxConnLifetime = conf.Database.MaxConnLifetime
 
 	return &PostgresClient{
 		log:           log,

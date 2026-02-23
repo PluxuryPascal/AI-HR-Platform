@@ -13,14 +13,21 @@ type JWTtoken struct {
 	Issuer   string
 	ExpireAt time.Duration
 	PrvKey   jwk.Key
+	pubKey   jwk.Key
 }
 
-func NewJWTtoken(issuer string, expireAt time.Duration, prvKey jwk.Key) *JWTtoken {
+func NewJWTtoken(issuer string, expireAt time.Duration, prvKey jwk.Key) (*JWTtoken, error) {
+	pubKey, err := prvKey.PublicKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get public key: %w", err)
+	}
+
 	return &JWTtoken{
 		Issuer:   issuer,
 		ExpireAt: expireAt,
 		PrvKey:   prvKey,
-	}
+		pubKey:   pubKey,
+	}, nil
 }
 
 func (t *JWTtoken) GenerateToken(subject string) ([]byte, error) {
@@ -43,8 +50,8 @@ func (t *JWTtoken) GenerateToken(subject string) ([]byte, error) {
 	return signed, nil
 }
 
-func (t *JWTtoken) VerifyToken(token []byte, pubKey jwk.Key) (jwt.Token, error) {
-	parsed, err := jwt.Parse(token, jwt.WithKey(jwa.EdDSA, pubKey), jwt.WithIssuer(t.Issuer))
+func (t *JWTtoken) VerifyToken(token []byte) (jwt.Token, error) {
+	parsed, err := jwt.Parse(token, jwt.WithKey(jwa.EdDSA, t.pubKey), jwt.WithIssuer(t.Issuer))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}

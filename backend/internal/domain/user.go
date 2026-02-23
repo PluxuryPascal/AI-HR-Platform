@@ -15,3 +15,8 @@ type UserRegister struct {
 	Mail     string `json:"mail"`
 	Password string `json:"password"`
 }
+
+type Session struct {
+	UserID string `json:"user_id"`
+	Group  string `json:"group"`
+}

@@ -8,7 +8,7 @@ import (
 func HGet[T any](ctx context.Context, m *Manager, k Key[T], id, field string) (T, error) {
 	key := fullKey(m, k, id)
 
-	raw, err := m.client.Pool.HGet(ctx, key, field).Result()
+	raw, err := m.client.Pool.HGet(ctx, key, field).Bytes()
 	if err != nil {
 		var zero T
 
@@ -33,11 +33,7 @@ func HSetField[T any](ctx context.Context, m *Manager, k Key[T], id, field strin
 	return nil
 }
 
-type MapString interface {
-	map[string]interface{}
-}
-
-func HSetMap[T MapString](ctx context.Context, m *Manager, k Key[T], id string, v T) error {
+func HSetMap(ctx context.Context, m *Manager, k Key[map[string]any], id string, v map[string]any) error {
 	key := fullKey(m, k, id)
 
 	if err := m.client.Pool.HSet(ctx, key, v).Err(); err != nil {

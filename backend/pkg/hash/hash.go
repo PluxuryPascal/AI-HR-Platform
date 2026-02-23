@@ -77,7 +77,7 @@ func generateSalt(saltLen int) ([]byte, error) {
 
 func decodeHash(encoded string) (p *Argon2, salt, hash []byte, err error) {
 	vals := strings.SplitN(encoded, "$", 7)
-	if len(vals) != 6 {
+	if len(vals) != 6 || vals[1] != "argon2id" || vals[0] != "" {
 		return nil, nil, nil, fmt.Errorf("invalid hash format")
 	}
 

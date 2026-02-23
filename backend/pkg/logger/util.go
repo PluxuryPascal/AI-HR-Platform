@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 
 	"go.uber.org/zap/zapcore"
 )
@@ -27,7 +27,7 @@ func extractLevel(level string) (zapcore.Level, error) {
 }
 
 func checkOrCreatePath(p string) (string, error) {
-	d := path.Dir(p)
+	d := filepath.Dir(p)
 
 	_, err := os.Stat(d)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {

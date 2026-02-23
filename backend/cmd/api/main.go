@@ -17,7 +17,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 )
@@ -74,7 +73,7 @@ func run(ctx context.Context) error {
 
 	apiServer := createApiServer(ctx, infra.cfg, infra.log, handlers, sessionMiddleware)
 
-	if err := svc.Run(ctx, []svc.Service{
+	if err := svc.Run(ctx, infra.log.Log, []svc.Service{
 		infra.log,
 		infra.pool,
 		infra.redisPool,
@@ -125,7 +124,11 @@ func initUtilities(infra *infrastructureComponents) (*utilityComponents, error) 
 		return nil, fmt.Errorf("load key error: %w", err)
 	}
 
-	t := token.NewJWTtoken(infra.cfg.Token.Issuer, infra.cfg.Token.ExpireAt, prvKey)
+	t, err := token.NewJWTtoken(infra.cfg.Token.Issuer, infra.cfg.Token.ExpireAt, prvKey)
+	if err != nil {
+		return nil, fmt.Errorf("create token error: %w", err)
+	}
+
 	h := hash.NewArgon2(infra.cfg.Hash)
 	cacheManager := cache.NewManager(infra.redisPool, cache.WithPrefix("ai_hr"))
 
@@ -155,7 +158,7 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 	)
 
 	h := handlers{
-		auth: handler.NewAuthHandler(infra.log.Log, u.auth),
+		auth: handler.NewAuthHandler(&infra.cfg.Server, infra.log.Log, u.auth),
 	}
 
 	return h, sessionMiddleware
@@ -163,10 +166,10 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 
 func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h handlers, sessionMiddleware middleware.SessionMiddleware) *server.Api {
 	return server.NewApiServer(
-		cfg.Server.Port,
+		&cfg.Server,
 		server.WithLogger(log.Log),
 		server.WithRouter(ctx,
-			user.NewRouter(h.auth, sessionMiddleware.RateLimit(5, 5*time.Minute)),
+			user.NewRouter(h.auth, sessionMiddleware.RateLimit(cfg.RateLimit["auth"])),
 		),
 	)
 }

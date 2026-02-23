@@ -25,10 +25,10 @@ func encode[T any](v T) ([]byte, error) {
 	return b, nil
 }
 
-func decode[T any](raw string) (T, error) {
+func decode[T any](raw []byte) (T, error) {
 	var v T
 
-	if err := json.Unmarshal([]byte(raw), &v); err != nil {
+	if err := json.Unmarshal(raw, &v); err != nil {
 		return v, fmt.Errorf("cache: unmarshal: %w", err)
 	}
 

@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -16,6 +17,8 @@ const (
 
 type Log struct {
 	Log *zap.Logger
+
+	files []*os.File
 
 	level   zapcore.Level
 	cores   []zapcore.Core
