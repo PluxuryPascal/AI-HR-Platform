@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"backend/internal/domain"
 	"backend/internal/usecase"
 	"backend/pkg/config"
 	"errors"
@@ -27,13 +28,16 @@ func NewAuthHandler(cfg *config.Server, log *zap.Logger, usecase usecase.AuthUse
 }
 
 type loginRequest struct {
-	Mail     string `json:"mail" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=32"`
 }
 
 type registerRequest struct {
-	Mail     string `json:"mail" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required,min=8,max=32"`
+	FirstName string `json:"first_name" validate:"required,min=2,max=32"`
+	LastName  string `json:"last_name" validate:"required,min=2,max=32"`
+	TeamName  string `json:"team_name" validate:"required,min=3,max=32"`
 }
 
 func (a *AuthHandler) PostLogin() echo.HandlerFunc {
@@ -48,7 +52,7 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
 		}
 
-		token, expireAt, err := a.usecase.Login(c.Request().Context(), req.Mail, req.Password)
+		token, expireAt, err := a.usecase.Login(c.Request().Context(), req.Email, req.Password)
 		if err != nil {
 			if errors.Is(err, usecase.ErrInvalidCredentials) {
 				return echo.NewHTTPError(http.StatusUnauthorized, "invalid credentials")
@@ -83,7 +87,15 @@ func (a *AuthHandler) PostRegister() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
 		}
 
-		token, expireAt, err := a.usecase.Register(c.Request().Context(), req.Mail, req.Password)
+		input := domain.RegisterOwnerRequest{
+			Email:     req.Email,
+			Password:  req.Password,
+			FirstName: req.FirstName,
+			LastName:  req.LastName,
+			TeamName:  req.TeamName,
+		}
+
+		token, expireAt, err := a.usecase.RegisterOwner(c.Request().Context(), input)
 		if err != nil {
 			if errors.Is(err, usecase.ErrUserAlreadyExists) {
 				return echo.NewHTTPError(http.StatusConflict, "user already exists")
@@ -128,5 +140,48 @@ func (a *AuthHandler) PostLogout() echo.HandlerFunc {
 		})
 
 		return c.NoContent(http.StatusOK)
+	}
+}
+
+func (a *AuthHandler) PostCreateUser() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var req registerRequest
+
+		if err := c.Bind(&req); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect bind: %w", err))
+		}
+
+		if err := c.Validate(&req); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
+		}
+
+		input := domain.RegisterOwnerRequest{
+			Email:     req.Email,
+			Password:  req.Password,
+			FirstName: req.FirstName,
+			LastName:  req.LastName,
+			TeamName:  req.TeamName,
+		}
+
+		token, expireAt, err := a.usecase.RegisterOwner(c.Request().Context(), input)
+		if err != nil {
+			if errors.Is(err, usecase.ErrUserAlreadyExists) {
+				return echo.NewHTTPError(http.StatusConflict, "user already exists")
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("register error: %w", err))
+		}
+
+		c.SetCookie(&http.Cookie{
+			Name:     "access_token",
+			SameSite: http.SameSiteStrictMode,
+			Value:    *token,
+			Expires:  time.Now().Add(expireAt),
+			Path:     "/",
+			Secure:   a.cfg.SecureCookie,
+			HttpOnly: true,
+		})
+
+		return c.NoContent(http.StatusCreated)
 	}
 }

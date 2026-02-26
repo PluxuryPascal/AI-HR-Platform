@@ -11,8 +11,9 @@ import (
 )
 
 type UserRepository interface {
-	Login(ctx context.Context, login string) (*domain.UserLogin, error)
-	Register(ctx context.Context, user *domain.UserRegister) (*domain.User, error)
+	Login(ctx context.Context, login string) (*domain.User, error)
+	RegisterOwner(ctx context.Context, user *domain.RegisterOwnerRequest) (*domain.User, error)
+	CreateUser(ctx context.Context, user *domain.CreateUserParams) (*domain.User, error)
 }
 
 var ErrUserNotFound = errors.New("user not found")
@@ -21,60 +22,160 @@ type userRepo struct {
 	dbClient *db.PostgresClient
 }
 
-func NewUserRepo(dbClient *db.PostgresClient) UserRepository {
-	return &userRepo{dbClient: dbClient}
-}
-
-func (r *userRepo) Login(ctx context.Context, login string) (*domain.UserLogin, error) {
+func (r *userRepo) CreateUser(ctx context.Context, user *domain.CreateUserParams) (*domain.User, error) {
 	query := `
-		SELECT
-			u.id AS user_id,
-			u.password_hash AS password,
-			t.name AS goup_alias
-		FROM auth.t_users u
-			JOIN auth.t_teams t on t.id = u.team_id
-		WHERE u.email = @login;
-	`
-
-	result, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
-		"login": login,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("exec error: %w", err)
-	}
-
-	user, err := pgx.RowToStructByName[domain.UserLogin](result)
-	if err != nil {
-		return nil, fmt.Errorf("scan row error: %w", err)
-	}
-
-	return &user, nil
-}
-
-func (r *userRepo) Register(ctx context.Context, user *domain.UserRegister) (*domain.User, error) {
-	query := `
-		INSERT INTO auth.t.users u (
+		INSERT INTO auth.t_users (
+			team_id,
 			email,
+			first_name,
+			last_name,
+			role,
 			password_hash
 		)
 		VALUES (
+			@team_id,
 			@email,
+			@first_name,
+			@last_name,
+			@role,
 			@password_hash
 		)
+		RETURNING 
+			u.id AS user_id,
+			(SELECT t.name FROM auth.t_teams t WHERE t.id = team_id) AS group_alias;
 	`
 
-	result, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
-		"email":         user.Mail,
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
+		"team_id":       user.TeamID,
+		"email":         user.Email,
+		"first_name":    user.FirstName,
+		"last_name":     user.LastName,
+		"role":          user.Role,
 		"password_hash": user.Password,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("exec error: %w", err)
 	}
 
-	createdUser, err := pgx.RowToStructByName[domain.User](result)
+	createdUser, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[domain.User])
 	if err != nil {
 		return nil, fmt.Errorf("scan row error: %w", err)
 	}
 
 	return &createdUser, nil
+}
+
+func (r *userRepo) Login(ctx context.Context, email string) (*domain.User, error) {
+	query := `
+	SELECT
+			u.id,
+			t.id AS team_id,
+			t.name AS team_name,
+			u.email,
+			u.first_name,
+			u.last_name,
+			u.role,
+			u.password_hash,
+			u.created_at,
+			u.updated_at,
+			u.locale
+			FROM auth.t_users u
+			JOIN auth.t_teams t on t.id = u.team_id
+			WHERE u.email = @email;
+			`
+
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
+		"email": email,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("exec error: %w", err)
+	}
+
+	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[domain.User])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+
+		return nil, fmt.Errorf("scan row error: %w", err)
+	}
+
+	return &user, nil
+}
+
+func (r *userRepo) RegisterOwner(ctx context.Context, user *domain.RegisterOwnerRequest) (*domain.User, error) {
+	tx, err := r.dbClient.Pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx error: %w", err)
+	}
+
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	var teamID string
+
+	teamQuery := `
+		INSERT INTO auth.t_teams (
+			name
+		)
+		VALUES (
+			@name
+		)
+		RETURNING id;
+	`
+
+	if err := tx.QueryRow(ctx, teamQuery, pgx.NamedArgs{
+		"name": user.TeamName,
+	}).Scan(&teamID); err != nil {
+		return nil, fmt.Errorf("exec error: %w", err)
+	}
+
+	query := `
+		INSERT INTO auth.t_users (
+			team_id,
+			email,
+			first_name,
+			last_name,
+			role,
+			password_hash
+		)
+		VALUES (
+			@team_id,
+			@email,
+			@first_name,
+			@last_name,
+			'admin',
+			@password_hash
+		)
+		RETURNING 
+			u.id AS user_id,
+			(SELECT t.name FROM auth.t_teams t WHERE t.id = team_id) AS group_alias;
+	`
+
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
+		"team_id":       teamID,
+		"email":         user.Email,
+		"first_name":    user.FirstName,
+		"last_name":     user.LastName,
+		"password_hash": user.Password,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("exec error: %w", err)
+	}
+
+	createdUser, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[domain.User])
+	if err != nil {
+		return nil, fmt.Errorf("scan row error: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit tx error: %w", err)
+	}
+
+	return &createdUser, nil
+}
+
+func NewUserRepo(dbClient *db.PostgresClient) UserRepository {
+	return &userRepo{dbClient: dbClient}
 }

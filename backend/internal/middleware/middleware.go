@@ -83,7 +83,8 @@ func (m *middleware) Session(t *token.JWTtoken) echo.MiddlewareFunc {
 			}
 
 			c.Set("id", subject.UserID)
-			c.Set("group", subject.Group)
+			c.Set("team_id", subject.TeamID)
+			c.Set("role", subject.Role)
 
 			return next(c)
 		}

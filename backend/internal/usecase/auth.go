@@ -22,7 +22,7 @@ var (
 
 type AuthUseCase interface {
 	Login(ctx context.Context, email string, password string) (*string, time.Duration, error)
-	Register(ctx context.Context, email string, password string) (*string, time.Duration, error)
+	RegisterOwner(ctx context.Context, req domain.RegisterOwnerRequest) (*string, time.Duration, error)
 	Logout(ctx context.Context, tokenStr string) error
 }
 
@@ -48,18 +48,21 @@ func (a *authUseCase) Logout(ctx context.Context, tokenStr string) error {
 	return nil
 }
 
-func (a *authUseCase) Register(ctx context.Context, email string, password string) (*string, time.Duration, error) {
-	hashedPassword, err := a.hash.Hash(password)
+func (a *authUseCase) RegisterOwner(ctx context.Context, req domain.RegisterOwnerRequest) (*string, time.Duration, error) {
+	hashedPassword, err := a.hash.Hash(req.Password)
 	if err != nil {
 		return nil, 0, fmt.Errorf("hash password: %w", err)
 	}
 
-	user := &domain.UserRegister{
-		Mail:     email,
-		Password: hashedPassword,
+	user := &domain.RegisterOwnerRequest{
+		Email:     req.Email,
+		Password:  hashedPassword,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		TeamName:  req.TeamName,
 	}
 
-	userData, err := a.repo.Register(ctx, user)
+	userData, err := a.repo.RegisterOwner(ctx, user)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -73,7 +76,8 @@ func (a *authUseCase) Register(ctx context.Context, email string, password strin
 
 	if err := cache.SetWithTTL(ctx, a.cacheManager, cache.SessionKey, sessionID, domain.Session{
 		UserID: userData.ID,
-		Group:  userData.GroupAlias,
+		TeamID: userData.TeamID,
+		Role:   userData.Role,
 	}, a.token.ExpireAt); err != nil {
 		return nil, 0, fmt.Errorf("set session: %w", err)
 	}
@@ -84,6 +88,7 @@ func (a *authUseCase) Register(ctx context.Context, email string, password strin
 	}
 
 	tokenString := string(signed)
+
 	return &tokenString, a.token.ExpireAt, nil
 }
 
@@ -97,7 +102,7 @@ func (a *authUseCase) Login(ctx context.Context, email string, password string) 
 		return nil, 0, fmt.Errorf("repo login: %w", err)
 	}
 
-	verified, err := a.hash.Verify(password, user.Password)
+	verified, err := a.hash.Verify(password, user.PasswordHash)
 	if err != nil {
 		return nil, 0, fmt.Errorf("verify password hash: %w", err)
 	}
@@ -110,7 +115,8 @@ func (a *authUseCase) Login(ctx context.Context, email string, password string) 
 
 	if err := cache.SetWithTTL(ctx, a.cacheManager, cache.SessionKey, sessionID, domain.Session{
 		UserID: user.ID,
-		Group:  user.GroupAlias,
+		TeamID: user.TeamID,
+		Role:   user.Role,
 	}, a.token.ExpireAt); err != nil {
 		return nil, 0, fmt.Errorf("set session: %w", err)
 	}
@@ -121,8 +127,8 @@ func (a *authUseCase) Login(ctx context.Context, email string, password string) 
 	}
 
 	tokenString := string(signed)
-	return &tokenString, a.token.ExpireAt, nil
 
+	return &tokenString, a.token.ExpireAt, nil
 }
 
 func NewAuthUseCase(repo repo.UserRepository, cacheManager *cache.Manager, token *token.JWTtoken, hash hash.Hash) AuthUseCase {
