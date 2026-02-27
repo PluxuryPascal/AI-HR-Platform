@@ -28,4 +28,5 @@ func (k Key[T]) WithTTL(ttl time.Duration) Key[T] {
 var (
 	SessionKey   = NewKey[domain.Session]("session")
 	RateLimitKey = NewKey[int64]("rate_limit")
+	InviteKey    = NewKey[domain.InvitePayload]("invite")
 )

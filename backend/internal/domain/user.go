@@ -24,13 +24,20 @@ type RegisterOwnerRequest struct {
 	TeamName  string `json:"team_name"`
 }
 
-type CreateUserParams struct {
+type CreateUserRepoParams struct {
 	Email     string `json:"email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Password  string `json:"password"`
 	TeamID    string `json:"team_id"`
 	Role      string `json:"role"`
+}
+
+type CreateUserParams struct {
+	Token     string `json:"token" validate:"required"`
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name" validate:"required"`
+	Password  string `json:"password" validate:"required,min=8"`
 }
 
 type Session struct {

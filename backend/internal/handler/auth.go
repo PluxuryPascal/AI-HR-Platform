@@ -40,7 +40,7 @@ type registerRequest struct {
 	TeamName  string `json:"team_name" validate:"required,min=3,max=32"`
 }
 
-func (a *AuthHandler) PostLogin() echo.HandlerFunc {
+func (i *AuthHandler) PostLogin() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var req loginRequest
 
@@ -52,7 +52,7 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
 		}
 
-		token, expireAt, err := a.usecase.Login(c.Request().Context(), req.Email, req.Password)
+		token, expireAt, err := i.usecase.Login(c.Request().Context(), req.Email, req.Password)
 		if err != nil {
 			if errors.Is(err, usecase.ErrInvalidCredentials) {
 				return echo.NewHTTPError(http.StatusUnauthorized, "invalid credentials")
@@ -67,7 +67,7 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 			Value:    *token,
 			Expires:  time.Now().Add(expireAt),
 			Path:     "/",
-			Secure:   a.cfg.SecureCookie,
+			Secure:   i.cfg.SecureCookie,
 			HttpOnly: true,
 		})
 
@@ -75,7 +75,7 @@ func (a *AuthHandler) PostLogin() echo.HandlerFunc {
 	}
 }
 
-func (a *AuthHandler) PostRegister() echo.HandlerFunc {
+func (i *AuthHandler) PostRegister() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var req registerRequest
 
@@ -95,7 +95,7 @@ func (a *AuthHandler) PostRegister() echo.HandlerFunc {
 			TeamName:  req.TeamName,
 		}
 
-		token, expireAt, err := a.usecase.RegisterOwner(c.Request().Context(), input)
+		token, expireAt, err := i.usecase.RegisterOwner(c.Request().Context(), input)
 		if err != nil {
 			if errors.Is(err, usecase.ErrUserAlreadyExists) {
 				return echo.NewHTTPError(http.StatusConflict, "user already exists")
@@ -110,7 +110,7 @@ func (a *AuthHandler) PostRegister() echo.HandlerFunc {
 			Value:    *token,
 			Expires:  time.Now().Add(expireAt),
 			Path:     "/",
-			Secure:   a.cfg.SecureCookie,
+			Secure:   i.cfg.SecureCookie,
 			HttpOnly: true,
 		})
 
@@ -118,14 +118,14 @@ func (a *AuthHandler) PostRegister() echo.HandlerFunc {
 	}
 }
 
-func (a *AuthHandler) PostLogout() echo.HandlerFunc {
+func (i *AuthHandler) PostLogout() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie("access_token")
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "cookie not found")
 		}
 
-		if err := a.usecase.Logout(c.Request().Context(), cookie.Value); err != nil {
+		if err := i.usecase.Logout(c.Request().Context(), cookie.Value); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("logout error: %w", err))
 		}
 
@@ -135,53 +135,10 @@ func (a *AuthHandler) PostLogout() echo.HandlerFunc {
 			Value:    "",
 			Expires:  time.Now().Add(-time.Hour),
 			Path:     "/",
-			Secure:   a.cfg.SecureCookie,
+			Secure:   i.cfg.SecureCookie,
 			HttpOnly: true,
 		})
 
 		return c.NoContent(http.StatusOK)
-	}
-}
-
-func (a *AuthHandler) PostCreateUser() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var req registerRequest
-
-		if err := c.Bind(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect bind: %w", err))
-		}
-
-		if err := c.Validate(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
-		}
-
-		input := domain.RegisterOwnerRequest{
-			Email:     req.Email,
-			Password:  req.Password,
-			FirstName: req.FirstName,
-			LastName:  req.LastName,
-			TeamName:  req.TeamName,
-		}
-
-		token, expireAt, err := a.usecase.RegisterOwner(c.Request().Context(), input)
-		if err != nil {
-			if errors.Is(err, usecase.ErrUserAlreadyExists) {
-				return echo.NewHTTPError(http.StatusConflict, "user already exists")
-			}
-
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("register error: %w", err))
-		}
-
-		c.SetCookie(&http.Cookie{
-			Name:     "access_token",
-			SameSite: http.SameSiteStrictMode,
-			Value:    *token,
-			Expires:  time.Now().Add(expireAt),
-			Path:     "/",
-			Secure:   a.cfg.SecureCookie,
-			HttpOnly: true,
-		})
-
-		return c.NoContent(http.StatusCreated)
 	}
 }
