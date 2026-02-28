@@ -72,7 +72,7 @@ func run(ctx context.Context) error {
 	}
 
 	repos := initRepositories(infra)
-	usecases := initUseCases(utils, repos)
+	usecases := initUseCases(infra, utils, repos)
 	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
 
 	apiServer := createApiServer(ctx, infra.cfg, infra.log, handlers, sessionMiddleware)
@@ -150,10 +150,10 @@ func initRepositories(infra *infrastructureComponents) repos {
 	}
 }
 
-func initUseCases(utils *utilityComponents, r repos) usecases {
+func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos) usecases {
 	return usecases{
 		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h),
-		invite: usecase.NewInviteUseCase(r.invite, utils.cacheManager, utils.t, utils.h),
+		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, utils.cacheManager, utils.t, utils.h),
 	}
 }
 

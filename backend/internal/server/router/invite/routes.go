@@ -9,7 +9,7 @@ import (
 
 type InviteRoutes interface {
 	PostInvite() echo.HandlerFunc
-	PostValidate() echo.HandlerFunc
+	GetValidate() echo.HandlerFunc
 	PostCreateUser() echo.HandlerFunc
 }
 
@@ -39,7 +39,7 @@ func NewRouter(h InviteRoutes, m echo.MiddlewareFunc) router.Router {
 func (r *inviteRouter) initRoutes() {
 	r.routes = []router.Route{
 		router.NewRoute(http.MethodPost, "/invite", r.handler.PostInvite, r.middleware),
-		router.NewRoute(http.MethodPost, "/validate", r.handler.PostValidate, r.middleware),
+		router.NewRoute(http.MethodGet, "/validate", r.handler.GetValidate, r.middleware),
 		router.NewRoute(http.MethodPost, "/create-user", r.handler.PostCreateUser, r.middleware),
 	}
 }

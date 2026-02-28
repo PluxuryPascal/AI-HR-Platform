@@ -27,40 +27,42 @@ func NewInviteHandler(cfg *config.Server, log *zap.Logger, usecase usecase.Invit
 	}
 }
 
-type acceptInviteRequest struct {
-	Token     string `json:"token" validate:"required"`
-	FirstName string `json:"first_name" validate:"required"`
-	LastName  string `json:"last_name" validate:"required"`
-	Password  string `json:"password" validate:"required,min=8"`
+type postInviteRequest struct {
+	Email  string    `json:"email"   validate:"required,email"`
+	Role   string    `json:"role"    validate:"required"`
+	JobIDs *[]string `json:"job_ids" validate:"omitempty,dive,uuid"`
 }
 
-func (i *InviteHandler) PostValidate() echo.HandlerFunc {
+type acceptInviteRequest struct {
+	Token     string `json:"token"      validate:"required"`
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name"  validate:"required"`
+	Password  string `json:"password"   validate:"required,min=8"`
+}
+
+func (i *InviteHandler) GetValidate() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var req domain.InvitePayload
-
-		if err := c.Bind(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect bind: %w", err))
+		tokenStr := c.QueryParam("token")
+		if tokenStr == "" {
+			return echo.NewHTTPError(http.StatusBadRequest, "token is required")
 		}
 
-		if err := c.Validate(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
-		}
-
-		if err := i.usecase.InviteUser(c.Request().Context(), req); err != nil {
-			if errors.Is(err, usecase.ErrUserAlreadyExists) {
-				return echo.NewHTTPError(http.StatusConflict, "user already exists")
+		payload, err := i.usecase.ValidateInvite(c.Request().Context(), tokenStr)
+		if err != nil {
+			if errors.Is(err, usecase.ErrInviteNotFound) || errors.Is(err, usecase.ErrInviteExpired) {
+				return echo.NewHTTPError(http.StatusNotFound, err.Error())
 			}
 
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invite error: %w", err))
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("validate error: %w", err))
 		}
 
-		return c.NoContent(http.StatusCreated)
+		return c.JSON(http.StatusOK, payload)
 	}
 }
 
 func (i *InviteHandler) PostInvite() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var req domain.InvitePayload
+		var req postInviteRequest
 
 		if err := c.Bind(&req); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect bind: %w", err))
@@ -70,11 +72,16 @@ func (i *InviteHandler) PostInvite() echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
 		}
 
-		if err := i.usecase.InviteUser(c.Request().Context(), req); err != nil {
-			if errors.Is(err, usecase.ErrUserAlreadyExists) {
-				return echo.NewHTTPError(http.StatusConflict, "user already exists")
-			}
+		cookie, err := c.Cookie("access_token")
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "cookie not found")
+		}
 
+		if err := i.usecase.InviteUser(c.Request().Context(), cookie.Value, domain.CreateInviteParams{
+			Email:  req.Email,
+			Role:   req.Role,
+			JobIDs: req.JobIDs,
+		}); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invite error: %w", err))
 		}
 
@@ -101,13 +108,16 @@ func (i *InviteHandler) PostCreateUser() echo.HandlerFunc {
 			LastName:  req.LastName,
 		}
 
-		token, expireAt, err := i.usecase.CreateUser(c.Request().Context(), input)
+		token, expireAt, err := i.usecase.AcceptInvite(c.Request().Context(), input)
 		if err != nil {
-			if errors.Is(err, usecase.ErrUserAlreadyExists) {
+			switch {
+			case errors.Is(err, usecase.ErrUserAlreadyExists):
 				return echo.NewHTTPError(http.StatusConflict, "user already exists")
+			case errors.Is(err, usecase.ErrInviteNotFound), errors.Is(err, usecase.ErrInviteExpired):
+				return echo.NewHTTPError(http.StatusNotFound, err.Error())
+			default:
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("register error: %w", err))
 			}
-
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("register error: %w", err))
 		}
 
 		c.SetCookie(&http.Cookie{

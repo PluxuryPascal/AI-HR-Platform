@@ -34,7 +34,7 @@ func (i *userRepo) Login(ctx context.Context, email string) (*domain.User, error
 			u.password_hash,
 			u.created_at,
 			u.updated_at,
-			u.locale
+			COALESCE(u.locale, '') AS locale
 			FROM auth.t_users u
 			JOIN auth.t_teams t on t.id = u.team_id
 			WHERE u.email = @email;
@@ -105,20 +105,20 @@ func (i *userRepo) RegisterOwner(ctx context.Context, user *domain.RegisterOwner
 			@password_hash
 		)
 		RETURNING 
-			u.id,
-			(SELECT t.id FROM auth.t_teams t WHERE t.id = team_id) AS team_id,
+			id,
+			(SELECT t.id   FROM auth.t_teams t WHERE t.id = team_id) AS team_id,
 			(SELECT t.name FROM auth.t_teams t WHERE t.id = team_id) AS team_name,
-			u.email,
-			u.first_name,
-			u.last_name,
-			u.role,
-			u.password_hash,
-			u.created_at,
-			u.updated_at,
-			u.locale;
+			email,
+			first_name,
+			last_name,
+			role,
+			password_hash,
+			created_at,
+			updated_at,
+			COALESCE(locale, '') AS locale;
 	`
 
-	rows, err := i.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
+	rows, err := tx.Query(ctx, query, pgx.NamedArgs{
 		"team_id":       teamID,
 		"email":         user.Email,
 		"first_name":    user.FirstName,

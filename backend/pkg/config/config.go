@@ -17,6 +17,11 @@ type Config struct {
 	Logger    Logger               `yaml:"logger"`
 	Token     Token                `yaml:"token"`
 	RateLimit map[string]RateLimit `yaml:"rate-limit"`
+	Invite    Invite               `yaml:"invite"`
+}
+
+type Invite struct {
+	TTL time.Duration `yaml:"ttl"`
 }
 
 type RateLimit struct {
