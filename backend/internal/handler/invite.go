@@ -34,6 +34,30 @@ type acceptInviteRequest struct {
 	Password  string `json:"password" validate:"required,min=8"`
 }
 
+func (i *InviteHandler) PostValidate() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var req domain.InvitePayload
+
+		if err := c.Bind(&req); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect bind: %w", err))
+		}
+
+		if err := c.Validate(&req); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
+		}
+
+		if err := i.usecase.InviteUser(c.Request().Context(), req); err != nil {
+			if errors.Is(err, usecase.ErrUserAlreadyExists) {
+				return echo.NewHTTPError(http.StatusConflict, "user already exists")
+			}
+
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invite error: %w", err))
+		}
+
+		return c.NoContent(http.StatusCreated)
+	}
+}
+
 func (i *InviteHandler) PostInvite() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var req domain.InvitePayload

@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/labstack/echo/v4"
 )
@@ -14,18 +13,16 @@ type route struct {
 	middlewares []echo.MiddlewareFunc
 }
 
-func (r *route) Register(ctx context.Context, e *echo.Echo) {
-	e.Add(r.method, r.path, r.handler(), r.middlewares...)
+func (r *route) Register(_ context.Context, g *echo.Group) {
+	g.Add(r.method, r.path, r.handler(), r.middlewares...)
 }
 
 var _ Route = (*route)(nil)
 
 func NewRoute(method, path string, handler func() echo.HandlerFunc, middlewares ...echo.MiddlewareFunc) Route {
-	fullPath := fmt.Sprintf("/api%s", path)
-
 	return &route{
 		method:      method,
-		path:        fullPath,
+		path:        path,
 		handler:     handler,
 		middlewares: middlewares,
 	}

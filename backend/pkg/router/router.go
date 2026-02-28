@@ -11,5 +11,5 @@ type Router interface {
 }
 
 type Route interface {
-	Register(ctx context.Context, e *echo.Echo)
+	Register(ctx context.Context, g *echo.Group)
 }

@@ -7,6 +7,7 @@ import (
 	"backend/internal/middleware"
 	"backend/internal/repo"
 	"backend/internal/server"
+	"backend/internal/server/router/invite"
 	"backend/internal/server/router/user"
 	"backend/internal/usecase"
 	"backend/pkg/config"
@@ -22,15 +23,18 @@ import (
 )
 
 type repos struct {
-	user repo.UserRepository
+	user   repo.UserRepository
+	invite repo.InviteRepository
 }
 
 type usecases struct {
-	auth usecase.AuthUseCase
+	auth   usecase.AuthUseCase
+	invite usecase.InviteUseCase
 }
 
 type handlers struct {
-	auth *handler.AuthHandler
+	auth   *handler.AuthHandler
+	invite *handler.InviteHandler
 }
 
 type infrastructureComponents struct {
@@ -141,13 +145,15 @@ func initUtilities(infra *infrastructureComponents) (*utilityComponents, error) 
 
 func initRepositories(infra *infrastructureComponents) repos {
 	return repos{
-		user: repo.NewUserRepo(infra.pool),
+		user:   repo.NewUserRepo(infra.pool),
+		invite: repo.NewInviteRepo(infra.pool),
 	}
 }
 
 func initUseCases(utils *utilityComponents, r repos) usecases {
 	return usecases{
-		auth: usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h),
+		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h),
+		invite: usecase.NewInviteUseCase(r.invite, utils.cacheManager, utils.t, utils.h),
 	}
 }
 
@@ -159,7 +165,8 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 	)
 
 	h := handlers{
-		auth: handler.NewAuthHandler(&infra.cfg.Server, infra.log.Log, u.auth),
+		auth:   handler.NewAuthHandler(&infra.cfg.Server, infra.log.Log, u.auth),
+		invite: handler.NewInviteHandler(&infra.cfg.Server, infra.log.Log, u.invite),
 	}
 
 	return h, sessionMiddleware
@@ -169,8 +176,17 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 	return server.NewApiServer(
 		&cfg.Server,
 		server.WithLogger(log.Log),
-		server.WithRouter(ctx,
-			user.NewRouter(h.auth, sessionMiddleware.RateLimit(cfg.RateLimit["auth"])),
+		server.WithRouterGroup(ctx, "/auth",
+			user.NewRouter(
+				h.auth,
+				sessionMiddleware.RateLimit(cfg.RateLimit["auth"]),
+			),
+		),
+		server.WithRouterGroup(ctx, "/invite",
+			invite.NewRouter(
+				h.invite,
+				sessionMiddleware.RateLimit(cfg.RateLimit["invite"]),
+			),
 		),
 	)
 }

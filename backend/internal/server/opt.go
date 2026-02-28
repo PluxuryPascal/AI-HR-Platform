@@ -10,11 +10,26 @@ import (
 	"go.uber.org/zap"
 )
 
+// WithRouter регистрирует роутеры в базовой группе /api.
 func WithRouter(ctx context.Context, routes ...router.Router) func(*Api) {
 	return func(s *Api) {
+		g := s.api.Group("/api/v1")
 		for _, apiRouter := range routes {
 			for _, route := range apiRouter.Routes() {
-				route.Register(ctx, s.api)
+				route.Register(ctx, g)
+			}
+		}
+	}
+}
+
+// WithRouterGroup регистрирует роутеры в группе /api/{prefix},
+// например WithRouterGroup(ctx, "/v1", userRouter, inviteRouter).
+func WithRouterGroup(ctx context.Context, prefix string, routes ...router.Router) func(*Api) {
+	return func(s *Api) {
+		g := s.api.Group("/api/v1" + prefix)
+		for _, apiRouter := range routes {
+			for _, route := range apiRouter.Routes() {
+				route.Register(ctx, g)
 			}
 		}
 	}
