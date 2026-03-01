@@ -1,0 +1,3 @@
+-- PostgreSQL does not support dropping a value from an ENUM type natively.
+-- A full rollback would require creating a new ENUM type, migrating data, and swapping types.
+-- For simplicity in development, this down migration is left empty as ENUM additions are often considered append-only.

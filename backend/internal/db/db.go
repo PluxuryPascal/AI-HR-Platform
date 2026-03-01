@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
@@ -98,6 +99,12 @@ func NewDb(log *zap.Logger, conf *config.Config) (*PostgresClient, error) {
 
 func (c *PostgresClient) AddAfterRun(f ...AfterRun) {
 	c.afterRunFuncs = append(c.afterRunFuncs, f...)
+}
+
+// ConnConfig возвращает копию конфигурации подключения к БД.
+// Используется для создания отдельных подключений (например, casbin adapter).
+func (c *PostgresClient) ConnConfig() *pgx.ConnConfig {
+	return c.cfg.ConnConfig.Copy()
 }
 
 var _ svc.Service = (*PostgresClient)(nil)

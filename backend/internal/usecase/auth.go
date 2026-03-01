@@ -5,6 +5,7 @@ import (
 	"backend/internal/domain"
 	"backend/internal/repo"
 	"backend/pkg/hash"
+	"backend/pkg/rbac"
 	"backend/pkg/token"
 	"context"
 	"errors"
@@ -31,6 +32,7 @@ type authUseCase struct {
 	cacheManager *cache.Manager
 	token        *token.JWTtoken
 	hash         hash.Hash
+	enforcer     *rbac.CasbinClient
 }
 
 func (a *authUseCase) Logout(ctx context.Context, tokenStr string) error {
@@ -70,6 +72,10 @@ func (a *authUseCase) RegisterOwner(ctx context.Context, req domain.RegisterOwne
 		}
 
 		return nil, 0, fmt.Errorf("repo register: %w", err)
+	}
+
+	if _, err := a.enforcer.AddRoleForUserInDomain(userData.ID, "owner", userData.TeamID); err != nil {
+		return nil, 0, fmt.Errorf("add grouping policy: %w", err)
 	}
 
 	sessionID := uuid.New().String()
@@ -131,12 +137,13 @@ func (a *authUseCase) Login(ctx context.Context, email string, password string) 
 	return &tokenString, a.token.ExpireAt, nil
 }
 
-func NewAuthUseCase(repo repo.UserRepository, cacheManager *cache.Manager, token *token.JWTtoken, hash hash.Hash) AuthUseCase {
+func NewAuthUseCase(repo repo.UserRepository, cacheManager *cache.Manager, token *token.JWTtoken, hash hash.Hash, enforcer *rbac.CasbinClient) AuthUseCase {
 	return &authUseCase{
 		repo:         repo,
 		cacheManager: cacheManager,
 		token:        token,
 		hash:         hash,
+		enforcer:     enforcer,
 	}
 }
 

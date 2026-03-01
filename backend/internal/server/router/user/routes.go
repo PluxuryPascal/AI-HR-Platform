@@ -14,9 +14,10 @@ type UserRoutes interface {
 }
 
 type userRouter struct {
-	routes     []router.Route
-	handler    UserRoutes
-	middleware echo.MiddlewareFunc
+	routes    []router.Route
+	handler   UserRoutes
+	rateLimit echo.MiddlewareFunc
+	session   echo.MiddlewareFunc
 }
 
 func (r *userRouter) Routes() []router.Route {
@@ -25,10 +26,11 @@ func (r *userRouter) Routes() []router.Route {
 
 var _ router.Router = (*userRouter)(nil)
 
-func NewRouter(h UserRoutes, m echo.MiddlewareFunc) router.Router {
+func NewRouter(h UserRoutes, rateLimit echo.MiddlewareFunc, session echo.MiddlewareFunc) router.Router {
 	r := &userRouter{
-		handler:    h,
-		middleware: m,
+		handler:   h,
+		rateLimit: rateLimit,
+		session:   session,
 	}
 
 	r.initRoutes()
@@ -38,8 +40,8 @@ func NewRouter(h UserRoutes, m echo.MiddlewareFunc) router.Router {
 
 func (r *userRouter) initRoutes() {
 	r.routes = []router.Route{
-		router.NewRoute(http.MethodPost, "/login", r.handler.PostLogin, r.middleware),
-		router.NewRoute(http.MethodPost, "/register", r.handler.PostRegister, r.middleware),
-		router.NewRoute(http.MethodPost, "/logout", r.handler.PostLogout, r.middleware),
+		router.NewRoute(http.MethodPost, "/login", r.handler.PostLogin, r.rateLimit),
+		router.NewRoute(http.MethodPost, "/register", r.handler.PostRegister, r.rateLimit),
+		router.NewRoute(http.MethodPost, "/logout", r.handler.PostLogout, r.rateLimit, r.session),
 	}
 }

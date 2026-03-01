@@ -101,7 +101,7 @@ func (i *userRepo) RegisterOwner(ctx context.Context, user *domain.RegisterOwner
 			@email,
 			@first_name,
 			@last_name,
-			'admin',
+			'owner',
 			@password_hash
 		)
 		RETURNING 

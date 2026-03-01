@@ -13,6 +13,7 @@ import (
 	"backend/pkg/config"
 	"backend/pkg/hash"
 	"backend/pkg/logger"
+	"backend/pkg/rbac"
 	"backend/pkg/svc"
 	"backend/pkg/token"
 	"context"
@@ -42,6 +43,7 @@ type infrastructureComponents struct {
 	log       *logger.Log
 	pool      *db.PostgresClient
 	redisPool *db.RedisClient
+	casbin    *rbac.CasbinClient
 }
 
 type utilityComponents struct {
@@ -75,12 +77,13 @@ func run(ctx context.Context) error {
 	usecases := initUseCases(infra, utils, repos)
 	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
 
-	apiServer := createApiServer(ctx, infra.cfg, infra.log, handlers, sessionMiddleware)
+	apiServer := createApiServer(ctx, infra.cfg, utils.t, infra.log, handlers, sessionMiddleware)
 
 	if err := svc.Run(ctx, infra.log.Log, []svc.Service{
 		infra.log,
 		infra.pool,
 		infra.redisPool,
+		infra.casbin,
 		apiServer,
 	}); err != nil {
 		return fmt.Errorf("run service error: %w", err)
@@ -114,11 +117,14 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		return nil, fmt.Errorf("create redis error: %w", err)
 	}
 
+	casbinClient := rbac.NewCasbinClient(zapLog.Log, pool.ConnConfig(), "casbin/model.conf")
+
 	return &infrastructureComponents{
 		cfg:       conf,
 		log:       zapLog,
 		pool:      pool,
 		redisPool: redisPool,
+		casbin:    casbinClient,
 	}, nil
 }
 
@@ -152,16 +158,17 @@ func initRepositories(infra *infrastructureComponents) repos {
 
 func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos) usecases {
 	return usecases{
-		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h),
-		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, utils.cacheManager, utils.t, utils.h),
+		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h, infra.casbin),
+		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, utils.cacheManager, utils.t, utils.h, infra.casbin),
 	}
 }
 
-func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases) (handlers, middleware.SessionMiddleware) {
-	sessionMiddleware := middleware.NewSessionMiddleware(
+func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases) (handlers, middleware.Middleware) {
+	middleware := middleware.NewMiddleware(
 		infra.log,
 		infra.redisPool,
 		utils.cacheManager,
+		infra.casbin,
 	)
 
 	h := handlers{
@@ -169,23 +176,26 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 		invite: handler.NewInviteHandler(&infra.cfg.Server, infra.log.Log, u.invite),
 	}
 
-	return h, sessionMiddleware
+	return h, middleware
 }
 
-func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h handlers, sessionMiddleware middleware.SessionMiddleware) *server.Api {
+func createApiServer(ctx context.Context, cfg *config.Config, t *token.JWTtoken, log *logger.Log, h handlers, middleware middleware.Middleware) *server.Api {
 	return server.NewApiServer(
 		&cfg.Server,
 		server.WithLogger(log.Log),
 		server.WithRouterGroup(ctx, "/auth",
 			user.NewRouter(
 				h.auth,
-				sessionMiddleware.RateLimit(cfg.RateLimit["auth"]),
+				middleware.RateLimit(cfg.RateLimit["auth"]),
+				middleware.Session(t),
 			),
 		),
 		server.WithRouterGroup(ctx, "/invite",
 			invite.NewRouter(
 				h.invite,
-				sessionMiddleware.RateLimit(cfg.RateLimit["invite"]),
+				middleware.RateLimit(cfg.RateLimit["invite"]),
+				middleware.Session(t),
+				middleware.RBAC(),
 			),
 		),
 	)

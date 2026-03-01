@@ -5,6 +5,7 @@ import (
 	"backend/internal/db"
 	"backend/pkg/config"
 	"backend/pkg/logger"
+	"backend/pkg/rbac"
 	"backend/pkg/token"
 	"net/http"
 	"strconv"
@@ -14,15 +15,17 @@ import (
 	"go.uber.org/zap"
 )
 
-type SessionMiddleware interface {
+type Middleware interface {
 	RateLimit(rateLimit config.RateLimit) echo.MiddlewareFunc
 	Session(t *token.JWTtoken) echo.MiddlewareFunc
+	RBAC() echo.MiddlewareFunc
 }
 
 type middleware struct {
-	log          *zap.Logger
-	redisClient  *db.RedisClient
-	cacheManager *cache.Manager
+	log            *zap.Logger
+	redisClient    *db.RedisClient
+	cacheManager   *cache.Manager
+	casbinEnforcer *rbac.CasbinClient
 }
 
 func (m *middleware) RateLimit(rateLimit config.RateLimit) echo.MiddlewareFunc {
@@ -91,12 +94,38 @@ func (m *middleware) Session(t *token.JWTtoken) echo.MiddlewareFunc {
 	}
 }
 
-func NewSessionMiddleware(log *logger.Log, redisClient *db.RedisClient, cacheManager *cache.Manager) SessionMiddleware {
-	return &middleware{
-		log:          log.Log,
-		redisClient:  redisClient,
-		cacheManager: cacheManager,
+func (m *middleware) RBAC() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := c.Get("id").(string)
+			teamID := c.Get("team_id").(string)
+
+			obj := c.Path()
+			act := c.Request().Method
+
+			ok, err := m.casbinEnforcer.Enforce(userID, teamID, obj, act)
+			if err != nil {
+				m.log.Error("rbac error", zap.Error(err))
+				return echo.NewHTTPError(http.StatusServiceUnavailable, "service temporarily unavailable")
+			}
+
+			if !ok {
+				m.log.Warn("rbac denied", zap.String("user_id", userID), zap.String("team_id", teamID), zap.String("obj", obj), zap.String("act", act))
+				return echo.NewHTTPError(http.StatusForbidden, "access denied")
+			}
+
+			return next(c)
+		}
 	}
 }
 
-var _ SessionMiddleware = (*middleware)(nil)
+func NewMiddleware(log *logger.Log, redisClient *db.RedisClient, cacheManager *cache.Manager, casbinEnforcer *rbac.CasbinClient) Middleware {
+	return &middleware{
+		log:            log.Log,
+		redisClient:    redisClient,
+		cacheManager:   cacheManager,
+		casbinEnforcer: casbinEnforcer,
+	}
+}
+
+var _ Middleware = (*middleware)(nil)

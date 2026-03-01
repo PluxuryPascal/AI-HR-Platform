@@ -6,6 +6,7 @@ import (
 	"backend/internal/repo"
 	"backend/pkg/config"
 	"backend/pkg/hash"
+	"backend/pkg/rbac"
 	"backend/pkg/token"
 	"context"
 	"errors"
@@ -37,6 +38,7 @@ type inviteUseCase struct {
 	cacheManager *cache.Manager
 	token        *token.JWTtoken
 	hash         hash.Hash
+	enforcer     *rbac.CasbinClient
 }
 
 func NewInviteUseCase(
@@ -45,6 +47,7 @@ func NewInviteUseCase(
 	cacheManager *cache.Manager,
 	token *token.JWTtoken,
 	hash hash.Hash,
+	enforcer *rbac.CasbinClient,
 ) InviteUseCase {
 	return &inviteUseCase{
 		cfg:          cfg,
@@ -52,6 +55,7 @@ func NewInviteUseCase(
 		cacheManager: cacheManager,
 		token:        token,
 		hash:         hash,
+		enforcer:     enforcer,
 	}
 }
 
@@ -142,6 +146,10 @@ func (i *inviteUseCase) AcceptInvite(ctx context.Context, req domain.CreateUserP
 		}
 
 		return nil, 0, fmt.Errorf("accept invite: %w", err)
+	}
+
+	if _, err := i.enforcer.AddRoleForUserInDomain(user.ID, invite.Role, invite.TeamID); err != nil {
+		return nil, 0, fmt.Errorf("add role for user in domain: %w", err)
 	}
 
 	sessionID := uuid.New().String()
