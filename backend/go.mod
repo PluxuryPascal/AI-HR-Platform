@@ -3,7 +3,7 @@ module backend
 go 1.25.6
 
 require (
-	github.com/casbin/casbin/v3 v3.10.0
+	github.com/casbin/casbin/v2 v2.135.0
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/pckhoi/casbin-pgx-adapter/v3 v3.2.0
 	golang.org/x/sync v0.19.0
@@ -11,7 +11,6 @@ require (
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
-	github.com/casbin/casbin/v2 v2.98.0 // indirect
 	github.com/casbin/govaluate v1.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect

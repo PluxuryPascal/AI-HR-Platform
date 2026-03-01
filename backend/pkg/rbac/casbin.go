@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/casbin/casbin/v3"
+	"github.com/casbin/casbin/v2"
 	"github.com/jackc/pgx/v5"
 	pgxadapter "github.com/pckhoi/casbin-pgx-adapter/v3"
 	"go.uber.org/zap"
@@ -62,8 +62,11 @@ func (c *CasbinClient) Init(_ context.Context) error {
 
 	c.enforcer = enforcer
 
+	// Синхронизируем политики из policy.csv при каждом запуске.
+	// Метод AddPolicy идемпотентен: он добавит в БД только новые строки из CSV,
+	// которых там ещё нет.
 	if err := c.seedDefaultPolicies(); err != nil {
-		return fmt.Errorf("failed to seed default policies: %w", err)
+		return fmt.Errorf("failed to sync default policies: %w", err)
 	}
 
 	c.log.Debug("casbin initialized")
