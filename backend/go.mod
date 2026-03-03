@@ -7,6 +7,8 @@ require (
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/pckhoi/casbin-pgx-adapter/v3 v3.2.0
 	golang.org/x/sync v0.19.0
+	google.golang.org/grpc v1.79.1
+	google.golang.org/protobuf v1.36.11
 )
 
 require (
@@ -34,6 +36,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 )
 
 require (

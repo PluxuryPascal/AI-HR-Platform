@@ -28,6 +28,7 @@ func WithRouter(ctx context.Context, routes ...router.Router) func(*Api) {
 func WithRouterGroup(ctx context.Context, prefix string, routes ...router.Router) func(*Api) {
 	return func(s *Api) {
 		g := s.api.Group("/api/v1" + prefix)
+
 		for _, apiRouter := range routes {
 			for _, route := range apiRouter.Routes() {
 				route.Register(ctx, g)

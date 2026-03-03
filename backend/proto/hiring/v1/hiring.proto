@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package hiring.v1;
+
+option go_package = "internal/proto/hiring/v1;hiringv1";
+
+
+// Hiring Service
+service HiringService {
+    // From AI-Engine service after CVs processing
+    rpc UpdateCandidateProfile(UpdateCandidateProfileRequest) returns (UpdateCandidateProfileResponse);
+
+    // From Auth service after user accept invite
+    rpc TransferJobAccess(TransferJobAccessRequest) returns (TransferJobAccessResponse);
+}
+
+enum ParsingStatus {
+    PARSING_STATUS_UNSPECIFIED = 0;
+    PARSING_STATUS_SUCCESS = 1;         // Fully extracted, mandatory fields present
+    PARSING_STATUS_NEEDS_REVIEW = 2;    // Partially extracted, needs human review
+    PARSING_STATUS_FAILED = 3;          // Unreadable file / OCR failed / errors
+}
+
+message UpdateCandidateProfileRequest {
+    string candidate_id = 1;
+    ParsingStatus parsing_status = 2;   // Outcome of the AI parsing
+    
+    // Extracted text from PDF
+    string parsed_text = 3;
+    
+    // Core fields extracted by LLM
+    string first_name = 4;
+    string last_name = 5;
+    string email = 6;
+    
+    // JSON bytes representing the full extracted profile (skills, exp)
+    bytes structured_data = 7;
+}
+
+message UpdateCandidateProfileResponse {
+    bool success = 1;
+}
+
+message TransferJobAccessRequest {
+    string user_id = 1;
+    repeated string job_ids = 2;
+}
+
+message TransferJobAccessResponse {
+    bool success = 1;
+}
