@@ -10,14 +10,17 @@ import (
 )
 
 type Config struct {
-	Server    Server               `yaml:"server"`
-	Database  Database             `yaml:"database"`
-	Redis     Redis                `yaml:"redis"`
-	Hash      Hash                 `yaml:"hash"`
-	Logger    Logger               `yaml:"logger"`
-	Token     Token                `yaml:"token"`
-	RateLimit map[string]RateLimit `yaml:"rate-limit"`
-	Invite    Invite               `yaml:"invite"`
+	Server     Server               `yaml:"server"`
+	Database   Database             `yaml:"database"`
+	Redis      Redis                `yaml:"redis"`
+	Hash       Hash                 `yaml:"hash"`
+	Logger     Logger               `yaml:"logger"`
+	Token      Token                `yaml:"token"`
+	RateLimit  map[string]RateLimit `yaml:"rate-limit"`
+	Invite     Invite               `yaml:"invite"`
+	RabbitMQ   RabbitMQ             `yaml:"rabbitmq"`
+	Cloudinary Cloudinary           `yaml:"cloudinary"`
+	GRPC       GRPC                 `yaml:"grpc"`
 }
 
 type Invite struct {
@@ -76,6 +79,42 @@ type Database struct {
 	MaxConns          int32         `yaml:"max-conns"`
 	MinConns          int32         `yaml:"min-conns"`
 	MaxConnLifetime   time.Duration `yaml:"max-conn-lifetime"`
+}
+
+type ExchangeConfig struct {
+	Name    string `yaml:"name"`
+	Type    string `yaml:"type"`
+	Durable bool   `yaml:"durable"`
+}
+
+type QueueConfig struct {
+	Name       string `yaml:"name"`
+	Exchange   string `yaml:"exchange"`
+	RoutingKey string `yaml:"routing_key"`
+	DLX        string `yaml:"dlx"`
+	MaxRetries int    `yaml:"max_retries"`
+	MessageTTL int    `yaml:"message_ttl"`
+}
+
+type RabbitMQ struct {
+	URL            string           `yaml:"url"`
+	Exchanges      []ExchangeConfig `yaml:"exchanges"`
+	Queues         []QueueConfig    `yaml:"queues"`
+	PrefetchCount  int              `yaml:"prefetch_count"`
+	ReconnectDelay time.Duration    `yaml:"reconnect_delay"`
+}
+
+type Cloudinary struct {
+	URL          string `yaml:"url"`
+	CloudName    string `yaml:"cloud_name"`
+	APIKey       string `yaml:"api_key"`
+	APISecret    string `yaml:"api_secret"`
+	UploadFolder string `yaml:"upload_folder"`
+}
+
+type GRPC struct {
+	Port           int `yaml:"port"`
+	MaxRecvMsgSize int `yaml:"max_recv_msg_size"`
 }
 
 func LoadConfig(path string) (*Config, error) {

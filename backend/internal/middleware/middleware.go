@@ -45,10 +45,7 @@ func (m *middleware) RateLimit(rateLimit config.RateLimit) echo.MiddlewareFunc {
 
 			c.Response().Header().Set("X-RateLimit-Limit", strconv.Itoa(rateLimit.Requests))
 
-			remaining := rateLimit.Requests - int(count)
-			if remaining < 0 {
-				remaining = 0
-			}
+			remaining := max(rateLimit.Requests-int(count), 0)
 
 			c.Response().Header().Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
 

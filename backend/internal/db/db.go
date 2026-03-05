@@ -33,7 +33,7 @@ func (c *PostgresClient) HealthCheck(ctx context.Context) error {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	c.log.Debug("database connection is healthy")
+	c.log.Debug("database health check passed")
 
 	return nil
 }
