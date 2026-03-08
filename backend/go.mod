@@ -4,8 +4,10 @@ go 1.25.6
 
 require (
 	github.com/casbin/casbin/v2 v2.135.0
+	github.com/cloudinary/cloudinary-go/v2 v2.14.1
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/pckhoi/casbin-pgx-adapter/v3 v3.2.0
+	github.com/wagslane/go-rabbitmq v0.15.0
 	golang.org/x/sync v0.19.0
 	google.golang.org/grpc v1.79.1
 	google.golang.org/protobuf v1.36.11
@@ -15,7 +17,6 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
 	github.com/casbin/govaluate v1.10.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cloudinary/cloudinary-go/v2 v2.14.1 // indirect
 	github.com/creasty/defaults v1.7.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -37,7 +38,6 @@ require (
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
-	github.com/wagslane/go-rabbitmq v0.15.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/time v0.14.0 // indirect

@@ -14,7 +14,7 @@ type CloudinaryStorage struct {
 	log *zap.Logger
 	cfg *config.Cloudinary
 
-	Cloudinary *cloudinary.Cloudinary
+	client *cloudinary.Cloudinary
 }
 
 func (c *CloudinaryStorage) Init(ctx context.Context) error {
@@ -23,7 +23,7 @@ func (c *CloudinaryStorage) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to create cloudinary client: %w", err)
 	}
 
-	c.Cloudinary = cloudinary
+	c.client = cloudinary
 
 	c.log.Debug("cloudinary initialized")
 
@@ -31,11 +31,11 @@ func (c *CloudinaryStorage) Init(ctx context.Context) error {
 }
 
 func (c *CloudinaryStorage) DependsOn() []string {
-	return []string{"log"}
+	return []string{"logger"}
 }
 
 func (c *CloudinaryStorage) HealthCheck(ctx context.Context) error {
-	_, err := c.Cloudinary.Admin.Ping(ctx)
+	_, err := c.client.Admin.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to ping cloudinary: %w", err)
 	}
