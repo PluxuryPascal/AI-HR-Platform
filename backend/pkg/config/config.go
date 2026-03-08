@@ -88,19 +88,21 @@ type ExchangeConfig struct {
 }
 
 type QueueConfig struct {
-	Name       string `yaml:"name"`
-	Exchange   string `yaml:"exchange"`
-	RoutingKey string `yaml:"routing_key"`
-	DLX        string `yaml:"dlx"`
-	MaxRetries int    `yaml:"max_retries"`
-	MessageTTL int    `yaml:"message_ttl"`
+	Name          string `yaml:"name"`
+	Exchange      string `yaml:"exchange"`
+	RoutingKey    string `yaml:"routing_key"`
+	DLX           string `yaml:"dlx"`
+	DLXRoutingKey string `yaml:"dlx_routing_key"`
+	MaxRetries    int    `yaml:"max_retries"`
+	MessageTTL    int    `yaml:"message_ttl"`
+	PrefetchCount int    `yaml:"prefetch_count"`
+	Concurrency   int    `yaml:"concurrency"`
 }
 
 type RabbitMQ struct {
 	URL            string           `yaml:"url"`
 	Exchanges      []ExchangeConfig `yaml:"exchanges"`
 	Queues         []QueueConfig    `yaml:"queues"`
-	PrefetchCount  int              `yaml:"prefetch_count"`
 	ReconnectDelay time.Duration    `yaml:"reconnect_delay"`
 }
 

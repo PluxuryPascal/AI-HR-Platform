@@ -16,7 +16,7 @@ import (
 )
 
 type Middleware interface {
-	RateLimit(rateLimit config.RateLimit) echo.MiddlewareFunc
+	RateLimit(group string, rateLimit config.RateLimit) echo.MiddlewareFunc
 	Session(t *token.JWTtoken) echo.MiddlewareFunc
 	RBAC() echo.MiddlewareFunc
 }
@@ -28,10 +28,12 @@ type middleware struct {
 	casbinEnforcer *rbac.CasbinClient
 }
 
-func (m *middleware) RateLimit(rateLimit config.RateLimit) echo.MiddlewareFunc {
+func (m *middleware) RateLimit(group string, rateLimit config.RateLimit) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			ipKey := c.RealIP()
+			// Ключ: <prefix>:rate_limit:<group>:<ip>
+			// Разные группы (auth, invite) имеют независимые счётчики
+			ipKey := group + ":" + c.RealIP()
 
 			count, err := cache.IncrWithTTL(c.Request().Context(), m.cacheManager, cache.RateLimitKey, ipKey, rateLimit.Window)
 			if err != nil {
