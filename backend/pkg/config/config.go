@@ -115,8 +115,31 @@ type Cloudinary struct {
 }
 
 type GRPC struct {
-	Port           int `yaml:"port"`
-	MaxRecvMsgSize int `yaml:"max_recv_msg_size"`
+	Server  GRPCServer            `yaml:"server"`
+	Clients map[string]GRPCClient `yaml:"clients"`
+}
+
+type GRPCServer struct {
+	Port           int  `yaml:"port"`
+	MaxRecvMsgSize int  `yaml:"max_recv_msg_size"`
+	UseTLS         bool `yaml:"use_tls"`
+	TLS            TLS  `yaml:"tls"`
+}
+
+type GRPCClient struct {
+	Host           string `yaml:"host"`
+	Port           int    `yaml:"port"`
+	MaxRecvMsgSize int    `yaml:"max_recv_msg_size"`
+	UseTLS         bool   `yaml:"use_tls"`
+	TLS            TLS    `yaml:"tls"`
+}
+
+type TLS struct {
+	CaCertPath     string `yaml:"ca_cert_path"`
+	ServerCertPath string `yaml:"server_cert_path"`
+	ServerKeyPath  string `yaml:"server_key_path"`
+	ClientCertPath string `yaml:"client_cert_path"`
+	ClientKeyPath  string `yaml:"client_key_path"`
 }
 
 func LoadConfig(path string) (*Config, error) {
