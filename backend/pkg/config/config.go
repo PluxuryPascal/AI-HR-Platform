@@ -115,7 +115,7 @@ type Cloudinary struct {
 }
 
 type GRPC struct {
-	Server  GRPCServer            `yaml:"server"`
+	Servers map[string]GRPCServer `yaml:"servers"`
 	Clients map[string]GRPCClient `yaml:"clients"`
 }
 

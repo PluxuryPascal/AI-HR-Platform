@@ -16,8 +16,9 @@ import (
 )
 
 type Server struct {
-	log *zap.Logger
-	cfg *config.GRPCServer
+	log  *zap.Logger
+	cfg  *config.GRPCServer
+	name string
 
 	lis    net.Listener
 	Server *grpc.Server
@@ -94,7 +95,7 @@ func (s *Server) Init(ctx context.Context) error {
 }
 
 func (s *Server) Name() string {
-	return "grpc-server"
+	return fmt.Sprintf("grpc-server-%s", s.name)
 }
 
 func (s *Server) Run(ctx context.Context) error {
@@ -113,10 +114,11 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func NewServer(log *zap.Logger, cfg *config.GRPCServer) *Server {
+func NewServer(name string, log *zap.Logger, cfg *config.GRPCServer) *Server {
 	return &Server{
-		log: log,
-		cfg: cfg,
+		name: name,
+		log:  log,
+		cfg:  cfg,
 	}
 }
 
