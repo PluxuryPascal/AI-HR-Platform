@@ -20,11 +20,17 @@ import (
 )
 
 type repos struct {
-	access repo.AccessRepository
+	access     repo.AccessRepository
+	department repo.DepartmentRepository
+	job        repo.JobRepository
+	candidate  repo.CandidateRepository
 }
 
 type usecases struct {
-	access usecase.AccessUseCase
+	access     usecase.AccessUseCase
+	department usecase.DepartmentUseCase
+	job        usecase.JobUseCase
+	candidate  usecase.CandidateUseCase
 }
 
 type handlers struct {
@@ -139,13 +145,19 @@ func initUtilities(infra *infrastructureComponents) (*utilityComponents, error) 
 
 func initRepositories(infra *infrastructureComponents) repos {
 	return repos{
-		access: repo.NewAccessRepository(infra.pool),
+		access:     repo.NewAccessRepository(infra.pool),
+		department: repo.NewDepartmentRepo(infra.pool),
+		job:        repo.NewJobRepo(infra.pool),
+		candidate:  repo.NewCandidateRepo(infra.pool),
 	}
 }
 
 func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos) usecases {
 	return usecases{
-		access: usecase.NewAccessUseCase(r.access),
+		access:     usecase.NewAccessUseCase(r.access),
+		department: usecase.NewDepartmentUseCase(r.department),
+		job:        usecase.NewJobUseCase(r.job),
+		candidate:  usecase.NewCandidateUseCase(r.candidate),
 	}
 }
 

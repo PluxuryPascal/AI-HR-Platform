@@ -101,8 +101,6 @@ func (c *PostgresClient) AddAfterRun(f ...AfterRun) {
 	c.afterRunFuncs = append(c.afterRunFuncs, f...)
 }
 
-// ConnConfig возвращает копию конфигурации подключения к БД.
-// Используется для создания отдельных подключений (например, casbin adapter).
 func (c *PostgresClient) ConnConfig() *pgx.ConnConfig {
 	return c.cfg.ConnConfig.Copy()
 }

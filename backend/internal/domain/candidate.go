@@ -24,3 +24,17 @@ type CandidateProfile struct {
 	AIParsedAt     *time.Time `json:"ai_parsed_at,omitempty" db:"ai_parsed_at"`
 	UpdatedAt      *time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }
+
+type CandidateFilter struct {
+	FirstName      *string    `json:"first_name"`
+	LastName       *string    `json:"last_name"`
+	Email          *string    `json:"email"`
+	CurrentStageID *string    `json:"current_stage_id"`
+	DateFilter     *DateFilter `json:"date_filter"`
+	Sort           *SortParams `json:"sort"`
+}
+
+type CandidatesDTO struct {
+	Total      int         `json:"total" db:"total"`
+	Candidates []Candidate `json:"candidates" db:"candidates"`
+}
