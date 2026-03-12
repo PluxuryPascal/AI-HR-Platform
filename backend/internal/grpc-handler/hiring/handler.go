@@ -12,13 +12,15 @@ import (
 type Handler struct {
 	pb.UnimplementedHiringServiceServer
 
-	logger   *zap.Logger
-	accessUC usecase.AccessUseCase
+	logger      *zap.Logger
+	accessUC    usecase.AccessUseCase
+	candidateUC usecase.CandidateUseCase
 }
 
-func NewHandler(log *zap.Logger, accessUC usecase.AccessUseCase) *Handler {
+func NewHandler(log *zap.Logger, accessUC usecase.AccessUseCase, candidateUC usecase.CandidateUseCase) *Handler {
 	return &Handler{
-		logger:   log,
-		accessUC: accessUC,
+		logger:      log,
+		accessUC:    accessUC,
+		candidateUC: candidateUC,
 	}
 }

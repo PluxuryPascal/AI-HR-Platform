@@ -28,6 +28,7 @@ func (u *candidateUseCase) CreateCandidate(ctx context.Context, candidate *domai
 	if err := u.candidateRepo.Create(ctx, candidate, profile, initialStageID); err != nil {
 		return fmt.Errorf("create candidate: %w", err)
 	}
+
 	return nil
 }
 
@@ -36,6 +37,7 @@ func (u *candidateUseCase) GetCandidateByID(ctx context.Context, id string) (*do
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("get candidate by id: %w", err)
 	}
+
 	return cand, profile, stageID, nil
 }
 
@@ -44,6 +46,7 @@ func (u *candidateUseCase) GetCandidatesByJob(ctx context.Context, jobID string,
 	if err != nil {
 		return nil, fmt.Errorf("get candidates by job: %w", err)
 	}
+
 	return candidatesDTO, nil
 }
 
@@ -51,6 +54,7 @@ func (u *candidateUseCase) UpdateCandidate(ctx context.Context, candidate *domai
 	if err := u.candidateRepo.Update(ctx, candidate); err != nil {
 		return fmt.Errorf("update candidate: %w", err)
 	}
+
 	return nil
 }
 
@@ -58,6 +62,7 @@ func (u *candidateUseCase) UpdateCandidateProfile(ctx context.Context, profile *
 	if err := u.candidateRepo.UpdateProfile(ctx, profile); err != nil {
 		return fmt.Errorf("update candidate profile: %w", err)
 	}
+
 	return nil
 }
 
@@ -65,5 +70,6 @@ func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id string) error
 	if err := u.candidateRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete candidate: %w", err)
 	}
+
 	return nil
 }

@@ -74,7 +74,7 @@ func run(ctx context.Context) error {
 	usecases := initUseCases(infra, utils, repos)
 	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
 
-	grpcHandler := grpchiring.NewHandler(infra.log.Log, usecases.access)
+	grpcHandler := grpchiring.NewHandler(infra.log.Log, usecases.access, usecases.candidate)
 
 	infra.grpcServer.OnInit(func(s *grpc.Server) {
 		pb.RegisterHiringServiceServer(s.GetServer(), grpcHandler)
