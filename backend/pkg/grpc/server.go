@@ -22,11 +22,19 @@ type Server struct {
 
 	lis    net.Listener
 	Server *grpc.Server
+
+	onInit []func(*Server)
 }
 
 // GetServer возвращает инстанс gRPC сервера для регистрации на нём хендлеров
 func (s *Server) GetServer() *grpc.Server {
 	return s.Server
+}
+
+// OnInit регистрирует функцию, которая будет вызвана в конце Init(),
+// когда gRPC сервер уже создан и готов к регистрации хэндлеров.
+func (s *Server) OnInit(fn func(*Server)) {
+	s.onInit = append(s.onInit, fn)
 }
 
 func (s *Server) DependsOn() []string {
@@ -88,6 +96,10 @@ func (s *Server) Init(ctx context.Context) error {
 
 	s.lis = lis
 	s.Server = server
+
+	for _, fn := range s.onInit {
+		fn(s)
+	}
 
 	s.log.Info("grpc server started", zap.Int("port", s.cfg.Port))
 

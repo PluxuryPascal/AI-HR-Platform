@@ -7,6 +7,7 @@ require (
 	github.com/cloudinary/cloudinary-go/v2 v2.14.1
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/pckhoi/casbin-pgx-adapter/v3 v3.2.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/wagslane/go-rabbitmq v0.15.0
 	golang.org/x/sync v0.19.0
 	google.golang.org/grpc v1.79.1

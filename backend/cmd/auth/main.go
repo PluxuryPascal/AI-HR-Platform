@@ -3,14 +3,17 @@ package main
 import (
 	"backend/internal/cache"
 	"backend/internal/db"
-	"backend/internal/handler"
+	httpHandler "backend/internal/http-handler"
 	"backend/internal/middleware"
+	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
 	"backend/internal/server"
 	"backend/internal/server/router/invite"
 	"backend/internal/server/router/user"
 	"backend/internal/usecase"
+	"backend/internal/worker"
 	"backend/pkg/config"
+	"backend/pkg/grpc"
 	"backend/pkg/hash"
 	"backend/pkg/logger"
 	"backend/pkg/rbac"
@@ -34,8 +37,8 @@ type usecases struct {
 }
 
 type handlers struct {
-	auth   *handler.AuthHandler
-	invite *handler.InviteHandler
+	auth   *httpHandler.AuthHandler
+	invite *httpHandler.InviteHandler
 }
 
 type infrastructureComponents struct {
@@ -44,6 +47,7 @@ type infrastructureComponents struct {
 	pool      *db.PostgresClient
 	redisPool *db.RedisClient
 	casbin    *rbac.CasbinClient
+	grpcCl    *grpc.Client
 }
 
 type utilityComponents struct {
@@ -74,10 +78,17 @@ func run(ctx context.Context) error {
 	}
 
 	repos := initRepositories(infra)
-	usecases := initUseCases(infra, utils, repos)
+
+	var hiringClient pb.HiringServiceClient
+	infra.grpcCl.OnInit(func(c *grpc.Client) {
+		hiringClient = pb.NewHiringServiceClient(c.GetConn())
+	})
+
+	usecases := initUseCases(infra, utils, repos, &hiringClient)
 	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
 
 	apiServer := createApiServer(ctx, infra.cfg, utils.t, infra.log, handlers, sessionMiddleware)
+	recoveryWorker := worker.NewInviteRecoveryWorker(infra.log.Log, &infra.cfg.InviteRecovery, usecases.invite)
 
 	if err := svc.Run(ctx, infra.log.Log, []svc.Service{
 		infra.log,
@@ -85,6 +96,8 @@ func run(ctx context.Context) error {
 		infra.redisPool,
 		infra.casbin,
 		apiServer,
+		infra.grpcCl,
+		recoveryWorker,
 	}); err != nil {
 		return fmt.Errorf("run service error: %w", err)
 	}
@@ -119,12 +132,16 @@ func initInfrastructure() (*infrastructureComponents, error) {
 
 	casbinClient := rbac.NewCasbinClient(zapLog.Log, pool.ConnConfig(), "casbin/model.conf")
 
+	hiringClientCfg := conf.GRPC.Clients["hiring"]
+	grpcClient := grpc.NewClient("hiring", zapLog.Log, &hiringClientCfg)
+
 	return &infrastructureComponents{
 		cfg:       conf,
 		log:       zapLog,
 		pool:      pool,
 		redisPool: redisPool,
 		casbin:    casbinClient,
+		grpcCl:    grpcClient,
 	}, nil
 }
 
@@ -156,10 +173,10 @@ func initRepositories(infra *infrastructureComponents) repos {
 	}
 }
 
-func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos) usecases {
+func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos, hiringClient *pb.HiringServiceClient) usecases {
 	return usecases{
 		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h, infra.casbin),
-		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, utils.cacheManager, utils.t, utils.h, infra.casbin),
+		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, hiringClient),
 	}
 }
 
@@ -172,8 +189,8 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 	)
 
 	h := handlers{
-		auth:   handler.NewAuthHandler(&infra.cfg.Server, infra.log.Log, u.auth),
-		invite: handler.NewInviteHandler(&infra.cfg.Server, infra.log.Log, u.invite),
+		auth:   httpHandler.NewAuthHandler(&infra.cfg.Server, infra.log.Log, u.auth),
+		invite: httpHandler.NewInviteHandler(&infra.cfg.Server, infra.log.Log, u.invite),
 	}
 
 	return h, middleware
@@ -181,6 +198,7 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 
 func createApiServer(ctx context.Context, cfg *config.Config, t *token.JWTtoken, log *logger.Log, h handlers, middleware middleware.Middleware) *server.Api {
 	return server.NewApiServer(
+		cfg.Server.Ports["auth"],
 		&cfg.Server,
 		server.WithLogger(log.Log),
 		server.WithRouterGroup(ctx, "/auth",

@@ -17,14 +17,20 @@ type Config struct {
 	Logger     Logger               `yaml:"logger"`
 	Token      Token                `yaml:"token"`
 	RateLimit  map[string]RateLimit `yaml:"rate-limit"`
-	Invite     Invite               `yaml:"invite"`
-	RabbitMQ   RabbitMQ             `yaml:"rabbitmq"`
+	Invite         Invite               `yaml:"invite"`
+	InviteRecovery InviteRecovery       `yaml:"invite-recovery"`
+	RabbitMQ       RabbitMQ             `yaml:"rabbitmq"`
 	Cloudinary Cloudinary           `yaml:"cloudinary"`
 	GRPC       GRPC                 `yaml:"grpc"`
 }
 
 type Invite struct {
 	TTL time.Duration `yaml:"ttl"`
+}
+
+type InviteRecovery struct {
+	Cron           string        `yaml:"cron"`
+	StuckThreshold time.Duration `yaml:"stuck-threshold"`
 }
 
 type RateLimit struct {
@@ -66,11 +72,11 @@ type Redis struct {
 }
 
 type Server struct {
-	Port         int           `yaml:"port"`
-	SecureCookie bool          `yaml:"secure-cookie"`
-	ReadTimeout  time.Duration `yaml:"read-timeout"`
-	WriteTimeout time.Duration `yaml:"write-timeout"`
-	IdleTimeout  time.Duration `yaml:"idle-timeout"`
+	Ports        map[string]int `yaml:"ports"`
+	SecureCookie bool           `yaml:"secure-cookie"`
+	ReadTimeout  time.Duration  `yaml:"read-timeout"`
+	WriteTimeout time.Duration  `yaml:"write-timeout"`
+	IdleTimeout  time.Duration  `yaml:"idle-timeout"`
 }
 
 type Database struct {

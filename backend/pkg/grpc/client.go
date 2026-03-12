@@ -22,11 +22,19 @@ type Client struct {
 	name string
 
 	conn *grpc.ClientConn
+
+	onInit []func(*Client)
 }
 
 // GetConn возвращает установленное соединение для передачи в конструкторы клиентов
 func (c *Client) GetConn() *grpc.ClientConn {
 	return c.conn
+}
+
+// OnInit регистрирует функцию, которая будет вызвана в конце Init(),
+// когда gRPC соединение уже установлено и готово к использованию.
+func (c *Client) OnInit(fn func(*Client)) {
+	c.onInit = append(c.onInit, fn)
 }
 
 func (c *Client) DependsOn() []string {
@@ -98,6 +106,10 @@ func (c *Client) Init(ctx context.Context) error {
 	}
 
 	c.conn = conn
+
+	for _, fn := range c.onInit {
+		fn(c)
+	}
 
 	c.log.Info("grpc client started", zap.Int("port", c.cfg.Port))
 

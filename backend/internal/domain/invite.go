@@ -11,8 +11,10 @@ type Invite struct {
 	Email     string    `db:"email"`
 	Role      string    `db:"role"`
 	Token     string    `db:"token"`
+	Status    string    `db:"status"`
 	ExpiresAt time.Time `db:"expires_at"`
 	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 // CreateInviteParams is the input DTO for the InviteUser use-case method.

@@ -52,7 +52,7 @@ func (a *Api) Stop(ctx context.Context) error {
 	return nil
 }
 
-func NewApiServer(cfg *config.Server, opts ...func(*Api)) *Api {
+func NewApiServer(port int, cfg *config.Server, opts ...func(*Api)) *Api {
 	e := echo.New()
 
 	e.Validator = validator.NewValidator()
@@ -63,7 +63,7 @@ func NewApiServer(cfg *config.Server, opts ...func(*Api)) *Api {
 
 	api := &Api{
 		api:  e,
-		port: cfg.Port,
+		port: port,
 	}
 
 	for _, opt := range opts {
