@@ -14,6 +14,7 @@ type CandidateUseCase interface {
 	UpdateCandidate(ctx context.Context, candidate *domain.Candidate) error
 	UpdateCandidateProfile(ctx context.Context, profile *domain.CandidateProfile) error
 	DeleteCandidate(ctx context.Context, id string) error
+	MoveCandidate(ctx context.Context, p domain.MoveCandidateParams) error
 }
 
 type candidateUseCase struct {
@@ -69,6 +70,14 @@ func (u *candidateUseCase) UpdateCandidateProfile(ctx context.Context, profile *
 func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id string) error {
 	if err := u.candidateRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete candidate: %w", err)
+	}
+
+	return nil
+}
+
+func (u *candidateUseCase) MoveCandidate(ctx context.Context, p domain.MoveCandidateParams) error {
+	if err := u.candidateRepo.MoveStage(ctx, p); err != nil {
+		return fmt.Errorf("move candidate: %w", err)
 	}
 
 	return nil

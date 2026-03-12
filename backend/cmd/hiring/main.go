@@ -24,6 +24,7 @@ type repos struct {
 	department repo.DepartmentRepository
 	job        repo.JobRepository
 	candidate  repo.CandidateRepository
+	pipeline   repo.PipelineRepository
 }
 
 type usecases struct {
@@ -31,6 +32,7 @@ type usecases struct {
 	department usecase.DepartmentUseCase
 	job        usecase.JobUseCase
 	candidate  usecase.CandidateUseCase
+	pipeline   usecase.PipelineUseCase
 }
 
 type handlers struct {
@@ -149,6 +151,7 @@ func initRepositories(infra *infrastructureComponents) repos {
 		department: repo.NewDepartmentRepo(infra.pool),
 		job:        repo.NewJobRepo(infra.pool),
 		candidate:  repo.NewCandidateRepo(infra.pool),
+		pipeline:   repo.NewPipelineRepo(infra.pool),
 	}
 }
 
@@ -158,6 +161,7 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 		department: usecase.NewDepartmentUseCase(r.department),
 		job:        usecase.NewJobUseCase(r.job),
 		candidate:  usecase.NewCandidateUseCase(r.candidate),
+		pipeline:   usecase.NewPipelineUseCase(r.pipeline),
 	}
 }
 

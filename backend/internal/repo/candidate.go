@@ -4,6 +4,7 @@ import (
 	"backend/internal/db"
 	"backend/internal/domain"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -17,6 +18,7 @@ type CandidateRepository interface {
 	Update(ctx context.Context, candidate *domain.Candidate) error
 	UpdateProfile(ctx context.Context, profile *domain.CandidateProfile) error
 	Delete(ctx context.Context, id string) error
+	MoveStage(ctx context.Context, p domain.MoveCandidateParams) error
 }
 
 type candidateRepo struct {
@@ -362,5 +364,58 @@ func (r *candidateRepo) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return fmt.Errorf("delete candidate: %w", err)
 	}
+	return nil
+}
+
+func (r *candidateRepo) MoveStage(ctx context.Context, p domain.MoveCandidateParams) error {
+	tx, err := r.dbClient.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Get current stage
+	const queryGetCurr = `SELECT stage_id FROM hiring.t_candidate_stages WHERE candidate_id = @candidate_id`
+	var fromStageID *string
+	err = tx.QueryRow(ctx, queryGetCurr, pgx.NamedArgs{"candidate_id": p.CandidateID}).Scan(&fromStageID)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("get current stage: %w", err)
+	}
+
+	// 2. Update current stage
+	const queryUpdateStage = `
+		INSERT INTO hiring.t_candidate_stages (candidate_id, stage_id, position, moved_at)
+		VALUES (@candidate_id, @stage_id, @position, NOW())
+		ON CONFLICT (candidate_id) DO UPDATE 
+		SET stage_id = EXCLUDED.stage_id, position = EXCLUDED.position, moved_at = NOW()
+	`
+	_, err = tx.Exec(ctx, queryUpdateStage, pgx.NamedArgs{
+		"candidate_id": p.CandidateID,
+		"stage_id":     p.ToStageID,
+		"position":     p.NewPosition,
+	})
+	if err != nil {
+		return fmt.Errorf("update candidate stage: %w", err)
+	}
+
+	// 3. Record history
+	const queryHistory = `
+		INSERT INTO hiring.t_candidate_stage_history (candidate_id, from_stage_id, to_stage_id, changed_by)
+		VALUES (@candidate_id, @from_stage_id, @to_stage_id, @changed_by)
+	`
+	_, err = tx.Exec(ctx, queryHistory, pgx.NamedArgs{
+		"candidate_id":  p.CandidateID,
+		"from_stage_id": fromStageID,
+		"to_stage_id":   p.ToStageID,
+		"changed_by":    p.ChangedBy,
+	})
+	if err != nil {
+		return fmt.Errorf("insert stage history: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit tx: %w", err)
+	}
+
 	return nil
 }
