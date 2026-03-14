@@ -20,9 +20,9 @@ export function JobsStats() {
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">12</div>
+                    <div className="text-2xl font-bold">4</div>
                     <p className="text-xs text-muted-foreground">
-                        {t("fromLastMonth", { count: 2 })}
+                        {t("fromLastMonth", { count: 1 })}
                     </p>
                 </CardContent>
             </Card>
@@ -34,9 +34,9 @@ export function JobsStats() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">1,240</div>
+                    <div className="text-2xl font-bold">67</div>
                     <p className="text-xs text-muted-foreground">
-                        {t("fromLastMonth", { count: 180 })}
+                        {t("fromLastMonth", { count: 12 })}
                     </p>
                 </CardContent>
             </Card>
@@ -48,7 +48,7 @@ export function JobsStats() {
                     <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-amber-500">45</div>
+                    <div className="text-2xl font-bold text-amber-500">18</div>
                     <p className="text-xs text-muted-foreground">
                         {t("requiresAttention")}
                     </p>

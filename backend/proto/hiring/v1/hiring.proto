@@ -35,6 +35,10 @@ message UpdateCandidateProfileRequest {
     
     // JSON bytes representing the full extracted profile (skills, exp)
     bytes structured_data = 7;
+
+    // Additional fields extracted by AI
+    string location = 8;
+    repeated string skills = 9;
 }
 
 message UpdateCandidateProfileResponse {

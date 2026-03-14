@@ -13,6 +13,8 @@ type Candidate struct {
 	Email         *string    `json:"email,omitempty" db:"email"`
 	ResumeFileKey *string    `json:"resume_file_key,omitempty" db:"resume_file_key"`
 	ParsedText    *string    `json:"parsed_text,omitempty" db:"parsed_text"`
+	Location      *string    `json:"location,omitempty" db:"location"`
+	Skills        []string   `json:"skills,omitempty" db:"skills"`
 	CreatedAt     time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt     *time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }

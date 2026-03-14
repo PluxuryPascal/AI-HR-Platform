@@ -38,6 +38,12 @@ func (h *Handler) UpdateCandidateProfile(ctx context.Context, req *pb.UpdateCand
 	if req.ParsedText != "" {
 		cand.ParsedText = &req.ParsedText
 	}
+	if req.Location != "" {
+		cand.Location = &req.Location
+	}
+	if len(req.Skills) > 0 {
+		cand.Skills = req.Skills
+	}
 
 	if err := h.candidateUC.UpdateCandidate(ctx, cand); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update basic candidate info: %v", err)

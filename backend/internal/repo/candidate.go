@@ -39,8 +39,8 @@ func (r *candidateRepo) Create(ctx context.Context, candidate *domain.Candidate,
 
 	// 1. Insert Candidate
 	const queryCand = `
-		INSERT INTO hiring.t_candidates (job_id, first_name, last_name, email, resume_file_key, parsed_text)
-		VALUES (@job_id, @first_name, @last_name, @email, @resume_file_key, @parsed_text)
+		INSERT INTO hiring.t_candidates (job_id, first_name, last_name, email, resume_file_key, parsed_text, location, skills)
+		VALUES (@job_id, @first_name, @last_name, @email, @resume_file_key, @parsed_text, @location, @skills)
 		RETURNING id, created_at, updated_at
 	`
 	err = tx.QueryRow(ctx, queryCand, pgx.NamedArgs{
@@ -50,6 +50,8 @@ func (r *candidateRepo) Create(ctx context.Context, candidate *domain.Candidate,
 		"email":           candidate.Email,
 		"resume_file_key": candidate.ResumeFileKey,
 		"parsed_text":     candidate.ParsedText,
+		"location":        candidate.Location,
+		"skills":          candidate.Skills,
 	}).Scan(&candidate.ID, &candidate.CreatedAt, &candidate.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("insert candidate: %w", err)
@@ -92,7 +94,7 @@ func (r *candidateRepo) Create(ctx context.Context, candidate *domain.Candidate,
 func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error) {
 	const query = `
 		SELECT 
-			c.id, c.job_id, c.first_name, c.last_name, c.email, c.resume_file_key, c.parsed_text, c.created_at, c.updated_at,
+			c.id, c.job_id, c.first_name, c.last_name, c.email, c.resume_file_key, c.parsed_text, c.location, c.skills, c.created_at, c.updated_at,
 			cp.structured_data, cp.ai_parsed_at, cp.updated_at as profile_updated_at,
 			cs.stage_id
 		FROM hiring.t_candidates c
@@ -106,7 +108,7 @@ func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candida
 	var stageID *string
 
 	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{"id": id}).Scan(
-		&cand.ID, &cand.JobID, &cand.FirstName, &cand.LastName, &cand.Email, &cand.ResumeFileKey, &cand.ParsedText, &cand.CreatedAt, &cand.UpdatedAt,
+		&cand.ID, &cand.JobID, &cand.FirstName, &cand.LastName, &cand.Email, &cand.ResumeFileKey, &cand.ParsedText, &cand.Location, &cand.Skills, &cand.CreatedAt, &cand.UpdatedAt,
 		&profile.StructuredData, &profile.AIParsedAt, &profile.UpdatedAt,
 		&stageID,
 	)
@@ -213,6 +215,8 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 					'last_name',       l.last_name,
 					'email',           l.email,
 					'resume_file_key', l.resume_file_key,
+					'location',        l.location,
+					'skills',          l.skills,
 					'created_at',      l.created_at,
 					'updated_at',      l.updated_at
 				)) AS build
@@ -322,7 +326,8 @@ func (r *candidateRepo) Update(ctx context.Context, candidate *domain.Candidate)
 	const query = `
 		UPDATE hiring.t_candidates
 		SET first_name = @first_name, last_name = @last_name, email = @email,
-		    resume_file_key = @resume_file_key, parsed_text = @parsed_text, updated_at = NOW()
+		    resume_file_key = @resume_file_key, parsed_text = @parsed_text, 
+		    location = @location, skills = @skills, updated_at = NOW()
 		WHERE id = @id
 		RETURNING updated_at
 	`
@@ -333,6 +338,8 @@ func (r *candidateRepo) Update(ctx context.Context, candidate *domain.Candidate)
 		"email":           candidate.Email,
 		"resume_file_key": candidate.ResumeFileKey,
 		"parsed_text":     candidate.ParsedText,
+		"location":        candidate.Location,
+		"skills":          candidate.Skills,
 	}).Scan(&candidate.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("update candidate: %w", err)

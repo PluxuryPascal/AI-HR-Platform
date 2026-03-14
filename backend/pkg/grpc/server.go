@@ -21,14 +21,14 @@ type Server struct {
 	name string
 
 	lis    net.Listener
-	Server *grpc.Server
+	server *grpc.Server
 
 	onInit []func(*Server)
 }
 
 // GetServer возвращает инстанс gRPC сервера для регистрации на нём хендлеров
 func (s *Server) GetServer() *grpc.Server {
-	return s.Server
+	return s.server
 }
 
 // OnInit регистрирует функцию, которая будет вызвана в конце Init(),
@@ -42,7 +42,7 @@ func (s *Server) DependsOn() []string {
 }
 
 func (s *Server) HealthCheck(ctx context.Context) error {
-	if s.Server == nil {
+	if s.server == nil {
 		return fmt.Errorf("grpc server is not initialized")
 	}
 
@@ -95,7 +95,7 @@ func (s *Server) Init(ctx context.Context) error {
 	}
 
 	s.lis = lis
-	s.Server = server
+	s.server = server
 
 	for _, fn := range s.onInit {
 		fn(s)
@@ -111,7 +111,7 @@ func (s *Server) Name() string {
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	if err := s.Server.Serve(s.lis); err != nil {
+	if err := s.server.Serve(s.lis); err != nil {
 		return fmt.Errorf("failed to serve: %w", err)
 	}
 
@@ -119,8 +119,8 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	if s.Server != nil {
-		s.Server.GracefulStop()
+	if s.server != nil {
+		s.server.GracefulStop()
 	}
 
 	return nil
