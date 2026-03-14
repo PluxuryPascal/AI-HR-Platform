@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/pgvector/pgvector-go"
 )
 
 type CandidateRepository interface {
@@ -19,6 +20,11 @@ type CandidateRepository interface {
 	UpdateProfile(ctx context.Context, profile *domain.CandidateProfile) error
 	Delete(ctx context.Context, id string) error
 	MoveStage(ctx context.Context, p domain.MoveCandidateParams) error
+
+	// AI Support
+	SaveCandidateScore(ctx context.Context, score *domain.CandidateScore, factors []domain.ScoreFactor) error
+	GetScoreByCandidateID(ctx context.Context, candidateID string) (*domain.CandidateScore, []domain.ScoreFactor, error)
+	SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error
 }
 
 type candidateRepo struct {
@@ -424,5 +430,104 @@ func (r *candidateRepo) MoveStage(ctx context.Context, p domain.MoveCandidatePar
 		return fmt.Errorf("commit tx: %w", err)
 	}
 
+	return nil
+}
+
+func (r *candidateRepo) SaveCandidateScore(ctx context.Context, score *domain.CandidateScore, factors []domain.ScoreFactor) error {
+	tx, err := r.dbClient.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	const queryScore = `
+		INSERT INTO ai_engine.t_candidate_scores (candidate_id, match_score, analyzed_at)
+		VALUES (@candidate_id, @match_score, NOW())
+		ON CONFLICT (candidate_id) DO UPDATE 
+		SET match_score = EXCLUDED.match_score, analyzed_at = NOW()
+	`
+	_, err = tx.Exec(ctx, queryScore, pgx.NamedArgs{
+		"candidate_id": score.CandidateID,
+		"match_score":  score.MatchScore,
+	})
+	if err != nil {
+		return fmt.Errorf("upsert candidate score: %w", err)
+	}
+
+	const queryDelFactors = `DELETE FROM ai_engine.t_score_factors WHERE candidate_id = @candidate_id`
+	_, err = tx.Exec(ctx, queryDelFactors, pgx.NamedArgs{"candidate_id": score.CandidateID})
+	if err != nil {
+		return fmt.Errorf("delete old factors: %w", err)
+	}
+
+	if len(factors) > 0 {
+		batch := &pgx.Batch{}
+		const queryFact = `
+			INSERT INTO ai_engine.t_score_factors (candidate_id, type, description, impact)
+			VALUES ($1, $2, $3, $4)
+		`
+		for _, f := range factors {
+			batch.Queue(queryFact, score.CandidateID, f.Type, f.Description, f.Impact)
+		}
+		br := tx.SendBatch(ctx, batch)
+		if err := br.Close(); err != nil {
+			return fmt.Errorf("insert factors batch: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *candidateRepo) GetScoreByCandidateID(ctx context.Context, candidateID string) (*domain.CandidateScore, []domain.ScoreFactor, error) {
+	const queryScore = `
+		SELECT candidate_id, match_score, analyzed_at
+		FROM ai_engine.t_candidate_scores
+		WHERE candidate_id = @id
+	`
+	var score domain.CandidateScore
+	err := r.dbClient.Pool.QueryRow(ctx, queryScore, pgx.NamedArgs{"id": candidateID}).Scan(
+		&score.CandidateID, &score.MatchScore, &score.AnalyzedAt,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("query score: %w", err)
+	}
+
+	const queryFactors = `
+		SELECT id, candidate_id, type, description, impact
+		FROM ai_engine.t_score_factors
+		WHERE candidate_id = @id
+	`
+	rows, err := r.dbClient.Pool.Query(ctx, queryFactors, pgx.NamedArgs{"id": candidateID})
+	if err != nil {
+		return nil, nil, fmt.Errorf("query factors: %w", err)
+	}
+	defer rows.Close()
+
+	var factors []domain.ScoreFactor
+	for rows.Next() {
+		var f domain.ScoreFactor
+		if err := rows.Scan(&f.ID, &f.CandidateID, &f.Type, &f.Description, &f.Impact); err != nil {
+			return nil, nil, fmt.Errorf("scan factor: %w", err)
+		}
+		factors = append(factors, f)
+	}
+
+	return &score, factors, nil
+}
+
+func (r *candidateRepo) SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error {
+	const query = `
+		INSERT INTO ai_engine.t_resume_embeddings (team_id, candidate_id, chunk_text, embedding)
+		VALUES (@team_id, @candidate_id, @chunk_text, @embedding)
+	`
+	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{
+		"team_id":      embedding.TeamID,
+		"candidate_id": embedding.CandidateID,
+		"chunk_text":   embedding.ChunkText,
+		"embedding":    pgvector.NewVector(embedding.Embedding),
+	})
+	if err != nil {
+		return fmt.Errorf("insert embedding: %w", err)
+	}
 	return nil
 }

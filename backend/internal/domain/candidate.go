@@ -27,6 +27,40 @@ type CandidateProfile struct {
 	UpdatedAt      *time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }
 
+// FactorType represents the factor_type ENUM
+type FactorType string
+
+const (
+	FactorPositive FactorType = "positive"
+	FactorNegative FactorType = "negative"
+	FactorNeutral  FactorType = "neutral"
+)
+
+// CandidateScore represents the ai_engine.t_candidate_scores table
+type CandidateScore struct {
+	CandidateID string     `json:"candidate_id" db:"candidate_id"`
+	MatchScore  int        `json:"match_score" db:"match_score"`
+	AnalyzedAt  *time.Time `json:"analyzed_at,omitempty" db:"analyzed_at"`
+}
+
+// ScoreFactor represents the ai_engine.t_score_factors table
+type ScoreFactor struct {
+	ID          string     `json:"id" db:"id"`
+	CandidateID string     `json:"candidate_id" db:"candidate_id"`
+	Type        FactorType `json:"type" db:"type"`
+	Description string     `json:"description" db:"description"`
+	Impact      int        `json:"impact" db:"impact"`
+}
+
+// ResumeEmbedding represents the ai_engine.t_resume_embeddings table
+type ResumeEmbedding struct {
+	ID          string    `json:"id" db:"id"`
+	TeamID      string    `json:"team_id" db:"team_id"`
+	CandidateID string    `json:"candidate_id" db:"candidate_id"`
+	ChunkText   string    `json:"chunk_text" db:"chunk_text"`
+	Embedding   []float32 `json:"embedding" db:"embedding"`
+}
+
 type CandidateFilter struct {
 	FirstName      *string    `json:"first_name"`
 	LastName       *string    `json:"last_name"`
