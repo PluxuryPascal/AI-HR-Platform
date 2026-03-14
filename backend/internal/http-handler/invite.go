@@ -2,6 +2,7 @@ package handler
 
 import (
 	"backend/internal/domain"
+	"backend/internal/response"
 	"backend/internal/usecase"
 	"backend/pkg/config"
 	"errors"
@@ -44,19 +45,19 @@ func (i *InviteHandler) GetValidate() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		tokenStr := c.QueryParam("token")
 		if tokenStr == "" {
-			return echo.NewHTTPError(http.StatusBadRequest, "token is required")
+			return response.Error(c, http.StatusBadRequest, "token is required")
 		}
 
 		payload, err := i.usecase.ValidateInvite(c.Request().Context(), tokenStr)
 		if err != nil {
 			if errors.Is(err, usecase.ErrInviteNotFound) || errors.Is(err, usecase.ErrInviteExpired) {
-				return echo.NewHTTPError(http.StatusNotFound, err.Error())
+				return response.Error(c, http.StatusNotFound, err.Error())
 			}
 
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("validate error: %w", err))
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("validate error: %v", err))
 		}
 
-		return c.JSON(http.StatusOK, payload)
+		return response.OK(c, payload)
 	}
 }
 
@@ -65,16 +66,16 @@ func (i *InviteHandler) PostInvite() echo.HandlerFunc {
 		var req postInviteRequest
 
 		if err := c.Bind(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect bind: %w", err))
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect bind: %v", err))
 		}
 
 		if err := c.Validate(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect data: %v", err))
 		}
 
 		cookie, err := c.Cookie("access_token")
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "cookie not found")
+			return response.Error(c, http.StatusBadRequest, "cookie not found")
 		}
 
 		if err := i.usecase.InviteUser(c.Request().Context(), cookie.Value, domain.CreateInviteParams{
@@ -82,10 +83,10 @@ func (i *InviteHandler) PostInvite() echo.HandlerFunc {
 			Role:   req.Role,
 			JobIDs: req.JobIDs,
 		}); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("invite error: %w", err))
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("invite error: %v", err))
 		}
 
-		return c.NoContent(http.StatusCreated)
+		return response.NoContent(c, http.StatusCreated)
 	}
 }
 
@@ -94,11 +95,11 @@ func (i *InviteHandler) PostCreateUser() echo.HandlerFunc {
 		var req acceptInviteRequest
 
 		if err := c.Bind(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect bind: %w", err))
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect bind: %v", err))
 		}
 
 		if err := c.Validate(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("incorrect data: %w", err))
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect data: %v", err))
 		}
 
 		input := domain.CreateUserParams{
@@ -112,11 +113,11 @@ func (i *InviteHandler) PostCreateUser() echo.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, usecase.ErrUserAlreadyExists):
-				return echo.NewHTTPError(http.StatusConflict, "user already exists")
+				return response.Error(c, http.StatusConflict, "user already exists")
 			case errors.Is(err, usecase.ErrInviteNotFound), errors.Is(err, usecase.ErrInviteExpired):
-				return echo.NewHTTPError(http.StatusNotFound, err.Error())
+				return response.Error(c, http.StatusNotFound, err.Error())
 			default:
-				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("register error: %w", err))
+				return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("register error: %v", err))
 			}
 		}
 
@@ -130,6 +131,6 @@ func (i *InviteHandler) PostCreateUser() echo.HandlerFunc {
 			HttpOnly: true,
 		})
 
-		return c.NoContent(http.StatusCreated)
+		return response.NoContent(c, http.StatusCreated)
 	}
 }

@@ -4,11 +4,14 @@ import (
 	"backend/internal/db"
 	"backend/internal/domain"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type JobRepository interface {
 	Create(ctx context.Context, job *domain.Job) error
@@ -74,6 +77,9 @@ func (r *jobRepo) GetByID(ctx context.Context, id string) (*domain.Job, error) {
 
 	job, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[domain.Job])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
 		return nil, fmt.Errorf("scan job: %w", err)
 	}
 

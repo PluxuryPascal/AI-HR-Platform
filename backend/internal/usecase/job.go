@@ -4,8 +4,11 @@ import (
 	"backend/internal/domain"
 	"backend/internal/repo"
 	"context"
+	"errors"
 	"fmt"
 )
+
+var ErrJobNotFound = errors.New("job not found")
 
 type JobUseCase interface {
 	CreateJob(ctx context.Context, job *domain.Job) error
@@ -34,6 +37,9 @@ func (u *jobUseCase) CreateJob(ctx context.Context, job *domain.Job) error {
 func (u *jobUseCase) GetJobByID(ctx context.Context, id string) (*domain.Job, error) {
 	job, err := u.jobRepo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return nil, ErrJobNotFound
+		}
 		return nil, fmt.Errorf("get job by id: %w", err)
 	}
 

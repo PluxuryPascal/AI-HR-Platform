@@ -4,16 +4,19 @@ import (
 	"backend/internal/cache"
 	"backend/internal/db"
 	grpchiring "backend/internal/grpc-handler/hiring"
+	"backend/internal/http-handler"
 	"backend/internal/middleware"
 	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
 	"backend/internal/server"
+	"backend/internal/server/router/job"
 	"backend/internal/usecase"
 	"backend/pkg/config"
 	"backend/pkg/grpc"
 	"backend/pkg/logger"
 	"backend/pkg/rbac"
 	"backend/pkg/svc"
+	"backend/pkg/token"
 	"context"
 	"fmt"
 	"log"
@@ -36,6 +39,7 @@ type usecases struct {
 }
 
 type handlers struct {
+	job *handler.JobHandler
 }
 
 type infrastructureComponents struct {
@@ -49,6 +53,7 @@ type infrastructureComponents struct {
 type utilityComponents struct {
 	casbinClient *rbac.CasbinClient
 	cacheManager *cache.Manager
+	token        *token.JWTtoken
 }
 
 func main() {
@@ -82,7 +87,7 @@ func run(ctx context.Context) error {
 		pb.RegisterHiringServiceServer(s.GetServer(), grpcHandler)
 	})
 
-	apiServer := createApiServer(ctx, infra.cfg, infra.log, handlers, sessionMiddleware)
+	apiServer := createApiServer(ctx, infra.cfg, infra.log, handlers, sessionMiddleware, utils.token)
 
 	if err := svc.Run(ctx, infra.log.Log, []svc.Service{
 		infra.log,
@@ -139,9 +144,15 @@ func initUtilities(infra *infrastructureComponents) (*utilityComponents, error) 
 
 	cacheManager := cache.NewManager(infra.redisPool, cache.WithPrefix("ai_hr"))
 
+	t, err := token.NewJWTtoken(infra.cfg.Token.Issuer, infra.cfg.Token.ExpireAt, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create jwt token error: %w", err)
+	}
+
 	return &utilityComponents{
 		casbinClient: casbinClient,
 		cacheManager: cacheManager,
+		token:        t,
 	}, nil
 }
 
@@ -166,22 +177,27 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 }
 
 func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases) (handlers, middleware.Middleware) {
-	middleware := middleware.NewMiddleware(
+	mw := middleware.NewMiddleware(
 		infra.log,
 		infra.redisPool,
 		utils.cacheManager,
 		utils.casbinClient,
 	)
 
-	h := handlers{}
+	h := handlers{
+		job: handler.NewJobHandler(infra.log.Log, u.job),
+	}
 
-	return h, middleware
+	return h, mw
 }
 
-func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h handlers, middleware middleware.Middleware) *server.Api {
+func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h handlers, mw middleware.Middleware, t *token.JWTtoken) *server.Api {
 	return server.NewApiServer(
 		cfg.Server.Ports["hiring"],
 		&cfg.Server,
 		server.WithLogger(log.Log),
+		server.WithRouterGroup(ctx, "/jobs",
+			job.NewRouter(h.job, mw.Session(t), mw.RBAC()),
+		),
 	)
 }

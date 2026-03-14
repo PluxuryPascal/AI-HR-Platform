@@ -41,23 +41,23 @@ type Job struct {
 }
 
 type SortParams struct {
-	SortID   *string `json:"sort_id"`
-	SortDesc *bool   `json:"sort_desc"`
+	SortID   *string `json:"sort_id" validate:"omitempty"`
+	SortDesc *bool   `json:"sort_desc" validate:"omitempty"`
 }
 
 type DateFilter struct {
-	Type     string     `json:"type"` // "before", "after", "between"
-	DateFrom *time.Time `json:"date_from"`
-	DateTo   *time.Time `json:"date_to"`
+	Type     string     `json:"type" validate:"omitempty,oneof=before after between"` // "before", "after", "between"
+	DateFrom *time.Time `json:"date_from" validate:"required_if=Type after,required_if=Type between"`
+	DateTo   *time.Time `json:"date_to" validate:"required_if=Type before,required_if=Type between"`
 }
 
 type JobFilter struct {
-	Title          *string         `json:"title"`
-	DepartmentName *string         `json:"department_name"`
-	Status         *JobStatus      `json:"status"`
-	WorkFormat     *WorkFormatType `json:"work_format"`
-	DateFilter     *DateFilter     `json:"date_filter"`
-	Sort           *SortParams     `json:"sort"`
+	Title          *string         `json:"title" validate:"omitempty"`
+	DepartmentName *string         `json:"department_name" validate:"omitempty"`
+	Status         *JobStatus      `json:"status" validate:"omitempty,oneof=status_draft status_published status_closed status_archived"`
+	WorkFormat     *WorkFormatType `json:"work_format" validate:"omitempty,oneof=remote office hybrid"`
+	DateFilter     *DateFilter     `json:"date_filter" validate:"omitempty"`
+	Sort           *SortParams     `json:"sort" validate:"omitempty"`
 }
 
 type JobsDTO struct {
