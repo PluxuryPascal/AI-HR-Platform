@@ -9,6 +9,7 @@ import (
 	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
 	"backend/internal/server"
+	"backend/internal/server/router/candidate"
 	"backend/internal/server/router/job"
 	"backend/internal/usecase"
 	"backend/pkg/config"
@@ -39,7 +40,8 @@ type usecases struct {
 }
 
 type handlers struct {
-	job *handler.JobHandler
+	job       *handler.JobHandler
+	candidate *handler.CandidateHandler
 }
 
 type infrastructureComponents struct {
@@ -185,7 +187,8 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 	)
 
 	h := handlers{
-		job: handler.NewJobHandler(infra.log.Log, u.job),
+		job:       handler.NewJobHandler(infra.log.Log, u.job),
+		candidate: handler.NewCandidateHandler(infra.log.Log, u.candidate),
 	}
 
 	return h, mw
@@ -198,6 +201,12 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		server.WithLogger(log.Log),
 		server.WithRouterGroup(ctx, "/jobs",
 			job.NewRouter(h.job, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/jobs/:job_id/candidates",
+			candidate.NewJobScopedRouter(h.candidate, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/candidates",
+			candidate.NewRouter(h.candidate, mw.Session(t), mw.RBAC()),
 		),
 	)
 }

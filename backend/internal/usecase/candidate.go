@@ -4,8 +4,13 @@ import (
 	"backend/internal/domain"
 	"backend/internal/repo"
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/jackc/pgx/v5"
 )
+
+var ErrCandidateNotFound = errors.New("candidate not found")
 
 type CandidateUseCase interface {
 	CreateCandidate(ctx context.Context, candidate *domain.Candidate, profile *domain.CandidateProfile, initialStageID string) error
@@ -36,6 +41,10 @@ func (u *candidateUseCase) CreateCandidate(ctx context.Context, candidate *domai
 func (u *candidateUseCase) GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error) {
 	cand, profile, stageID, err := u.candidateRepo.GetByID(ctx, id)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil, nil, ErrCandidateNotFound
+		}
+
 		return nil, nil, nil, fmt.Errorf("get candidate by id: %w", err)
 	}
 
