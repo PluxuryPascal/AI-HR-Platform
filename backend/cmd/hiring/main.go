@@ -4,7 +4,7 @@ import (
 	"backend/internal/cache"
 	"backend/internal/db"
 	grpchiring "backend/internal/grpc-handler/hiring"
-	"backend/internal/http-handler"
+	handler "backend/internal/http-handler"
 	"backend/internal/middleware"
 	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
@@ -15,12 +15,16 @@ import (
 	"backend/pkg/config"
 	"backend/pkg/grpc"
 	"backend/pkg/logger"
+	"backend/pkg/mq"
 	"backend/pkg/rbac"
+	"backend/pkg/storage"
 	"backend/pkg/svc"
 	"backend/pkg/token"
 	"context"
 	"fmt"
 	"log"
+
+	"github.com/lestrrat-go/jwx/v2/jwk"
 )
 
 type repos struct {
@@ -45,15 +49,18 @@ type handlers struct {
 }
 
 type infrastructureComponents struct {
-	cfg        *config.Config
-	log        *logger.Log
-	pool       *db.PostgresClient
-	redisPool  *db.RedisClient
-	grpcServer *grpc.Server
+	cfg          *config.Config
+	log          *logger.Log
+	pool         *db.PostgresClient
+	redisPool    *db.RedisClient
+	grpcServer   *grpc.Server
+	storage      *storage.CloudinaryStorage
+	casbinClient *rbac.CasbinClient
+	mqClient     *mq.RabbitMQ
+	mqPublisher  *mq.MQPublisher
 }
 
 type utilityComponents struct {
-	casbinClient *rbac.CasbinClient
 	cacheManager *cache.Manager
 	token        *token.JWTtoken
 }
@@ -96,6 +103,10 @@ func run(ctx context.Context) error {
 		infra.pool,
 		infra.redisPool,
 		infra.grpcServer,
+		infra.mqClient,
+		infra.mqPublisher,
+		infra.storage,
+		infra.casbinClient,
 		apiServer,
 	}); err != nil {
 		return fmt.Errorf("run service error: %w", err)
@@ -129,30 +140,43 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		return nil, fmt.Errorf("create redis error: %w", err)
 	}
 
+	casbinClient := rbac.NewCasbinClient(zapLog.Log, pool.ConnConfig(), "casbin/model.conf")
+
+	storage := storage.NewCloudinaryStorage(zapLog.Log, &conf.Cloudinary)
+
+	mqClient := mq.NewRabbitMQ(zapLog.Log, &conf.RabbitMQ)
+	mqPublisher := mq.NewMQPublisher(zapLog.Log, mqClient)
+
 	serverCfg := conf.GRPC.Servers["hiring"]
 	grpcServer := grpc.NewServer("hiring", zapLog.Log, &serverCfg)
 
 	return &infrastructureComponents{
-		cfg:        conf,
-		log:        zapLog,
-		pool:       pool,
-		redisPool:  redisPool,
-		grpcServer: grpcServer,
+		cfg:          conf,
+		log:          zapLog,
+		pool:         pool,
+		redisPool:    redisPool,
+		grpcServer:   grpcServer,
+		storage:      storage,
+		casbinClient: casbinClient,
+		mqClient:     mqClient,
+		mqPublisher:  mqPublisher,
 	}, nil
 }
 
 func initUtilities(infra *infrastructureComponents) (*utilityComponents, error) {
-	casbinClient := rbac.NewCasbinClient(infra.log.Log, infra.pool.ConnConfig(), "casbin/model.conf")
-
 	cacheManager := cache.NewManager(infra.redisPool, cache.WithPrefix("ai_hr"))
 
-	t, err := token.NewJWTtoken(infra.cfg.Token.Issuer, infra.cfg.Token.ExpireAt, nil)
+	prvKey, err := loadKey(infra.cfg.Token.PrivateKey.Path)
+	if err != nil {
+		return nil, fmt.Errorf("load key error: %w", err)
+	}
+
+	t, err := token.NewJWTtoken(infra.cfg.Token.Issuer, infra.cfg.Token.ExpireAt, prvKey)
 	if err != nil {
 		return nil, fmt.Errorf("create jwt token error: %w", err)
 	}
 
 	return &utilityComponents{
-		casbinClient: casbinClient,
 		cacheManager: cacheManager,
 		token:        t,
 	}, nil
@@ -173,7 +197,7 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 		access:     usecase.NewAccessUseCase(r.access),
 		department: usecase.NewDepartmentUseCase(r.department),
 		job:        usecase.NewJobUseCase(r.job),
-		candidate:  usecase.NewCandidateUseCase(r.candidate),
+		candidate:  usecase.NewCandidateUseCase(infra.log.Log, r.candidate, r.pipeline, infra.storage, infra.mqPublisher),
 		pipeline:   usecase.NewPipelineUseCase(r.pipeline),
 	}
 }
@@ -183,7 +207,7 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 		infra.log,
 		infra.redisPool,
 		utils.cacheManager,
-		utils.casbinClient,
+		infra.casbinClient,
 	)
 
 	h := handlers{
@@ -209,4 +233,18 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 			candidate.NewRouter(h.candidate, mw.Session(t), mw.RBAC()),
 		),
 	)
+}
+
+func loadKey(path string) (jwk.Key, error) {
+	keySet, err := jwk.ReadFile(path, jwk.WithPEM(true))
+	if err != nil {
+		return nil, fmt.Errorf("read key error: %w", err)
+	}
+
+	key, ok := keySet.Key(0)
+	if !ok {
+		return nil, fmt.Errorf("key not found")
+	}
+
+	return key, nil
 }

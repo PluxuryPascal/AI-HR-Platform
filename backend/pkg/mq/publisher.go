@@ -29,18 +29,18 @@ import (
 //	    mq.WithRoutingKey("candidate.rejected"),
 //	)
 type MQPublisher struct {
-	log  *zap.Logger
-	conn *rabbitmq.Conn
+	log    *zap.Logger
+	rabbit *RabbitMQ
 
 	pub *rabbitmq.Publisher
 }
 
 var _ svc.Service = (*MQPublisher)(nil)
 
-func NewMQPublisher(log *zap.Logger, conn *rabbitmq.Conn) *MQPublisher {
+func NewMQPublisher(log *zap.Logger, rabbit *RabbitMQ) *MQPublisher {
 	return &MQPublisher{
-		log:  log,
-		conn: conn,
+		log:    log,
+		rabbit: rabbit,
 	}
 }
 
@@ -52,7 +52,7 @@ func (m *MQPublisher) DependsOn() []string { return []string{"logger", "rabbitmq
 // переподключения при обрыве соединения.
 func (m *MQPublisher) Init(_ context.Context) error {
 	pub, err := rabbitmq.NewPublisher(
-		m.conn,
+		m.rabbit.Conn,
 		rabbitmq.WithPublisherOptionsLogger(newZapLogger(m.log)),
 	)
 	if err != nil {
