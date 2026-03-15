@@ -10,18 +10,27 @@ import (
 )
 
 type Config struct {
-	Server     Server               `yaml:"server"`
-	Database   Database             `yaml:"database"`
-	Redis      Redis                `yaml:"redis"`
-	Hash       Hash                 `yaml:"hash"`
-	Logger     Logger               `yaml:"logger"`
-	Token      Token                `yaml:"token"`
-	RateLimit  map[string]RateLimit `yaml:"rate-limit"`
+	Server         Server               `yaml:"server"`
+	Database       Database             `yaml:"database"`
+	Redis          Redis                `yaml:"redis"`
+	Hash           Hash                 `yaml:"hash"`
+	Logger         Logger               `yaml:"logger"`
+	Token          Token                `yaml:"token"`
+	RateLimit      map[string]RateLimit `yaml:"rate-limit"`
 	Invite         Invite               `yaml:"invite"`
 	InviteRecovery InviteRecovery       `yaml:"invite-recovery"`
 	RabbitMQ       RabbitMQ             `yaml:"rabbitmq"`
-	Cloudinary Cloudinary           `yaml:"cloudinary"`
-	GRPC       GRPC                 `yaml:"grpc"`
+	Cloudinary     Cloudinary           `yaml:"cloudinary"`
+	GRPC           GRPC                 `yaml:"grpc"`
+	Temporal       Temporal             `yaml:"temporal"`
+}
+
+type Temporal struct {
+	HostPort        string        `yaml:"host-port"`
+	ActivityTimeout time.Duration `yaml:"activity-timeout"`
+	QueueName       string        `yaml:"queue-name"`
+	Namespace       string        `yaml:"namespace"`
+	WorkerCount     int           `yaml:"worker-count"`
 }
 
 type Invite struct {
