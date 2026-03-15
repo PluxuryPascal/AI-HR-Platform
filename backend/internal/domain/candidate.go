@@ -7,13 +7,13 @@ import (
 
 // Candidate represents the hiring.t_candidates table
 type Candidate struct {
-	ID            string     `json:"id" db:"id"`
-	JobID         string     `json:"job_id" db:"job_id"`
-	FirstName     *string    `json:"first_name,omitempty" db:"first_name"`
-	LastName      *string    `json:"last_name,omitempty" db:"last_name"`
-	Email         *string    `json:"email,omitempty" db:"email"`
-	ResumeFileKey *string    `json:"resume_file_key,omitempty" db:"resume_file_key"`
-	ParsedText    *string    `json:"parsed_text,omitempty" db:"parsed_text"`
+	ID            string                 `json:"id" db:"id"`
+	JobID         string                 `json:"job_id" db:"job_id"`
+	FirstName     *string                `json:"first_name,omitempty" db:"first_name"`
+	LastName      *string                `json:"last_name,omitempty" db:"last_name"`
+	Email         *string                `json:"email,omitempty" db:"email"`
+	ResumeFileKey *string                `json:"resume_file_key,omitempty" db:"resume_file_key"`
+	ParsedText    *string                `json:"parsed_text,omitempty" db:"parsed_text"`
 	Location      *string                `json:"location,omitempty" db:"location"`
 	Skills        []string               `json:"skills,omitempty" db:"skills"`
 	ParsingStatus CandidateParsingStatus `json:"parsing_status" db:"parsing_status"`
@@ -91,4 +91,18 @@ type CreateCandidateParams struct {
 	JobID    string
 	Filename string
 	File     io.Reader
+}
+
+type AIParsingResult struct {
+	CandidateID    string
+	JobID          string
+	ParseStatus    CandidateParsingStatus
+	FirstName      *string
+	LastName       *string
+	Email          *string
+	Location       *string
+	Skills         []string
+	ParsedText     *string
+	StructuredData []byte
+	InitialStageID *string
 }

@@ -7,17 +7,18 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/pgvector/pgvector-go"
 )
 
 type CandidateRepository interface {
-	Create(ctx context.Context, candidate *domain.Candidate, profile *domain.CandidateProfile, initialStageID string) error
+	Create(ctx context.Context, jobID, fileKey string) (*domain.Candidate, error)
 	GetByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error)
 	GetByJobID(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error)
-	Update(ctx context.Context, candidate *domain.Candidate) error
-	UpdateProfile(ctx context.Context, profile *domain.CandidateProfile) error
+	UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate) error
+	UpdateFromAIParsing(ctx context.Context, result *domain.AIParsingResult) error
 	Delete(ctx context.Context, id string) error
 	MoveStage(ctx context.Context, p domain.MoveCandidateParams) error
 
@@ -35,67 +36,119 @@ func NewCandidateRepo(dbClient *db.PostgresClient) CandidateRepository {
 	return &candidateRepo{dbClient: dbClient}
 }
 
-func (r *candidateRepo) Create(ctx context.Context, candidate *domain.Candidate, profile *domain.CandidateProfile, initialStageID string) error {
+func (r *candidateRepo) UpdateFromAIParsing(ctx context.Context, result *domain.AIParsingResult) error {
 	tx, err := r.dbClient.Pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+		return fmt.Errorf("begin transaction: %w", err)
 	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
-	defer tx.Rollback(ctx)
-
-	// 1. Insert Candidate
-	const queryCand = `
-		INSERT INTO hiring.t_candidates (job_id, first_name, last_name, email, resume_file_key, parsed_text, location, skills, parsing_status)
-		VALUES (@job_id, @first_name, @last_name, @email, @resume_file_key, @parsed_text, @location, @skills, @parsing_status)
-		RETURNING id, created_at, updated_at
+	const query = `
+		UPDATE hiring.t_candidates
+		SET 
+			first_name = @first_name,
+			last_name = @last_name,
+			email = @email,
+			parsed_text = @parsed_text,
+			location = @location,
+			skills = @skills,
+			parsing_status = @parsing_status,
+			updated_at = NOW()
+		WHERE id = @id
 	`
-	err = tx.QueryRow(ctx, queryCand, pgx.NamedArgs{
-		"job_id":          candidate.JobID,
-		"first_name":      candidate.FirstName,
-		"last_name":       candidate.LastName,
-		"email":           candidate.Email,
-		"resume_file_key": candidate.ResumeFileKey,
-		"parsed_text":     candidate.ParsedText,
-		"location":        candidate.Location,
-		"skills":          candidate.Skills,
-		"parsing_status":  candidate.ParsingStatus,
-	}).Scan(&candidate.ID, &candidate.CreatedAt, &candidate.UpdatedAt)
+
+	_, err = tx.Exec(ctx, query, pgx.NamedArgs{
+		"id":             result.CandidateID,
+		"first_name":     result.FirstName,
+		"last_name":      result.LastName,
+		"email":          result.Email,
+		"parsed_text":    result.ParsedText,
+		"location":       result.Location,
+		"skills":         result.Skills,
+		"parsing_status": result.ParseStatus,
+	})
 	if err != nil {
-		return fmt.Errorf("insert candidate: %w", err)
+		return fmt.Errorf("update candidate: %w", err)
 	}
 
-	// 2. Insert Profile
-	const queryProfile = `
-		INSERT INTO hiring.t_candidate_profiles (candidate_id, structured_data, ai_parsed_at)
-		VALUES (@candidate_id, @structured_data, @ai_parsed_at)
+	now := time.Now()
+	const profileQuery = `
+		INSERT INTO hiring.t_candidate_profiles (candidate_id, structured_data, ai_parsed_at, updated_at)
+		VALUES (@candidate_id, @structured_data, @ai_parsed_at, NOW())
+		ON CONFLICT (candidate_id) DO UPDATE SET
+			structured_data = EXCLUDED.structured_data,
+			ai_parsed_at = EXCLUDED.ai_parsed_at,
+			updated_at = NOW()
 	`
-	_, err = tx.Exec(ctx, queryProfile, pgx.NamedArgs{
-		"candidate_id":    candidate.ID,
-		"structured_data": profile.StructuredData,
-		"ai_parsed_at":    profile.AIParsedAt,
+
+	_, err = tx.Exec(ctx, profileQuery, pgx.NamedArgs{
+		"candidate_id":    result.CandidateID,
+		"structured_data": result.StructuredData,
+		"ai_parsed_at":    now,
 	})
 	if err != nil {
 		return fmt.Errorf("insert candidate profile: %w", err)
 	}
 
-	// 3. Set Initial Stage
-	const queryStage = `
-		INSERT INTO hiring.t_candidate_stages (candidate_id, stage_id, position)
-		VALUES (@candidate_id, @stage_id, 0)
-	`
-	_, err = tx.Exec(ctx, queryStage, pgx.NamedArgs{
-		"candidate_id": candidate.ID,
-		"stage_id":     initialStageID,
-	})
-	if err != nil {
-		return fmt.Errorf("insert candidate stage: %w", err)
+	if result.InitialStageID != nil {
+		const stageQuery = `
+			INSERT INTO hiring.t_candidate_stages (candidate_id, stage_id, position, moved_at)
+			VALUES (@candidate_id, @stage_id, 0, NOW())
+			ON CONFLICT (candidate_id) DO NOTHING
+		`
+
+		_, err = tx.Exec(ctx, stageQuery, pgx.NamedArgs{
+			"candidate_id": result.CandidateID,
+			"stage_id":     *result.InitialStageID,
+		})
+		if err != nil {
+			return fmt.Errorf("insert candidate stage: %w", err)
+		}
+
+		const historyQuery = `
+			INSERT INTO hiring.t_candidate_stage_history (candidate_id, from_stage_id, to_stage_id, changed_by, changed_at)
+			VALUES (@candidate_id, NULL, @stage_id, 'system', NOW())
+		`
+
+		_, err = tx.Exec(ctx, historyQuery, pgx.NamedArgs{
+			"candidate_id": result.CandidateID,
+			"stage_id":     *result.InitialStageID,
+		})
+		if err != nil {
+			return fmt.Errorf("insert candidate stage history: %w", err)
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit tx: %w", err)
+		return fmt.Errorf("commit transaction: %w", err)
 	}
 
 	return nil
+}
+
+func (r *candidateRepo) Create(ctx context.Context, jobID, fileKey string) (*domain.Candidate, error) {
+	const query = `
+		INSERT INTO hiring.t_candidates (job_id, resume_file_key, parsing_status)
+		VALUES (@job_id, @resume_file_key, @parsing_status)
+		RETURNING id, job_id, resume_file_key, parsing_status, created_at
+	`
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
+		"job_id":          jobID,
+		"resume_file_key": fileKey,
+		"parsing_status":  domain.ParsingStatusPending,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("insert candidate draft: %w", err)
+	}
+
+	candidate, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[domain.Candidate])
+	if err != nil {
+		return nil, fmt.Errorf("collect candidate: %w", err)
+	}
+
+	return &candidate, nil
 }
 
 func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error) {
@@ -330,29 +383,31 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 	return &res, nil
 }
 
-func (r *candidateRepo) Update(ctx context.Context, candidate *domain.Candidate) error {
+func (r *candidateRepo) UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate) error {
 	const query = `
 		UPDATE hiring.t_candidates
-		SET first_name = @first_name, last_name = @last_name, email = @email,
-		    resume_file_key = @resume_file_key, parsed_text = @parsed_text, 
-		    location = @location, skills = @skills, parsing_status = @parsing_status, updated_at = NOW()
+		SET 
+			first_name = @first_name, 
+			last_name = @last_name, 
+			email = @email,
+		    location = @location, 
+		    skills = @skills, 
+		    updated_at = NOW()
 		WHERE id = @id
 		RETURNING updated_at
 	`
-	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{
-		"id":              candidate.ID,
-		"first_name":      candidate.FirstName,
-		"last_name":       candidate.LastName,
-		"email":           candidate.Email,
-		"resume_file_key": candidate.ResumeFileKey,
-		"parsed_text":     candidate.ParsedText,
-		"location":        candidate.Location,
-		"skills":          candidate.Skills,
-		"parsing_status":  candidate.ParsingStatus,
-	}).Scan(&candidate.UpdatedAt)
-	if err != nil {
+
+	if err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{
+		"id":         candidate.ID,
+		"first_name": candidate.FirstName,
+		"last_name":  candidate.LastName,
+		"email":      candidate.Email,
+		"location":   candidate.Location,
+		"skills":     candidate.Skills,
+	}).Scan(&candidate.UpdatedAt); err != nil {
 		return fmt.Errorf("update candidate: %w", err)
 	}
+
 	return nil
 }
 

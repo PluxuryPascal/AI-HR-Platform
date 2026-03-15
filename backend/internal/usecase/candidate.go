@@ -26,6 +26,8 @@ type CandidateUseCase interface {
 	UpdateCandidateProfile(ctx context.Context, profile *domain.CandidateProfile) error
 	DeleteCandidate(ctx context.Context, id string) error
 	MoveCandidate(ctx context.Context, p domain.MoveCandidateParams) error
+	FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error
+	UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate) error
 }
 
 type candidateUseCase struct {
@@ -34,6 +36,34 @@ type candidateUseCase struct {
 	pipelineRepo  repo.PipelineRepository
 	storage       storage.FileStorage
 	publisher     *mq.MQPublisher
+}
+
+func (u *candidateUseCase) FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error {
+	if result.ParseStatus != domain.ParsingStatusFailed {
+		stages, err := u.pipelineRepo.GetStagesByJobID(ctx, result.JobID)
+		if err != nil {
+			return fmt.Errorf("get stages: %w", err)
+		}
+
+		if len(stages) > 0 {
+			result.InitialStageID = &stages[0].ID
+		}
+
+	}
+
+	if err := u.candidateRepo.UpdateFromAIParsing(ctx, &result); err != nil {
+		return fmt.Errorf("update candidate from ai parsing: %w", err)
+	}
+
+	return nil
+}
+
+func (u *candidateUseCase) UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate) error {
+	if err := u.candidateRepo.UpdateByRecruiter(ctx, candidate); err != nil {
+		return fmt.Errorf("update candidate by recruiter: %w", err)
+	}
+
+	return nil
 }
 
 func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, storage storage.FileStorage, publisher *mq.MQPublisher) CandidateUseCase {
@@ -108,9 +138,7 @@ func (u *candidateUseCase) UpdateCandidate(ctx context.Context, candidate *domai
 }
 
 func (u *candidateUseCase) UpdateCandidateProfile(ctx context.Context, profile *domain.CandidateProfile) error {
-	if err := u.candidateRepo.UpdateProfile(ctx, profile); err != nil {
-		return fmt.Errorf("update candidate profile: %w", err)
-	}
+	candi
 
 	return nil
 }
