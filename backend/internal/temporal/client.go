@@ -6,16 +6,17 @@ import (
 	"backend/pkg/zapadapter"
 	"context"
 	"fmt"
+	"time"
 
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
 type Client struct {
-	log           *zap.Logger
-	temporalConf  *client.Options
-	conf          *config.Temporal
-	TemporaClient client.Client
+	log            *zap.Logger
+	temporalConf   *client.Options
+	conf           *config.Temporal
+	TemporalClient client.Client
 }
 
 func (c *Client) DependsOn() []string {
@@ -23,7 +24,7 @@ func (c *Client) DependsOn() []string {
 }
 
 func (c *Client) HealthCheck(ctx context.Context) error {
-	_, err := c.TemporaClient.CheckHealth(ctx, &client.CheckHealthRequest{})
+	_, err := c.TemporalClient.CheckHealth(ctx, &client.CheckHealthRequest{})
 	if err != nil {
 		return fmt.Errorf("temporal client is not healthy: %w", err)
 	}
@@ -39,7 +40,7 @@ func (c *Client) Init(ctx context.Context) error {
 		return err
 	}
 
-	c.TemporaClient = cl
+	c.TemporalClient = cl
 
 	c.log.Info("temporal client initialized")
 
@@ -55,9 +56,46 @@ func (c *Client) Run(ctx context.Context) error {
 }
 
 func (c *Client) Stop(ctx context.Context) error {
-	if c.TemporaClient != nil {
-		c.TemporaClient.Close()
+	if c.TemporalClient != nil {
+		c.TemporalClient.Close()
 	}
+
+	return nil
+}
+
+func (c *Client) StartWorkflow(
+	ctx context.Context,
+	workflowID string,
+	timeout time.Duration,
+	workflowFn any,
+	input any,
+) (string, error) {
+	opts := client.StartWorkflowOptions{
+		ID:                       workflowID,
+		TaskQueue:                c.conf.QueueName,
+		WorkflowExecutionTimeout: timeout,
+		WorkflowIDConflictPolicy: 1,
+	}
+
+	we, err := c.TemporalClient.ExecuteWorkflow(ctx, opts, workflowFn, input)
+	if err != nil {
+		return "", fmt.Errorf("start workflow %q: %w", workflowID, err)
+	}
+
+	c.log.Info("workflow started",
+		zap.String("workflow_id", we.GetID()),
+		zap.String("run_id", we.GetRunID()),
+	)
+
+	return we.GetID(), nil
+}
+
+func (c *Client) CancelWorkflow(ctx context.Context, workflowID string) error {
+	if err := c.TemporalClient.CancelWorkflow(ctx, workflowID, ""); err != nil {
+		return fmt.Errorf("cancel workflow %s: %w", workflowID, err)
+	}
+
+	c.log.Info("workflow cancelled", zap.String("workflow_id", workflowID))
 
 	return nil
 }
@@ -65,13 +103,12 @@ func (c *Client) Stop(ctx context.Context) error {
 var _ svc.Service = (*Client)(nil)
 
 func NewClient(log *zap.Logger, temporalConf *client.Options, conf *config.Temporal) *Client {
-	temporalLogger := zapadapter.NewZapAdapter(log)
-
 	return &Client{
 		log: log,
 		temporalConf: &client.Options{
-			HostPort: conf.HostPort,
-			Logger:   temporalLogger,
+			HostPort:  conf.HostPort,
+			Namespace: conf.Namespace,
+			Logger:    zapadapter.NewZapAdapter(log),
 		},
 		conf: conf,
 	}

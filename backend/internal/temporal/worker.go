@@ -2,11 +2,12 @@ package temporal
 
 import (
 	"backend/internal/temporal/activity"
+	"backend/internal/temporal/workflow"
+	"backend/pkg/config"
 	"backend/pkg/svc"
 	"context"
 	"fmt"
 
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 	"go.uber.org/zap"
 )
@@ -14,13 +15,13 @@ import (
 type Worker struct {
 	log            *zap.Logger
 	workerCfg      *worker.Options
-	queueName      string
-	temporalClient client.Client
+	cfg            *config.Temporal
+	temporalClient *Client
 	TemporalWorker worker.Worker
-	activities     activity.Activities
+	activities     *activity.Activities
 }
 
-func NewWorker(log *zap.Logger, temporalClient client.Client, queueName string, activities activity.Activities) *Worker {
+func NewWorker(log *zap.Logger, temporalClient *Client, cfg *config.Temporal, activities *activity.Activities) *Worker {
 	return &Worker{
 		log: log,
 		workerCfg: &worker.Options{
@@ -28,12 +29,12 @@ func NewWorker(log *zap.Logger, temporalClient client.Client, queueName string, 
 		},
 		temporalClient: temporalClient,
 		activities:     activities,
-		queueName:      queueName,
+		cfg:            cfg,
 	}
 }
 
 func (w *Worker) DependsOn() []string {
-	return []string{"temporal-client", "logger"}
+	return []string{"temporal-client", "logger", "db", "cloudinary"}
 }
 
 func (w *Worker) HealthCheck(ctx context.Context) error {
@@ -41,7 +42,15 @@ func (w *Worker) HealthCheck(ctx context.Context) error {
 }
 
 func (w *Worker) Init(ctx context.Context) error {
-	w.TemporalWorker = worker.New(w.temporalClient, w.queueName, *w.workerCfg)
+	workerOptions := worker.Options{
+		MaxConcurrentActivityExecutionSize:     w.cfg.WorkerCount,
+		MaxConcurrentWorkflowTaskExecutionSize: 100,
+	}
+
+	w.TemporalWorker = worker.New(w.temporalClient.TemporalClient, w.cfg.QueueName, workerOptions)
+
+	w.TemporalWorker.RegisterWorkflow(workflow.ResumePipelineWorkflow)
+	w.TemporalWorker.RegisterActivity(w.activities)
 
 	return nil
 }
@@ -51,7 +60,7 @@ func (w *Worker) Name() string {
 }
 
 func (w *Worker) Run(ctx context.Context) error {
-	if err := w.TemporalWorker.Run(worker.InterruptCh()); err != nil {
+	if err := w.TemporalWorker.Start(); err != nil {
 		return fmt.Errorf("temporal worker failed: %w", err)
 	}
 
