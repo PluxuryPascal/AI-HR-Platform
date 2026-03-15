@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"io"
 	"time"
 )
 
@@ -13,11 +14,22 @@ type Candidate struct {
 	Email         *string    `json:"email,omitempty" db:"email"`
 	ResumeFileKey *string    `json:"resume_file_key,omitempty" db:"resume_file_key"`
 	ParsedText    *string    `json:"parsed_text,omitempty" db:"parsed_text"`
-	Location      *string    `json:"location,omitempty" db:"location"`
-	Skills        []string   `json:"skills,omitempty" db:"skills"`
-	CreatedAt     time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt     *time.Time `json:"updated_at,omitempty" db:"updated_at"`
+	Location      *string                `json:"location,omitempty" db:"location"`
+	Skills        []string               `json:"skills,omitempty" db:"skills"`
+	ParsingStatus CandidateParsingStatus `json:"parsing_status" db:"parsing_status"`
+	CreatedAt     time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt     *time.Time             `json:"updated_at,omitempty" db:"updated_at"`
 }
+
+type CandidateParsingStatus string
+
+const (
+	ParsingStatusPending     CandidateParsingStatus = "pending"
+	ParsingStatusProcessing  CandidateParsingStatus = "processing"
+	ParsingStatusNeedsReview CandidateParsingStatus = "needs_review"
+	ParsingStatusCompleted   CandidateParsingStatus = "completed"
+	ParsingStatusFailed      CandidateParsingStatus = "failed"
+)
 
 // CandidateProfile represents the hiring.t_candidate_profiles table (1:1 with Candidate)
 type CandidateProfile struct {
@@ -62,10 +74,10 @@ type ResumeEmbedding struct {
 }
 
 type CandidateFilter struct {
-	FirstName      *string    `json:"first_name"`
-	LastName       *string    `json:"last_name"`
-	Email          *string    `json:"email"`
-	CurrentStageID *string    `json:"current_stage_id"`
+	FirstName      *string     `json:"first_name"`
+	LastName       *string     `json:"last_name"`
+	Email          *string     `json:"email"`
+	CurrentStageID *string     `json:"current_stage_id"`
 	DateFilter     *DateFilter `json:"date_filter"`
 	Sort           *SortParams `json:"sort"`
 }
@@ -73,4 +85,10 @@ type CandidateFilter struct {
 type CandidatesDTO struct {
 	Total      int         `json:"total" db:"total"`
 	Candidates []Candidate `json:"candidates" db:"candidates"`
+}
+
+type CreateCandidateParams struct {
+	JobID    string
+	Filename string
+	File     io.Reader
 }

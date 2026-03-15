@@ -4,13 +4,17 @@ import (
 	"backend/internal/domain"
 	"backend/internal/repo"
 	"context"
+	"errors"
 	"fmt"
 )
+
+var ErrNoPipelineStages = errors.New("no pipeline stages")
 
 type PipelineUseCase interface {
 	CreateStage(ctx context.Context, params domain.CreateStageParams) (*domain.PipelineStage, error)
 	GetStagesByJobID(ctx context.Context, jobID string) ([]domain.PipelineStage, error)
 	GetStagesByTeamID(ctx context.Context, teamID string) ([]domain.PipelineStage, error)
+	GetFirstStageByJobID(ctx context.Context, jobID string) (*domain.PipelineStage, error)
 	UpdateStage(ctx context.Context, stage *domain.PipelineStage) error
 	DeleteStage(ctx context.Context, id string) error
 }
@@ -21,6 +25,18 @@ type pipelineUseCase struct {
 
 func NewPipelineUseCase(pipelineRepo repo.PipelineRepository) PipelineUseCase {
 	return &pipelineUseCase{pipelineRepo: pipelineRepo}
+}
+
+func (u *pipelineUseCase) GetFirstStageByJobID(ctx context.Context, jobID string) (*domain.PipelineStage, error) {
+	stages, err := u.pipelineRepo.GetStagesByJobID(ctx, jobID)
+	if err != nil {
+		return nil, fmt.Errorf("get stages: %w", err)
+	}
+	if len(stages) == 0 {
+		return nil, ErrNoPipelineStages
+	}
+
+	return &stages[0], nil
 }
 
 func (u *pipelineUseCase) CreateStage(ctx context.Context, params domain.CreateStageParams) (*domain.PipelineStage, error) {

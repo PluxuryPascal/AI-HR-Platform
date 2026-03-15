@@ -3,17 +3,23 @@ package usecase
 import (
 	"backend/internal/domain"
 	"backend/internal/repo"
+	"backend/pkg/mq"
+	"backend/pkg/storage"
 	"context"
 	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"go.uber.org/zap"
 )
 
-var ErrCandidateNotFound = errors.New("candidate not found")
+var (
+	ErrCandidateNotFound  = errors.New("candidate not found")
+	ErrStorageUnavailable = errors.New("storage unavailable")
+)
 
 type CandidateUseCase interface {
-	CreateCandidate(ctx context.Context, candidate *domain.Candidate, profile *domain.CandidateProfile, initialStageID string) error
+	CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error)
 	GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error)
 	GetCandidatesByJob(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error)
 	UpdateCandidate(ctx context.Context, candidate *domain.Candidate) error
@@ -23,19 +29,52 @@ type CandidateUseCase interface {
 }
 
 type candidateUseCase struct {
+	log           *zap.Logger
 	candidateRepo repo.CandidateRepository
+	pipelineRepo  repo.PipelineRepository
+	storage       storage.FileStorage
+	publisher     *mq.MQPublisher
 }
 
-func NewCandidateUseCase(candidateRepo repo.CandidateRepository) CandidateUseCase {
-	return &candidateUseCase{candidateRepo: candidateRepo}
+func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, storage storage.FileStorage, publisher *mq.MQPublisher) CandidateUseCase {
+	return &candidateUseCase{
+		log:           log,
+		candidateRepo: candidateRepo,
+		pipelineRepo:  pipelineRepo,
+		storage:       storage,
+		publisher:     publisher,
+	}
 }
 
-func (u *candidateUseCase) CreateCandidate(ctx context.Context, candidate *domain.Candidate, profile *domain.CandidateProfile, initialStageID string) error {
-	if err := u.candidateRepo.Create(ctx, candidate, profile, initialStageID); err != nil {
-		return fmt.Errorf("create candidate: %w", err)
+func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error) {
+	stages, err := u.pipelineRepo.GetStagesByJobID(ctx, params.JobID)
+	if err != nil {
+		return nil, fmt.Errorf("get stages: %w", err)
 	}
 
-	return nil
+	if len(stages) == 0 {
+		return nil, ErrNoPipelineStages
+	}
+
+	initialStageID := stages[0].ID
+
+	fileKey, err := u.storage.UploadFile(ctx, params.File, params.Filename)
+	if err != nil {
+		return nil, fmt.Errorf("upload file: %w", err)
+	}
+
+	candidate := &domain.Candidate{
+		JobID:         params.JobID,
+		ResumeFileKey: &fileKey,
+		ParsingStatus: domain.ParsingStatusPending,
+	}
+
+	candidate, err = u.candidateRepo.Create(ctx, candidate)
+	if err != nil {
+		return nil, fmt.Errorf("create candidate: %w", err)
+	}
+
+	return candidate, nil
 }
 
 func (u *candidateUseCase) GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error) {

@@ -7,29 +7,27 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
+const (
+	maxResumeSize = 10 << 20 // 10 MB на один файл
+)
+
 type CandidateHandler struct {
-	log     *zap.Logger
-	usecase usecase.CandidateUseCase
+	log         *zap.Logger
+	candidateUC usecase.CandidateUseCase
 }
 
 func NewCandidateHandler(log *zap.Logger, uc usecase.CandidateUseCase) *CandidateHandler {
 	return &CandidateHandler{
-		log:     log,
-		usecase: uc,
+		log:         log,
+		candidateUC: uc,
 	}
-}
-
-type createCandidateRequest struct {
-	InitialStageID string  `json:"initial_stage_id" validate:"required,uuid4"`
-	FirstName      *string `json:"first_name" validate:"omitempty,min=1,max=64"`
-	LastName       *string `json:"last_name" validate:"omitempty,min=1,max=64"`
-	Email          *string `json:"email" validate:"omitempty,email"`
-	Location       *string `json:"location" validate:"omitempty,max=128"`
 }
 
 type listCandidatesRequest struct {
@@ -56,32 +54,57 @@ type moveCandidateRequest struct {
 	NewPosition float64 `json:"new_position" validate:"required,min=0"`
 }
 
-func (h *CandidateHandler) PostCandidate() echo.HandlerFunc {
+type uploadResumeResponse struct {
+	Candidate     *domain.Candidate
+	ResumeFileKey string
+}
+
+func (h *CandidateHandler) PostUploadResume() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		jobID := c.Param("job_id")
-		var req createCandidateRequest
-		if err := c.Bind(&req); err != nil {
-			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
-		}
-		if err := c.Validate(&req); err != nil {
-			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
+
+		fh, err := c.FormFile("file")
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "field 'file' is required")
 		}
 
-		candidate := &domain.Candidate{
-			JobID:     jobID,
-			FirstName: req.FirstName,
-			LastName:  req.LastName,
-			Email:     req.Email,
-			Location:  req.Location,
-		}
-		profile := &domain.CandidateProfile{}
-
-		if err := h.usecase.CreateCandidate(c.Request().Context(), candidate, profile, req.InitialStageID); err != nil {
-			h.log.Error("create candidate error", zap.Error(err))
-			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		if fh.Size > maxResumeSize {
+			return echo.NewHTTPError(http.StatusRequestEntityTooLarge,
+				fmt.Sprintf("file too large: max %d MB", maxResumeSize>>20))
 		}
 
-		return response.Created(c, candidate)
+		if strings.ToLower(filepath.Ext(fh.Filename)) != ".pdf" {
+			return echo.NewHTTPError(http.StatusUnsupportedMediaType, "only PDF files are accepted")
+		}
+
+		file, err := fh.Open()
+		if err != nil {
+			h.log.Error("open uploaded file", zap.String("filename", fh.Filename), zap.Error(err))
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to read uploaded file")
+		}
+		defer file.Close()
+
+		candidate, err := h.candidateUC.CreateCandidate(c.Request().Context(), domain.CreateCandidateParams{
+			JobID:    jobID,
+			Filename: fh.Filename,
+			File:     file,
+		})
+		if err != nil {
+			switch {
+			case errors.Is(err, usecase.ErrNoPipelineStages):
+				return echo.NewHTTPError(http.StatusConflict, "job has no pipeline stages configured")
+			case errors.Is(err, usecase.ErrStorageUnavailable):
+				return echo.NewHTTPError(http.StatusBadGateway, "failed to upload file to storage")
+			default:
+				h.log.Error("upload resume", zap.Error(err))
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to upload resume")
+			}
+		}
+
+		return response.Created(c, uploadResumeResponse{
+			Candidate:     candidate,
+			ResumeFileKey: *candidate.ResumeFileKey,
+		})
 	}
 }
 
@@ -97,7 +120,7 @@ func (h *CandidateHandler) PostCandidateList() echo.HandlerFunc {
 		}
 
 		offset := (req.Pagination.Page - 1) * req.Pagination.PerPage
-		dto, err := h.usecase.GetCandidatesByJob(c.Request().Context(), jobID, offset, req.Pagination.PerPage, req.Filter)
+		dto, err := h.candidateUC.GetCandidatesByJob(c.Request().Context(), jobID, offset, req.Pagination.PerPage, req.Filter)
 		if err != nil {
 			h.log.Error("get candidates error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
@@ -110,7 +133,7 @@ func (h *CandidateHandler) PostCandidateList() echo.HandlerFunc {
 func (h *CandidateHandler) GetCandidate() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
-		candidate, profile, stageID, err := h.usecase.GetCandidateByID(c.Request().Context(), id)
+		candidate, profile, stageID, err := h.candidateUC.GetCandidateByID(c.Request().Context(), id)
 		if err != nil {
 			if errors.Is(err, usecase.ErrCandidateNotFound) {
 				return response.Error(c, http.StatusNotFound, "candidate not found")
@@ -138,7 +161,7 @@ func (h *CandidateHandler) PatchCandidate() echo.HandlerFunc {
 			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
 		}
 
-		candidate, _, _, err := h.usecase.GetCandidateByID(c.Request().Context(), id)
+		candidate, _, _, err := h.candidateUC.GetCandidateByID(c.Request().Context(), id)
 		if err != nil {
 			if errors.Is(err, usecase.ErrCandidateNotFound) {
 				return response.Error(c, http.StatusNotFound, "candidate not found")
@@ -163,7 +186,7 @@ func (h *CandidateHandler) PatchCandidate() echo.HandlerFunc {
 			candidate.Skills = req.Skills
 		}
 
-		if err := h.usecase.UpdateCandidate(c.Request().Context(), candidate); err != nil {
+		if err := h.candidateUC.UpdateCandidate(c.Request().Context(), candidate); err != nil {
 			h.log.Error("update candidate error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -191,7 +214,7 @@ func (h *CandidateHandler) PostCandidateMove() echo.HandlerFunc {
 			ChangedBy:   userID,
 		}
 
-		if err := h.usecase.MoveCandidate(c.Request().Context(), params); err != nil {
+		if err := h.candidateUC.MoveCandidate(c.Request().Context(), params); err != nil {
 			h.log.Error("move candidate error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -203,7 +226,7 @@ func (h *CandidateHandler) PostCandidateMove() echo.HandlerFunc {
 func (h *CandidateHandler) DeleteCandidate() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
-		if err := h.usecase.DeleteCandidate(c.Request().Context(), id); err != nil {
+		if err := h.candidateUC.DeleteCandidate(c.Request().Context(), id); err != nil {
 			h.log.Error("delete candidate error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
