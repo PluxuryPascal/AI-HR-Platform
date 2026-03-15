@@ -42,10 +42,70 @@ services:
       - ai_hr_network
     restart: unless-stopped
 
+  temporal:
+    container_name: temporal
+    depends_on:
+      - postgres
+    environment:
+      - DB=postgres12_pgx
+      - DB_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PWD=${POSTGRES_PASSWORD}
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=/etc/temporal/config/dynamicconfig/development-sql.yaml
+      # - TEMPORAL_CONFIG_FILE=/etc/temporal/config/static-config.yml
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+      # --- Настройки для скрипта инициализации (setup) ---
+      # Включает TLS для создания схем и миграций
+      # - POSTGRES_TLS_ENABLED=true
+      # - POSTGRES_TLS_DISABLE_HOST_VERIFICATION=true
+      # - SQL_TLS_ENABLED=true
+      # - SQL_HOST_VERIFICATION=false # или SQL_TLS_DISABLE_HOST_VERIFICATION (зависит от версии) 
+      # Метрики для prometheus
+      # - PROMETHEUS_ENDPOINT=0.0.0.0:9081
+    image: temporalio/auto-setup
+    ports:
+      - 127.0.0.1:7233:7233
+      # - 0.0.0.0:9081:9081 # Порт для метрик prometheus
+    volumes:
+      - ./docker/dynamicconfig:/etc/temporal/config/dynamicconfig
+    networks:
+      - ai_hr_network
+    restart: always
+
+  temporal-admin-tools:
+    container_name: temporal-admin-tools
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    image: temporalio/admin-tools
+    stdin_open: true
+    tty: true
+    networks:
+      - ai_hr_network
+    restart: always
+
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    image: temporalio/ui
+    ports:
+      - 127.0.0.1:8085:8080
+    networks:
+      - ai_hr_network
+    restart: always
+
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  temporal_data:
 
 
 networks:
