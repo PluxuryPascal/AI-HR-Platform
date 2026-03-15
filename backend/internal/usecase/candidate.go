@@ -6,6 +6,7 @@ import (
 	"backend/pkg/mq"
 	"backend/pkg/storage"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -14,20 +15,20 @@ import (
 )
 
 var (
-	ErrCandidateNotFound  = errors.New("candidate not found")
-	ErrStorageUnavailable = errors.New("storage unavailable")
+	ErrCandidateNotFound       = errors.New("candidate not found")
+	ErrStorageUnavailable      = errors.New("storage unavailable")
+	ErrCandidateNotNeedsReview = errors.New("candidate is not in needs review")
 )
 
 type CandidateUseCase interface {
 	CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error)
 	GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error)
 	GetCandidatesByJob(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error)
-	UpdateCandidate(ctx context.Context, candidate *domain.Candidate) error
-	UpdateCandidateProfile(ctx context.Context, profile *domain.CandidateProfile) error
 	DeleteCandidate(ctx context.Context, id string) error
 	MoveCandidate(ctx context.Context, p domain.MoveCandidateParams) error
 	FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error
 	UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate) error
+	ConfirmManualReview(ctx context.Context, candidate *domain.Candidate) error
 }
 
 type candidateUseCase struct {
@@ -36,6 +37,25 @@ type candidateUseCase struct {
 	pipelineRepo  repo.PipelineRepository
 	storage       storage.FileStorage
 	publisher     *mq.MQPublisher
+}
+
+func (u *candidateUseCase) ConfirmManualReview(ctx context.Context, candidate *domain.Candidate) error {
+	current, _, _, err := u.candidateRepo.GetByID(ctx, candidate.ID)
+	if err != nil {
+		return fmt.Errorf("get candidate by id: %w", err)
+	}
+
+	if current.ParsingStatus != domain.ParsingStatusNeedsReview {
+		return ErrCandidateNotNeedsReview
+	}
+
+	candidate.ParsingStatus = domain.ParsingStatusCompleted
+
+	if err := u.candidateRepo.UpdateByRecruiter(ctx, candidate); err != nil {
+		return fmt.Errorf("update candidate by recruiter: %w", err)
+	}
+
+	return nil
 }
 
 func (u *candidateUseCase) FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error {
@@ -55,6 +75,13 @@ func (u *candidateUseCase) FinalizeAIParsing(ctx context.Context, result domain.
 		return fmt.Errorf("update candidate from ai parsing: %w", err)
 	}
 
+	if result.ParseStatus == domain.ParsingStatusNeedsReview {
+		u.log.Info("candidate requires manual review",
+			zap.String("candidate_id", result.CandidateID),
+			zap.Strings("missing_fields", result.MissingFields),
+		)
+	}
+
 	return nil
 }
 
@@ -66,42 +93,36 @@ func (u *candidateUseCase) UpdateByRecruiter(ctx context.Context, candidate *dom
 	return nil
 }
 
-func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, storage storage.FileStorage, publisher *mq.MQPublisher) CandidateUseCase {
-	return &candidateUseCase{
-		log:           log,
-		candidateRepo: candidateRepo,
-		pipelineRepo:  pipelineRepo,
-		storage:       storage,
-		publisher:     publisher,
-	}
-}
-
 func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error) {
-	stages, err := u.pipelineRepo.GetStagesByJobID(ctx, params.JobID)
-	if err != nil {
-		return nil, fmt.Errorf("get stages: %w", err)
-	}
-
-	if len(stages) == 0 {
-		return nil, ErrNoPipelineStages
-	}
-
-	initialStageID := stages[0].ID
-
 	fileKey, err := u.storage.UploadFile(ctx, params.File, params.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("upload file: %w", err)
 	}
 
-	candidate := &domain.Candidate{
-		JobID:         params.JobID,
-		ResumeFileKey: &fileKey,
-		ParsingStatus: domain.ParsingStatusPending,
-	}
-
-	candidate, err = u.candidateRepo.Create(ctx, candidate)
+	candidate, err := u.candidateRepo.Create(ctx, params.JobID, fileKey)
 	if err != nil {
 		return nil, fmt.Errorf("create candidate: %w", err)
+	}
+
+	payload, err := json.Marshal(domain.CandidateCreatedEvent{
+		CandidateID:   candidate.ID,
+		JobID:         candidate.JobID,
+		ResumeFileKey: *candidate.ResumeFileKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("marshal candidate created event: %w", err)
+	}
+
+	if err := u.publisher.Publish(ctx, payload,
+		mq.WithExchange("hiring.events"),
+		mq.WithRoutingKey("candidate.created"),
+	); err != nil {
+		return nil, fmt.Errorf("publish candidate created event: %w", err)
+	}
+
+	candidate.ParsingStatus = domain.ParsingStatusProcessing
+	if err := u.candidateRepo.UpdateParsingStatus(ctx, candidate.ID, candidate.ParsingStatus); err != nil {
+		u.log.Warn("update parsing status", zap.String("candidate_id", candidate.ID), zap.Error(err))
 	}
 
 	return candidate, nil
@@ -129,20 +150,6 @@ func (u *candidateUseCase) GetCandidatesByJob(ctx context.Context, jobID string,
 	return candidatesDTO, nil
 }
 
-func (u *candidateUseCase) UpdateCandidate(ctx context.Context, candidate *domain.Candidate) error {
-	if err := u.candidateRepo.Update(ctx, candidate); err != nil {
-		return fmt.Errorf("update candidate: %w", err)
-	}
-
-	return nil
-}
-
-func (u *candidateUseCase) UpdateCandidateProfile(ctx context.Context, profile *domain.CandidateProfile) error {
-	candi
-
-	return nil
-}
-
 func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id string) error {
 	if err := u.candidateRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete candidate: %w", err)
@@ -157,4 +164,14 @@ func (u *candidateUseCase) MoveCandidate(ctx context.Context, p domain.MoveCandi
 	}
 
 	return nil
+}
+
+func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, storage storage.FileStorage, publisher *mq.MQPublisher) CandidateUseCase {
+	return &candidateUseCase{
+		log:           log,
+		candidateRepo: candidateRepo,
+		pipelineRepo:  pipelineRepo,
+		storage:       storage,
+		publisher:     publisher,
+	}
 }

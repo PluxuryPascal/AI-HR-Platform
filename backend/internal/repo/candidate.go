@@ -19,6 +19,7 @@ type CandidateRepository interface {
 	GetByJobID(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error)
 	UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate) error
 	UpdateFromAIParsing(ctx context.Context, result *domain.AIParsingResult) error
+	UpdateParsingStatus(ctx context.Context, candidateID string, status domain.CandidateParsingStatus) error
 	Delete(ctx context.Context, id string) error
 	MoveStage(ctx context.Context, p domain.MoveCandidateParams) error
 
@@ -34,6 +35,26 @@ type candidateRepo struct {
 
 func NewCandidateRepo(dbClient *db.PostgresClient) CandidateRepository {
 	return &candidateRepo{dbClient: dbClient}
+}
+
+func (r *candidateRepo) UpdateParsingStatus(ctx context.Context, candidateID string, status domain.CandidateParsingStatus) error {
+	const query = `
+		UPDATE hiring.t_candidates
+		SET 
+			parsing_status = @parsing_status,
+			updated_at = NOW()
+		WHERE id = @id
+	`
+
+	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{
+		"id":             candidateID,
+		"parsing_status": status,
+	})
+	if err != nil {
+		return fmt.Errorf("update parsing status: %w", err)
+	}
+
+	return nil
 }
 
 func (r *candidateRepo) UpdateFromAIParsing(ctx context.Context, result *domain.AIParsingResult) error {
@@ -75,10 +96,11 @@ func (r *candidateRepo) UpdateFromAIParsing(ctx context.Context, result *domain.
 
 	now := time.Now()
 	const profileQuery = `
-		INSERT INTO hiring.t_candidate_profiles (candidate_id, structured_data, ai_parsed_at, updated_at)
-		VALUES (@candidate_id, @structured_data, @ai_parsed_at, NOW())
+		INSERT INTO hiring.t_candidate_profiles (candidate_id, structured_data, missing_fields, ai_parsed_at, updated_at)
+		VALUES (@candidate_id, @structured_data, @missing_fields, @ai_parsed_at, NOW())
 		ON CONFLICT (candidate_id) DO UPDATE SET
 			structured_data = EXCLUDED.structured_data,
+			missing_fields = EXCLUDED.missing_fields,
 			ai_parsed_at = EXCLUDED.ai_parsed_at,
 			updated_at = NOW()
 	`
@@ -86,6 +108,7 @@ func (r *candidateRepo) UpdateFromAIParsing(ctx context.Context, result *domain.
 	_, err = tx.Exec(ctx, profileQuery, pgx.NamedArgs{
 		"candidate_id":    result.CandidateID,
 		"structured_data": result.StructuredData,
+		"missing_fields":  result.MissingFields,
 		"ai_parsed_at":    now,
 	})
 	if err != nil {
@@ -155,7 +178,7 @@ func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candida
 	const query = `
 		SELECT 
 			c.id, c.job_id, c.first_name, c.last_name, c.email, c.resume_file_key, c.parsed_text, c.location, c.skills, c.parsing_status, c.created_at, c.updated_at,
-			cp.structured_data, cp.ai_parsed_at, cp.updated_at as profile_updated_at,
+			cp.structured_data, cp.missing_fields, cp.ai_parsed_at, cp.updated_at as profile_updated_at,
 			cs.stage_id
 		FROM hiring.t_candidates c
 		LEFT JOIN hiring.t_candidate_profiles cp ON c.id = cp.candidate_id
@@ -169,7 +192,7 @@ func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candida
 
 	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{"id": id}).Scan(
 		&cand.ID, &cand.JobID, &cand.FirstName, &cand.LastName, &cand.Email, &cand.ResumeFileKey, &cand.ParsedText, &cand.Location, &cand.Skills, &cand.ParsingStatus, &cand.CreatedAt, &cand.UpdatedAt,
-		&profile.StructuredData, &profile.AIParsedAt, &profile.UpdatedAt,
+		&profile.StructuredData, &profile.MissingFields, &profile.AIParsedAt, &profile.UpdatedAt,
 		&stageID,
 	)
 	if err != nil {
@@ -408,24 +431,6 @@ func (r *candidateRepo) UpdateByRecruiter(ctx context.Context, candidate *domain
 		return fmt.Errorf("update candidate: %w", err)
 	}
 
-	return nil
-}
-
-func (r *candidateRepo) UpdateProfile(ctx context.Context, profile *domain.CandidateProfile) error {
-	const query = `
-		UPDATE hiring.t_candidate_profiles
-		SET structured_data = @structured_data, ai_parsed_at = @ai_parsed_at, updated_at = NOW()
-		WHERE candidate_id = @candidate_id
-		RETURNING updated_at
-	`
-	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{
-		"candidate_id":    profile.CandidateID,
-		"structured_data": profile.StructuredData,
-		"ai_parsed_at":    profile.AIParsedAt,
-	}).Scan(&profile.UpdatedAt)
-	if err != nil {
-		return fmt.Errorf("update candidate profile: %w", err)
-	}
 	return nil
 }
 

@@ -37,6 +37,7 @@ type CandidateProfile struct {
 	StructuredData []byte     `json:"structured_data,omitempty" db:"structured_data"`
 	AIParsedAt     *time.Time `json:"ai_parsed_at,omitempty" db:"ai_parsed_at"`
 	UpdatedAt      *time.Time `json:"updated_at,omitempty" db:"updated_at"`
+	MissingFields  []string   `json:"missing_fields,omitempty" db:"missing_fields"`
 }
 
 // FactorType represents the factor_type ENUM
@@ -105,4 +106,5 @@ type AIParsingResult struct {
 	ParsedText     *string
 	StructuredData []byte
 	InitialStageID *string
+	MissingFields  []string
 }

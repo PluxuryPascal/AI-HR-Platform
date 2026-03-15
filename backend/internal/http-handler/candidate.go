@@ -150,51 +150,6 @@ func (h *CandidateHandler) GetCandidate() echo.HandlerFunc {
 	}
 }
 
-func (h *CandidateHandler) PatchCandidate() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		id := c.Param("id")
-		var req updateCandidateRequest
-		if err := c.Bind(&req); err != nil {
-			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
-		}
-		if err := c.Validate(&req); err != nil {
-			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
-		}
-
-		candidate, _, _, err := h.candidateUC.GetCandidateByID(c.Request().Context(), id)
-		if err != nil {
-			if errors.Is(err, usecase.ErrCandidateNotFound) {
-				return response.Error(c, http.StatusNotFound, "candidate not found")
-			}
-			h.log.Error("get candidate error", zap.Error(err))
-			return response.Error(c, http.StatusInternalServerError, "internal server error")
-		}
-
-		if req.FirstName != nil {
-			candidate.FirstName = req.FirstName
-		}
-		if req.LastName != nil {
-			candidate.LastName = req.LastName
-		}
-		if req.Email != nil {
-			candidate.Email = req.Email
-		}
-		if req.Location != nil {
-			candidate.Location = req.Location
-		}
-		if req.Skills != nil {
-			candidate.Skills = req.Skills
-		}
-
-		if err := h.candidateUC.UpdateCandidate(c.Request().Context(), candidate); err != nil {
-			h.log.Error("update candidate error", zap.Error(err))
-			return response.Error(c, http.StatusInternalServerError, "internal server error")
-		}
-
-		return response.OK(c, candidate)
-	}
-}
-
 func (h *CandidateHandler) PostCandidateMove() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")

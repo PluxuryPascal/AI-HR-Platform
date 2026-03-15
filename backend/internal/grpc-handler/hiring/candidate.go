@@ -2,8 +2,8 @@ package hiring
 
 import (
 	"context"
-	"time"
 
+	"backend/internal/domain"
 	pb "backend/internal/proto/hiring/v1"
 
 	"go.uber.org/zap"
@@ -12,53 +12,89 @@ import (
 )
 
 func (h *Handler) UpdateCandidateProfile(ctx context.Context, req *pb.UpdateCandidateProfileRequest) (*pb.UpdateCandidateProfileResponse, error) {
-	candidateID := req.GetCandidateId()
-	if candidateID == "" {
+	if req.GetCandidateId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "candidate_id is required")
 	}
-
-	h.logger.Debug("received UpdateCandidateProfile request", zap.String("candidate_id", candidateID))
-
-	// 1. Get existing candidate and profile
-	cand, profile, _, err := h.candidateUC.GetCandidateByID(ctx, candidateID)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "candidate not found: %v", err)
+	if req.GetJobId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "job_id is required")
 	}
 
-	// 2. Update Candidate Basic Info
-	if req.FirstName != "" {
-		cand.FirstName = &req.FirstName
-	}
-	if req.LastName != "" {
-		cand.LastName = &req.LastName
-	}
-	if req.Email != "" {
-		cand.Email = &req.Email
-	}
-	if req.ParsedText != "" {
-		cand.ParsedText = &req.ParsedText
-	}
-	if req.Location != "" {
-		cand.Location = &req.Location
-	}
-	if len(req.Skills) > 0 {
-		cand.Skills = req.Skills
+	h.logger.Debug("received UpdateCandidateProfile request", zap.String("candidate_id", req.GetCandidateId()))
+
+	result := h.parseUpdateRequest(req)
+
+	if err := h.candidateUC.FinalizeAIParsing(ctx, result); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to finalize AI parsing: %v", err)
 	}
 
-	if err := h.candidateUC.UpdateCandidate(ctx, cand); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update basic candidate info: %v", err)
-	}
-
-	// 3. Update Candidate Profile (Structured Data)
-	profile.StructuredData = req.StructuredData
-	now := time.Now()
-	profile.AIParsedAt = &now
-
-	if err := h.candidateUC.UpdateCandidateProfile(ctx, profile); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update structured profile data: %v", err)
-	}
+	h.logger.Debug("AI parsing finalized", zap.String("candidate_id", result.CandidateID))
 
 	return &pb.UpdateCandidateProfileResponse{
 		Success: true,
 	}, nil
+}
+
+func (h *Handler) parseUpdateRequest(req *pb.UpdateCandidateProfileRequest) domain.AIParsingResult {
+	result := domain.AIParsingResult{
+		CandidateID:    req.GetCandidateId(),
+		JobID:          req.GetJobId(),
+		ParseStatus:    mapParsingStatus(req.GetParsingStatus()),
+		StructuredData: req.GetStructuredData(),
+	}
+
+	if v := req.GetParsedText(); v != "" {
+		result.ParsedText = &v
+	}
+	if v := req.GetFirstName(); v != "" {
+		result.FirstName = &v
+	}
+	if v := req.GetLastName(); v != "" {
+		result.LastName = &v
+	}
+	if v := req.GetEmail(); v != "" {
+		result.Email = &v
+	}
+	if v := req.GetLocation(); v != "" {
+		result.Location = &v
+	}
+	if skills := req.GetSkills(); len(skills) > 0 {
+		result.Skills = skills
+	}
+
+	if result.ParseStatus == domain.ParsingStatusNeedsReview {
+		result.MissingFields = collectMissingFields(result)
+	}
+
+	return result
+}
+
+// mapParsingStatus конвертирует proto ParsingStatus → domain CandidateParsingStatus.
+func mapParsingStatus(s pb.ParsingStatus) domain.CandidateParsingStatus {
+	switch s {
+	case pb.ParsingStatus_PARSING_STATUS_SUCCESS:
+		return domain.ParsingStatusCompleted
+	case pb.ParsingStatus_PARSING_STATUS_NEEDS_REVIEW:
+		return domain.ParsingStatusNeedsReview
+	default:
+		// FAILED и UNSPECIFIED оба → failed
+		return domain.ParsingStatusFailed
+	}
+}
+
+// collectMissingFields возвращает список имён полей, которые AI не смог извлечь.
+// Проверяем только поля, критичные для идентификации кандидата.
+func collectMissingFields(r domain.AIParsingResult) []string {
+	var missing []string
+
+	if r.FirstName == nil {
+		missing = append(missing, "first_name")
+	}
+	if r.LastName == nil {
+		missing = append(missing, "last_name")
+	}
+	if r.Email == nil {
+		missing = append(missing, "email")
+	}
+
+	return missing
 }

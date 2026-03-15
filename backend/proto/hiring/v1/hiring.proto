@@ -39,6 +39,7 @@ message UpdateCandidateProfileRequest {
     // Additional fields extracted by AI
     string location = 8;
     repeated string skills = 9;
+    string job_id = 10;
 }
 
 message UpdateCandidateProfileResponse {

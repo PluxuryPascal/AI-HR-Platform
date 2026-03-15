@@ -88,6 +88,7 @@ type UpdateCandidateProfileRequest struct {
 	// Additional fields extracted by AI
 	Location      string   `protobuf:"bytes,8,opt,name=location,proto3" json:"location,omitempty"`
 	Skills        []string `protobuf:"bytes,9,rep,name=skills,proto3" json:"skills,omitempty"`
+	JobId         string   `protobuf:"bytes,10,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -183,6 +184,13 @@ func (x *UpdateCandidateProfileRequest) GetSkills() []string {
 		return x.Skills
 	}
 	return nil
+}
+
+func (x *UpdateCandidateProfileRequest) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
 }
 
 type UpdateCandidateProfileResponse struct {
@@ -329,7 +337,7 @@ var File_proto_hiring_v1_hiring_proto protoreflect.FileDescriptor
 
 const file_proto_hiring_v1_hiring_proto_rawDesc = "" +
 	"\n" +
-	"\x1cproto/hiring/v1/hiring.proto\x12\thiring.v1\"\xd3\x02\n" +
+	"\x1cproto/hiring/v1/hiring.proto\x12\thiring.v1\"\xea\x02\n" +
 	"\x1dUpdateCandidateProfileRequest\x12!\n" +
 	"\fcandidate_id\x18\x01 \x01(\tR\vcandidateId\x12?\n" +
 	"\x0eparsing_status\x18\x02 \x01(\x0e2\x18.hiring.v1.ParsingStatusR\rparsingStatus\x12\x1f\n" +
@@ -341,7 +349,9 @@ const file_proto_hiring_v1_hiring_proto_rawDesc = "" +
 	"\x05email\x18\x06 \x01(\tR\x05email\x12'\n" +
 	"\x0fstructured_data\x18\a \x01(\fR\x0estructuredData\x12\x1a\n" +
 	"\blocation\x18\b \x01(\tR\blocation\x12\x16\n" +
-	"\x06skills\x18\t \x03(\tR\x06skills\":\n" +
+	"\x06skills\x18\t \x03(\tR\x06skills\x12\x15\n" +
+	"\x06job_id\x18\n" +
+	" \x01(\tR\x05jobId\":\n" +
 	"\x1eUpdateCandidateProfileResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"L\n" +
 	"\x18TransferJobAccessRequest\x12\x17\n" +
