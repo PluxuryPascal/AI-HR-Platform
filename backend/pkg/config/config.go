@@ -23,6 +23,25 @@ type Config struct {
 	Cloudinary     Cloudinary           `yaml:"cloudinary"`
 	GRPC           GRPC                 `yaml:"grpc"`
 	Temporal       Temporal             `yaml:"temporal"`
+	OpenRouter     OpenRouter           `yaml:"openrouter"`
+}
+
+type OpenRouter struct {
+	APIKey  string `yaml:"api_key"`
+	BaseURL string `yaml:"base_url"`
+
+	ParseModel string `yaml:"parse_model"`
+	ScoreModel string `yaml:"score_model"`
+	EmbedModel string `yaml:"embed_model"`
+	ChatModel  string `yaml:"chat_model"`
+
+	Timeout        time.Duration `yaml:"timeout"`
+	MaxTokensParse int           `yaml:"max_tokens_parse"`
+	MaxTokensScore int           `yaml:"max_tokens_score"`
+	MaxTokensChat  int           `yaml:"max_tokens_chat"`
+
+	ChunkSize    int `yaml:"chunk_size"`
+	ChunkOverlap int `yaml:"chunk_overlap"`
 }
 
 type Temporal struct {
