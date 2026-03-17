@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package ai_engine.v1;
+
+option go_package = "internal/proto/ai_engine/v1;aienginev1";
+
+service AIEngineService {
+  rpc GetCandidateScore(GetCandidateScoreRequest)
+      returns (GetCandidateScoreResponse);
+  rpc GenerateCandidateEmail(GenerateCandidateEmailRequest)
+      returns (GenerateCandidateEmailResponse);
+  rpc GetCandidateEmails(GetCandidateEmailsRequest)
+      returns (GetCandidateEmailsResponse);
+  rpc CompareCandidates(CompareCandidatesRequest)
+      returns (CompareCandidatesResponse);
+  rpc ParseJobDescription(ParseJobDescriptionRequest)
+      returns (ParseJobDescriptionResponse);
+}
+
+message GetCandidateScoreRequest {
+  string candidate_id = 1;
+}
+
+message ScoreFactor {
+  string type        = 1;
+  string description = 2;
+  int32  impact      = 3;
+}
+
+message GetCandidateScoreResponse {
+  int32             match_score  = 1;
+  repeated ScoreFactor factors   = 2;
+  bool              has_score    = 3;
+}
+
+enum EmailType {
+  EMAIL_TYPE_UNSPECIFIED   = 0;
+  EMAIL_TYPE_REJECTION     = 1;
+  EMAIL_TYPE_INTERVIEW_INVITE = 2;
+}
+
+enum EmailTone {
+  EMAIL_TONE_UNSPECIFIED   = 0;
+  EMAIL_TONE_PROFESSIONAL  = 1;
+  EMAIL_TONE_FRIENDLY      = 2;
+  EMAIL_TONE_BRIEF         = 3;
+}
+
+message GenerateCandidateEmailRequest {
+  string candidate_id        = 1;
+  string generated_by_user_id = 2;
+  EmailType  type            = 3;
+  EmailTone  tone            = 4;
+  string locale              = 5;
+  string recruiter_name      = 6;
+  string company_name        = 7;
+}
+
+message GenerateCandidateEmailResponse {
+  string communication_id = 1;
+  string subject          = 2;
+  string body             = 3;
+}
+
+message GetCandidateEmailsRequest {
+  string candidate_id = 1;
+}
+
+message CommunicationEntry {
+  string     communication_id    = 1;
+  EmailType  type                = 2;
+  string     subject             = 3;
+  string     body                = 4;
+  string     generated_by_user_id = 5;
+  bool       is_sent             = 6;
+  int64      generated_at_unix   = 7;
+}
+
+message GetCandidateEmailsResponse {
+  repeated CommunicationEntry emails = 1;
+}
+
+message CandidateForComparison {
+  string          candidate_id = 1;
+  string          first_name   = 2;
+  string          last_name    = 3;
+  string          role         = 4;
+  int32           match_score  = 5;
+  repeated string skills       = 6;
+  string          parsed_text  = 7;
+}
+
+message CompareCandidatesRequest {
+  repeated CandidateForComparison candidates = 1;
+  string job_requirements = 2;
+}
+
+message CandidateComparisonEntry {
+  string          experience   = 1;
+  repeated string skills       = 2;
+  string          salary_range = 3;
+  string          risks        = 4;
+  string          summary      = 5;
+}
+
+message CompareCandidatesResponse {
+  // key = candidate_id
+  map<string, CandidateComparisonEntry> results = 1;
+}
+
+message ParseJobDescriptionRequest {
+  string raw_text = 1;
+  string locale   = 2;
+}
+
+message ParseJobDescriptionResponse {
+  string          title        = 1;
+  string          description  = 2;
+  repeated string requirements = 3;
+  string          work_format  = 4;
+  int32           salary_min   = 5;
+  int32           salary_max   = 6;
+  string          currency     = 7;
+}
