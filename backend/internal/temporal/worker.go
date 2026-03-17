@@ -50,6 +50,10 @@ func (w *Worker) Init(ctx context.Context) error {
 	w.TemporalWorker = worker.New(w.temporalClient.TemporalClient, w.cfg.QueueName, workerOptions)
 
 	w.TemporalWorker.RegisterWorkflow(workflow.ResumePipelineWorkflow)
+	w.TemporalWorker.RegisterWorkflow(workflow.CompareCandidatesWorkflow)
+	w.TemporalWorker.RegisterWorkflow(workflow.JobParseWorkflow)
+	w.TemporalWorker.RegisterWorkflow(workflow.EmailGenerateWorkflow)
+
 	w.TemporalWorker.RegisterActivity(w.activities)
 
 	return nil
