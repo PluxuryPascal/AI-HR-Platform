@@ -100,6 +100,10 @@ func (c *Client) CancelWorkflow(ctx context.Context, workflowID string) error {
 	return nil
 }
 
+func (c *Client) TaskQueue() string {
+	return c.conf.QueueName
+}
+
 var _ svc.Service = (*Client)(nil)
 
 func NewClient(log *zap.Logger, temporalConf *client.Options, conf *config.Temporal) *Client {

@@ -55,8 +55,9 @@ type EmailGenerateInput struct {
 }
 
 type EmailGenerateOutput struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
+	CommunicationID string `json:"communication_id"`
+	Subject         string `json:"subject"`
+	Body            string `json:"body"`
 }
 
 type CandidateCompareCandidate struct {

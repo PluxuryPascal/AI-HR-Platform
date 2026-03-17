@@ -33,10 +33,23 @@ func (a *Activities) GenerateEmail(ctx context.Context, input EmailGenerateInput
 		return nil, fmt.Errorf("failed to generate email: %w", err)
 	}
 
-	logger.Info("Generating email completed", zap.String("candidate id", input.CandidateID))
+	comm := domain.Communication{
+		CandidateID:       input.CandidateID,
+		GeneratedByUserID: input.GeneratedByUserID,
+		Type:              domain.EmailType(input.EmailType),
+		Subject:           result.Subject,
+		Body:              result.Body,
+	}
+	if err := a.commDB.Create(ctx, &comm); err != nil {
+		logger.Error("Failed to save communication", zap.Error(err))
+		return nil, fmt.Errorf("failed to save communication: %w", err)
+	}
+
+	logger.Info("Generating email completed", zap.String("candidate id", input.CandidateID), zap.String("communication_id", comm.ID))
 
 	return &EmailGenerateOutput{
-		Subject: result.Subject,
-		Body:    result.Body,
+		CommunicationID: comm.ID,
+		Subject:         result.Subject,
+		Body:            result.Body,
 	}, nil
 }

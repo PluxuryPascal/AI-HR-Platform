@@ -44,6 +44,11 @@ type JobStore interface {
 	GetJobRequirements(ctx context.Context, jobID string) ([]byte, error)
 }
 
+type CommunicationStore interface {
+	Create(ctx context.Context, c *domain.Communication) error
+	GetByCandidateID(ctx context.Context, candidateID string) ([]domain.Communication, error)
+}
+
 type Activities struct {
 	log          *zap.Logger
 	pdfExtractor pdf.Extractor
@@ -56,10 +61,11 @@ type Activities struct {
 	jobParser    JobParser
 	candidateDB  CandidateStore
 	jobDB        JobStore
+	commDB       CommunicationStore
 	hiringGRPC   *grpc.Client
 }
 
-func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.FileStorage, parser ResumeParser, scorer Scorer, embedder Embedder, emailGen EmailGenerator, comparator CandidateComparator, jobParser JobParser, candidateDB CandidateStore, jobDB JobStore, hiringGRPC *grpc.Client) *Activities {
+func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.FileStorage, parser ResumeParser, scorer Scorer, embedder Embedder, emailGen EmailGenerator, comparator CandidateComparator, jobParser JobParser, candidateDB CandidateStore, jobDB JobStore, commDB CommunicationStore, hiringGRPC *grpc.Client) *Activities {
 	return &Activities{
 		log:          log,
 		pdfExtractor: pdfExtractor,
@@ -72,6 +78,7 @@ func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.
 		jobParser:    jobParser,
 		candidateDB:  candidateDB,
 		jobDB:        jobDB,
+		commDB:       commDB,
 		hiringGRPC:   hiringGRPC,
 	}
 }

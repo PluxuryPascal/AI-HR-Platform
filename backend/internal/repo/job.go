@@ -19,6 +19,7 @@ type JobRepository interface {
 	GetByTeamID(ctx context.Context, teamID string, offset, limit int, filter domain.JobFilter) (*domain.JobsDTO, error)
 	Update(ctx context.Context, job *domain.Job) error
 	Delete(ctx context.Context, id string) error
+	GetJobRequirements(ctx context.Context, jobID string) ([]byte, error)
 }
 
 type jobRepo struct {
@@ -343,4 +344,20 @@ func (r *jobRepo) Delete(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (r *jobRepo) GetJobRequirements(ctx context.Context, jobID string) ([]byte, error) {
+	const query = `
+		SELECT extracted_requirements
+		FROM hiring.t_jobs
+		WHERE id = @id AND extracted_requirements IS NOT NULL
+	`
+
+	var requirements []byte
+	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{"id": jobID}).Scan(&requirements)
+	if err != nil {
+		return nil, err
+	}
+
+	return requirements, nil
 }
