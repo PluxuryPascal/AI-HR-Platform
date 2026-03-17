@@ -6,6 +6,6 @@
 BEGIN;
 
 ALTER TABLE hiring.t_candidate_profiles
-    ADD COLUMN missing_fields TEXT[] NOT NULL DEFAULT '{}';
+    ADD COLUMN IF NOT EXISTS missing_fields TEXT[] NOT NULL DEFAULT '{}';
 
 COMMIT;

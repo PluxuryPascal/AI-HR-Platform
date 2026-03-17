@@ -6,7 +6,7 @@
 BEGIN;
 
 ALTER TABLE hiring.t_candidates
-    ADD COLUMN location VARCHAR,
-    ADD COLUMN skills   TEXT[];
+    ADD COLUMN IF NOT EXISTS location VARCHAR,
+    ADD COLUMN IF NOT EXISTS skills   TEXT[];
 
 COMMIT;
