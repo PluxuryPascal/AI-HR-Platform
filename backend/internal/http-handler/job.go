@@ -171,7 +171,8 @@ func (h *JobHandler) PatchJob() echo.HandlerFunc {
 			job.Currency = *req.Currency
 		}
 
-		if err := h.usecase.UpdateJob(c.Request().Context(), job); err != nil {
+		actorID := c.Get("id").(string)
+		if err := h.usecase.UpdateJob(c.Request().Context(), job, actorID); err != nil {
 			h.log.Error("update job error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -205,8 +206,15 @@ func (h *JobHandler) changeStatus(newStatus domain.JobStatus) echo.HandlerFunc {
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
 
+		// Validate allowed transitions
+		if !isValidStatusTransition(job.Status, newStatus) {
+			return response.Error(c, http.StatusConflict,
+				fmt.Sprintf("invalid status transition: %s → %s", job.Status, newStatus))
+		}
+
 		job.Status = newStatus
-		if err := h.usecase.UpdateJob(c.Request().Context(), job); err != nil {
+		actorID := c.Get("id").(string)
+		if err := h.usecase.UpdateJob(c.Request().Context(), job, actorID); err != nil {
 			h.log.Error("update job status error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -215,11 +223,25 @@ func (h *JobHandler) changeStatus(newStatus domain.JobStatus) echo.HandlerFunc {
 	}
 }
 
+// isValidStatusTransition checks allowed job status transitions:
+// Draft → Published, Published → Closed, Closed → Archived
+func isValidStatusTransition(from, to domain.JobStatus) bool {
+	transitions := map[domain.JobStatus]domain.JobStatus{
+		domain.JobStatusDraft:     domain.JobStatusPublished,
+		domain.JobStatusPublished: domain.JobStatusClosed,
+		domain.JobStatusClosed:    domain.JobStatusArchived,
+	}
+	allowed, ok := transitions[from]
+	return ok && allowed == to
+}
+
 func (h *JobHandler) DeleteJob() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
 
-		if err := h.usecase.DeleteJob(c.Request().Context(), id); err != nil {
+		actorID := c.Get("id").(string)
+		teamID := c.Get("team_id").(string)
+		if err := h.usecase.DeleteJob(c.Request().Context(), id, actorID, teamID); err != nil {
 			h.log.Error("delete job error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}

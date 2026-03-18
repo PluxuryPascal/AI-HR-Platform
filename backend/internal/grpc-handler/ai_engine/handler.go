@@ -2,8 +2,8 @@ package ai_engine
 
 import (
 	"backend/internal/domain"
-	"backend/internal/temporal"
 	pb "backend/internal/proto/ai_engine/v1"
+	"backend/internal/temporal"
 	"context"
 
 	"go.uber.org/zap"
@@ -16,7 +16,7 @@ type CandidateRepository interface {
 
 type CommunicationRepository interface {
 	Create(ctx context.Context, c *domain.Communication) error
-	GetByCandidateID(ctx context.Context, candidateID string) ([]domain.Communication, error)
+	GetByCandidateID(ctx context.Context, candFinalizeAIParsingidateID string) ([]domain.Communication, error)
 }
 
 type Handler struct {

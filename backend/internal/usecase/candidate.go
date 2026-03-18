@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"backend/internal/audit"
 	"backend/internal/domain"
 	"backend/internal/repo"
 	"backend/pkg/mq"
@@ -18,25 +19,29 @@ var (
 	ErrCandidateNotFound       = errors.New("candidate not found")
 	ErrStorageUnavailable      = errors.New("storage unavailable")
 	ErrCandidateNotNeedsReview = errors.New("candidate is not in needs review")
+	ErrInvalidStageTransition  = errors.New("invalid stage transition: only +1 position or terminal stage allowed")
 )
 
 type CandidateUseCase interface {
 	CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error)
 	GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error)
 	GetCandidatesByJob(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error)
-	DeleteCandidate(ctx context.Context, id string) error
+	DeleteCandidate(ctx context.Context, id, actorID, teamID string) error
 	MoveCandidate(ctx context.Context, p domain.MoveCandidateParams) error
 	FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error
 	UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate) error
 	ConfirmManualReview(ctx context.Context, candidate *domain.Candidate) error
+	GetStageHistory(ctx context.Context, candidateID string) ([]domain.StageHistoryEntry, error)
 }
 
 type candidateUseCase struct {
 	log           *zap.Logger
 	candidateRepo repo.CandidateRepository
 	pipelineRepo  repo.PipelineRepository
+	jobRepo       repo.JobRepository
 	storage       storage.FileStorage
 	publisher     *mq.MQPublisher
+	auditor       *audit.Logger
 }
 
 func (u *candidateUseCase) ConfirmManualReview(ctx context.Context, candidate *domain.Candidate) error {
@@ -94,6 +99,12 @@ func (u *candidateUseCase) UpdateByRecruiter(ctx context.Context, candidate *dom
 }
 
 func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error) {
+	// Get job to extract TeamID for the event
+	job, err := u.jobRepo.GetByID(ctx, params.JobID)
+	if err != nil {
+		return nil, fmt.Errorf("get job for team_id: %w", err)
+	}
+
 	fileKey, err := u.storage.UploadFile(ctx, params.File, params.Filename)
 	if err != nil {
 		return nil, fmt.Errorf("upload file: %w", err)
@@ -108,6 +119,7 @@ func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.Cr
 		CandidateID:   candidate.ID,
 		JobID:         candidate.JobID,
 		ResumeFileKey: *candidate.ResumeFileKey,
+		TeamID:        job.TeamID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal candidate created event: %w", err)
@@ -124,6 +136,15 @@ func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.Cr
 	if err := u.candidateRepo.UpdateParsingStatus(ctx, candidate.ID, candidate.ParsingStatus); err != nil {
 		u.log.Warn("update parsing status", zap.String("candidate_id", candidate.ID), zap.Error(err))
 	}
+
+	_ = u.auditor.Log(ctx, audit.Entry{
+		TeamID:    job.TeamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &params.ActorID,
+		Action:    audit.HiringCandidateAdded,
+		TargetID:  &candidate.ID,
+		Payload:   map[string]string{"job_id": params.JobID},
+	})
 
 	return candidate, nil
 }
@@ -150,28 +171,91 @@ func (u *candidateUseCase) GetCandidatesByJob(ctx context.Context, jobID string,
 	return candidatesDTO, nil
 }
 
-func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id string) error {
+func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id, actorID, teamID string) error {
 	if err := u.candidateRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete candidate: %w", err)
 	}
+
+	_ = u.auditor.Log(ctx, audit.Entry{
+		TeamID:    teamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &actorID,
+		Action:    audit.HiringCandidateDeleted,
+		TargetID:  &id,
+	})
 
 	return nil
 }
 
 func (u *candidateUseCase) MoveCandidate(ctx context.Context, p domain.MoveCandidateParams) error {
+	// Validate stage transition: only +1 position or terminal stage
+	targetStage, err := u.pipelineRepo.GetStageByID(ctx, p.ToStageID)
+	if err != nil {
+		return fmt.Errorf("get target stage: %w", err)
+	}
+
+	// If it's a terminal stage, always allow
+	if !targetStage.IsTerminal {
+		// Get candidate's current stage
+		_, _, currentStageID, err := u.candidateRepo.GetByID(ctx, p.CandidateID)
+		if err != nil {
+			return fmt.Errorf("get candidate: %w", err)
+		}
+
+		if currentStageID != nil {
+			currentStage, err := u.pipelineRepo.GetStageByID(ctx, *currentStageID)
+			if err != nil {
+				return fmt.Errorf("get current stage: %w", err)
+			}
+
+			if targetStage.Position != currentStage.Position+1 {
+				return ErrInvalidStageTransition
+			}
+		}
+	}
+
 	if err := u.candidateRepo.MoveStage(ctx, p); err != nil {
 		return fmt.Errorf("move candidate: %w", err)
+	}
+
+	// We should fetch TeamID from targetStage.JobID -> job.TeamID, or from Candidate -> job.TeamID.
+	if targetStage.JobID != nil {
+		job, err := u.jobRepo.GetByID(ctx, *targetStage.JobID)
+		if err != nil {
+			u.log.Warn("failed to get job to log candidate_moved audit", zap.Error(err))
+		} else {
+			_ = u.auditor.Log(ctx, audit.Entry{
+				TeamID:    job.TeamID,
+				ActorType: audit.ActorUser,
+				ActorID:   &p.ChangedBy,
+				Action:    audit.HiringCandidateMoved,
+				TargetID:  &p.CandidateID,
+				Payload:   map[string]string{"to_stage_id": p.ToStageID},
+			})
+		}
 	}
 
 	return nil
 }
 
-func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, storage storage.FileStorage, publisher *mq.MQPublisher) CandidateUseCase {
+func (u *candidateUseCase) GetStageHistory(ctx context.Context, candidateID string) ([]domain.StageHistoryEntry, error) {
+	entries, err := u.candidateRepo.GetStageHistory(ctx, candidateID)
+	if err != nil {
+		return nil, fmt.Errorf("get stage history: %w", err)
+	}
+
+	return entries, nil
+}
+
+func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, jobRepo repo.JobRepository, storage storage.FileStorage, publisher *mq.MQPublisher, auditor *audit.Logger) CandidateUseCase {
 	return &candidateUseCase{
 		log:           log,
 		candidateRepo: candidateRepo,
 		pipelineRepo:  pipelineRepo,
+		jobRepo:       jobRepo,
 		storage:       storage,
 		publisher:     publisher,
+		auditor:       auditor,
 	}
 }
+

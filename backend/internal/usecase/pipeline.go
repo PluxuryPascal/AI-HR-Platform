@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"backend/internal/audit"
 	"backend/internal/domain"
 	"backend/internal/repo"
 	"context"
@@ -15,16 +16,20 @@ type PipelineUseCase interface {
 	GetStagesByJobID(ctx context.Context, jobID string) ([]domain.PipelineStage, error)
 	GetStagesByTeamID(ctx context.Context, teamID string) ([]domain.PipelineStage, error)
 	GetFirstStageByJobID(ctx context.Context, jobID string) (*domain.PipelineStage, error)
-	UpdateStage(ctx context.Context, stage *domain.PipelineStage) error
-	DeleteStage(ctx context.Context, id string) error
+	UpdateStage(ctx context.Context, stage *domain.PipelineStage, actorID string) error
+	DeleteStage(ctx context.Context, id, actorID, teamID string) error
 }
 
 type pipelineUseCase struct {
 	pipelineRepo repo.PipelineRepository
+	auditor      *audit.Logger
 }
 
-func NewPipelineUseCase(pipelineRepo repo.PipelineRepository) PipelineUseCase {
-	return &pipelineUseCase{pipelineRepo: pipelineRepo}
+func NewPipelineUseCase(pipelineRepo repo.PipelineRepository, auditor *audit.Logger) PipelineUseCase {
+	return &pipelineUseCase{
+		pipelineRepo: pipelineRepo,
+		auditor:      auditor,
+	}
 }
 
 func (u *pipelineUseCase) GetFirstStageByJobID(ctx context.Context, jobID string) (*domain.PipelineStage, error) {
@@ -44,6 +49,15 @@ func (u *pipelineUseCase) CreateStage(ctx context.Context, params domain.CreateS
 	if err != nil {
 		return nil, fmt.Errorf("create pipeline stage: %w", err)
 	}
+
+	_ = u.auditor.Log(ctx, audit.Entry{
+		TeamID:    params.TeamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &params.ActorID,
+		Action:    audit.HiringStageCreated,
+		TargetID:  &stage.ID,
+	})
+
 	return stage, nil
 }
 
@@ -63,16 +77,34 @@ func (u *pipelineUseCase) GetStagesByTeamID(ctx context.Context, teamID string) 
 	return stages, nil
 }
 
-func (u *pipelineUseCase) UpdateStage(ctx context.Context, stage *domain.PipelineStage) error {
+func (u *pipelineUseCase) UpdateStage(ctx context.Context, stage *domain.PipelineStage, actorID string) error {
 	if err := u.pipelineRepo.UpdateStage(ctx, stage); err != nil {
 		return fmt.Errorf("update pipeline stage: %w", err)
 	}
+
+	_ = u.auditor.Log(ctx, audit.Entry{
+		TeamID:    stage.TeamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &actorID,
+		Action:    audit.HiringStageUpdated,
+		TargetID:  &stage.ID,
+	})
+
 	return nil
 }
 
-func (u *pipelineUseCase) DeleteStage(ctx context.Context, id string) error {
+func (u *pipelineUseCase) DeleteStage(ctx context.Context, id, actorID, teamID string) error {
 	if err := u.pipelineRepo.DeleteStage(ctx, id); err != nil {
 		return fmt.Errorf("delete pipeline stage: %w", err)
 	}
+
+	_ = u.auditor.Log(ctx, audit.Entry{
+		TeamID:    teamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &actorID,
+		Action:    audit.HiringStageDeleted,
+		TargetID:  &id,
+	})
+
 	return nil
 }

@@ -22,6 +22,7 @@ type CandidateRepository interface {
 	UpdateParsingStatus(ctx context.Context, candidateID string, status domain.CandidateParsingStatus) error
 	Delete(ctx context.Context, id string) error
 	MoveStage(ctx context.Context, p domain.MoveCandidateParams) error
+	GetStageHistory(ctx context.Context, candidateID string) ([]domain.StageHistoryEntry, error)
 
 	// AI Support
 	SaveCandidateScore(ctx context.Context, score *domain.CandidateScore, factors []domain.ScoreFactor) error
@@ -594,3 +595,45 @@ func (r *candidateRepo) SaveResumeEmbedding(ctx context.Context, embedding *doma
 	}
 	return nil
 }
+
+func (r *candidateRepo) GetStageHistory(ctx context.Context, candidateID string) ([]domain.StageHistoryEntry, error) {
+	const query = `
+		SELECT 
+			h.id,
+			h.candidate_id,
+			h.from_stage_id,
+			fs.title AS from_stage_title,
+			h.to_stage_id,
+			ts.title AS to_stage_title,
+			h.changed_by,
+			h.changed_at
+		FROM hiring.t_candidate_stage_history h
+		LEFT JOIN hiring.t_pipeline_stages fs ON h.from_stage_id = fs.id
+		JOIN hiring.t_pipeline_stages ts ON h.to_stage_id = ts.id
+		WHERE h.candidate_id = @candidate_id
+		ORDER BY h.changed_at DESC
+	`
+
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{"candidate_id": candidateID})
+	if err != nil {
+		return nil, fmt.Errorf("query stage history: %w", err)
+	}
+	defer rows.Close()
+
+	var entries []domain.StageHistoryEntry
+	for rows.Next() {
+		var e domain.StageHistoryEntry
+		if err := rows.Scan(
+			&e.ID, &e.CandidateID,
+			&e.FromStageID, &e.FromStageTitle,
+			&e.ToStageID, &e.ToStageTitle,
+			&e.ChangedBy, &e.ChangedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan history entry: %w", err)
+		}
+		entries = append(entries, e)
+	}
+
+	return entries, nil
+}
+

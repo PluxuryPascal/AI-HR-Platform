@@ -1,6 +1,7 @@
 package activity
 
 import (
+	"backend/internal/audit"
 	"backend/internal/domain"
 	"backend/internal/llm"
 	"backend/pkg/grpc"
@@ -63,9 +64,10 @@ type Activities struct {
 	jobDB        JobStore
 	commDB       CommunicationStore
 	hiringGRPC   *grpc.Client
+	auditor      *audit.Logger
 }
 
-func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.FileStorage, parser ResumeParser, scorer Scorer, embedder Embedder, emailGen EmailGenerator, comparator CandidateComparator, jobParser JobParser, candidateDB CandidateStore, jobDB JobStore, commDB CommunicationStore, hiringGRPC *grpc.Client) *Activities {
+func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.FileStorage, parser ResumeParser, scorer Scorer, embedder Embedder, emailGen EmailGenerator, comparator CandidateComparator, jobParser JobParser, candidateDB CandidateStore, jobDB JobStore, commDB CommunicationStore, hiringGRPC *grpc.Client, auditor *audit.Logger) *Activities {
 	return &Activities{
 		log:          log,
 		pdfExtractor: pdfExtractor,
@@ -80,5 +82,6 @@ func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.
 		jobDB:        jobDB,
 		commDB:       commDB,
 		hiringGRPC:   hiringGRPC,
+		auditor:      auditor,
 	}
 }

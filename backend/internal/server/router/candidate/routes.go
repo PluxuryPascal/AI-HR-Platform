@@ -12,6 +12,9 @@ type CandidateRoutes interface {
 	GetCandidate() echo.HandlerFunc
 	PostCandidateMove() echo.HandlerFunc
 	DeleteCandidate() echo.HandlerFunc
+	GetCandidateHistory() echo.HandlerFunc
+	PatchCandidate() echo.HandlerFunc
+	PostConfirmReview() echo.HandlerFunc
 }
 
 type candidateRouter struct {
@@ -31,8 +34,11 @@ func NewRouter(h CandidateRoutes, session, rbac echo.MiddlewareFunc) router.Rout
 func (r *candidateRouter) Routes() []router.Route {
 	return []router.Route{
 		router.NewRoute(http.MethodGet, "/:id", r.handler.GetCandidate, r.session, r.rbac),
+		router.NewRoute(http.MethodPatch, "/:id", r.handler.PatchCandidate, r.session, r.rbac),
 		router.NewRoute(http.MethodDelete, "/:id", r.handler.DeleteCandidate, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "/:id/move", r.handler.PostCandidateMove, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/:id/history", r.handler.GetCandidateHistory, r.session, r.rbac),
+		router.NewRoute(http.MethodPost, "/:id/confirm-review", r.handler.PostConfirmReview, r.session, r.rbac),
 	}
 }
 
@@ -55,3 +61,4 @@ func (r *candidateJobRouter) Routes() []router.Route {
 		router.NewRoute(http.MethodPost, "", r.handler.PostCandidateList, r.session, r.rbac),
 	}
 }
+

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/internal/audit"
 	"backend/internal/cache"
 	"backend/internal/db"
 	httpHandler "backend/internal/http-handler"
@@ -24,6 +25,7 @@ import (
 	"log"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
+	"go.uber.org/zap"
 )
 
 type repos struct {
@@ -84,7 +86,12 @@ func run(ctx context.Context) error {
 		hiringClient = pb.NewHiringServiceClient(c.GetConn())
 	})
 
-	usecases := initUseCases(infra, utils, repos, &hiringClient)
+	auditor := audit.NewLogger(infra.log.Log, infra.pool)
+	if err := auditor.SeedActionTypes(ctx); err != nil {
+		infra.log.Log.Warn("failed to seed audit action types", zap.Error(err))
+	}
+
+	usecases := initUseCases(infra, utils, repos, &hiringClient, auditor)
 	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
 
 	apiServer := createApiServer(ctx, infra.cfg, utils.t, infra.log, handlers, sessionMiddleware)
@@ -173,10 +180,10 @@ func initRepositories(infra *infrastructureComponents) repos {
 	}
 }
 
-func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos, hiringClient *pb.HiringServiceClient) usecases {
+func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos, hiringClient *pb.HiringServiceClient, auditor *audit.Logger) usecases {
 	return usecases{
-		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h, infra.casbin),
-		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, hiringClient),
+		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, auditor),
+		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, hiringClient, auditor),
 	}
 }
 

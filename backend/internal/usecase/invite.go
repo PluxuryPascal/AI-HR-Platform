@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"backend/internal/audit"
 	"backend/internal/cache"
 	"backend/internal/domain"
 	pb "backend/internal/proto/hiring/v1"
@@ -44,6 +45,7 @@ type inviteUseCase struct {
 	hash         hash.Hash
 	enforcer     *rbac.CasbinClient
 	hiringClient *pb.HiringServiceClient
+	auditor      *audit.Logger
 }
 
 func NewInviteUseCase(
@@ -55,6 +57,7 @@ func NewInviteUseCase(
 	hash hash.Hash,
 	enforcer *rbac.CasbinClient,
 	hiringClient *pb.HiringServiceClient,
+	auditor *audit.Logger,
 ) InviteUseCase {
 	return &inviteUseCase{
 		cfg:          cfg,
@@ -65,6 +68,7 @@ func NewInviteUseCase(
 		hash:         hash,
 		enforcer:     enforcer,
 		hiringClient: hiringClient,
+		auditor:      auditor,
 	}
 }
 
@@ -97,6 +101,15 @@ func (i *inviteUseCase) InviteUser(ctx context.Context, tokenStr string, req dom
 	if err := i.repo.CreateInvite(ctx, invite, jobIDs); err != nil {
 		return fmt.Errorf("create invite: %w", err)
 	}
+
+	_ = i.auditor.Log(ctx, audit.Entry{
+		TeamID:    subject.TeamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &subject.UserID,
+		Action:    audit.AuthInviteSent,
+		TargetID:  &invite.ID,
+		Payload:   map[string]string{"email": req.Email, "role": req.Role},
+	})
 
 	// TODO: hand the token to an email-sending service here.
 	// e.g. emailSvc.SendInvite(ctx, invite.Email, inviteToken)
@@ -194,6 +207,14 @@ func (i *inviteUseCase) AcceptInvite(ctx context.Context, req domain.CreateUserP
 	if err := i.CompleteInvite(ctx, invite.ID, user.ID, jobIDs); err != nil {
 		return &tokenString, i.token.ExpireAt, nil
 	}
+
+	_ = i.auditor.Log(ctx, audit.Entry{
+		TeamID:    invite.TeamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &user.ID,
+		Action:    audit.AuthInviteAccepted,
+		TargetID:  &invite.ID,
+	})
 
 	return &tokenString, i.token.ExpireAt, nil
 }

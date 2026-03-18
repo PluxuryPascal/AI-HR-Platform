@@ -1,6 +1,7 @@
 package activity
 
 import (
+	"backend/internal/audit"
 	"backend/internal/domain"
 	hiringv1 "backend/internal/proto/hiring/v1"
 	"backend/pkg/pdf"
@@ -97,6 +98,13 @@ func (a *Activities) LLMScore(ctx context.Context, input LLMScoreInput) (*domain
 		return nil, fmt.Errorf("failed to save score: %w", err)
 	}
 
+	_ = a.auditor.Log(ctx, audit.Entry{
+		TeamID:    input.TeamID,
+		ActorType: audit.ActorSystem,
+		Action:    audit.AIScoreComputed,
+		TargetID:  &input.CandidateID,
+	})
+
 	logger.Info("LLMScore completed", zap.String("candidate id", input.CandidateID), zap.Int("match score", result.MatchScore))
 
 	return result, nil
@@ -130,7 +138,7 @@ func (a *Activities) LLMEmbed(ctx context.Context, input LLMEmbedInput) error {
 	return nil
 }
 
-func (a *Activities) GRPCCallback(ctx context.Context, input GRPCCallbackInput) error {
+func (a *Activities) GRPCCallback(ctx context.Context, input GRPCCallbackInput, teamID string) error {
 	logger := activity.GetLogger(ctx)
 	logger.Info("GRPCCallback started",
 		"candidate_id", input.CandidateID,
@@ -158,6 +166,15 @@ func (a *Activities) GRPCCallback(ctx context.Context, input GRPCCallbackInput) 
 
 	if _, err := hiringClient.UpdateCandidateProfile(ctx, req); err != nil {
 		return fmt.Errorf("update candidate profile rpc: %w", err)
+	}
+
+	if input.Status != hiringv1.ParsingStatus_PARSING_STATUS_FAILED {
+		_ = a.auditor.Log(ctx, audit.Entry{
+			TeamID:    teamID,
+			ActorType: audit.ActorSystem,
+			Action:    audit.AIResumeParsed,
+			TargetID:  &input.CandidateID,
+		})
 	}
 
 	logger.Info("GRPCCallback completed",

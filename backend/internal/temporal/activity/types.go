@@ -20,6 +20,7 @@ type LLMParseInput struct {
 
 type LLMScoreInput struct {
 	CandidateID     string `json:"candidate_id"`
+	TeamID          string `json:"team_id"`
 	ParsedText      string `json:"parsed_text"`
 	JobRequirements string `json:"job_requirements"`
 }
@@ -40,6 +41,7 @@ type GRPCCallbackInput struct {
 
 type EmailGenerateInput struct {
 	CandidateID        string   `json:"candidate_id"`
+	TeamID             string   `json:"team_id"`
 	GeneratedByUserID  string   `json:"generated_by_user_id"`
 	CandidateFirstName string   `json:"candidate_first_name"`
 	CandidateLastName  string   `json:"candidate_last_name"`

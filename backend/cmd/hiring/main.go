@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/internal/audit"
 	"backend/internal/cache"
 	"backend/internal/db"
 	grpchiring "backend/internal/grpc-handler/hiring"
@@ -9,8 +10,10 @@ import (
 	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
 	"backend/internal/server"
+	"backend/internal/server/router/access"
 	"backend/internal/server/router/candidate"
 	"backend/internal/server/router/job"
+	"backend/internal/server/router/pipeline"
 	"backend/internal/usecase"
 	"backend/pkg/config"
 	"backend/pkg/grpc"
@@ -25,6 +28,7 @@ import (
 	"log"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
+	"go.uber.org/zap"
 )
 
 type repos struct {
@@ -46,6 +50,8 @@ type usecases struct {
 type handlers struct {
 	job       *handler.JobHandler
 	candidate *handler.CandidateHandler
+	access    *handler.AccessHandler
+	pipeline  *handler.PipelineHandler
 }
 
 type infrastructureComponents struct {
@@ -87,8 +93,15 @@ func run(ctx context.Context) error {
 	}
 
 	repos := initRepositories(infra)
-	usecases := initUseCases(infra, utils, repos)
-	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
+
+	auditor := audit.NewLogger(infra.log.Log, infra.pool)
+	if err := auditor.SeedActionTypes(ctx); err != nil {
+		infra.log.Log.Warn("failed to seed audit action types", zap.Error(err))
+	}
+
+	usecases := initUseCases(infra, utils, repos, auditor)
+
+	handlers, sessionMiddleware := initHandlers(infra, utils, usecases, auditor)
 
 	grpcHandler := grpchiring.NewHandler(infra.log.Log, usecases.access, usecases.candidate)
 
@@ -192,17 +205,17 @@ func initRepositories(infra *infrastructureComponents) repos {
 	}
 }
 
-func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos) usecases {
+func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos, auditor *audit.Logger) usecases {
 	return usecases{
-		access:     usecase.NewAccessUseCase(r.access),
+		access:     usecase.NewAccessUseCase(r.access, auditor),
 		department: usecase.NewDepartmentUseCase(r.department),
-		job:        usecase.NewJobUseCase(r.job),
-		candidate:  usecase.NewCandidateUseCase(infra.log.Log, r.candidate, r.pipeline, infra.storage, infra.mqPublisher),
-		pipeline:   usecase.NewPipelineUseCase(r.pipeline),
+		job:        usecase.NewJobUseCase(r.job, auditor),
+		candidate:  usecase.NewCandidateUseCase(infra.log.Log, r.candidate, r.pipeline, r.job, infra.storage, infra.mqPublisher, auditor),
+		pipeline:   usecase.NewPipelineUseCase(r.pipeline, auditor),
 	}
 }
 
-func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases) (handlers, middleware.Middleware) {
+func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases, auditor *audit.Logger) (handlers, middleware.Middleware) {
 	mw := middleware.NewMiddleware(
 		infra.log,
 		infra.redisPool,
@@ -213,6 +226,8 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 	h := handlers{
 		job:       handler.NewJobHandler(infra.log.Log, u.job),
 		candidate: handler.NewCandidateHandler(infra.log.Log, u.candidate),
+		access:    handler.NewAccessHandler(infra.log.Log, u.access),
+		pipeline:  handler.NewPipelineHandler(infra.log.Log, u.pipeline),
 	}
 
 	return h, mw
@@ -229,8 +244,14 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		server.WithRouterGroup(ctx, "/jobs/:job_id/candidates",
 			candidate.NewJobScopedRouter(h.candidate, mw.Session(t), mw.RBAC()),
 		),
+		server.WithRouterGroup(ctx, "/jobs/:job_id/stages",
+			pipeline.NewRouter(h.pipeline, mw.Session(t), mw.RBAC()),
+		),
 		server.WithRouterGroup(ctx, "/candidates",
 			candidate.NewRouter(h.candidate, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/jobs/:job_id/access",
+			access.NewRouter(h.access, mw.Session(t), mw.RBAC()),
 		),
 	)
 }

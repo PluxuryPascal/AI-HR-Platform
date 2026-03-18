@@ -88,6 +88,7 @@ func (h *CandidateHandler) PostUploadResume() echo.HandlerFunc {
 			JobID:    jobID,
 			Filename: fh.Filename,
 			File:     file,
+			ActorID:  c.Get("id").(string),
 		})
 		if err != nil {
 			switch {
@@ -170,6 +171,9 @@ func (h *CandidateHandler) PostCandidateMove() echo.HandlerFunc {
 		}
 
 		if err := h.candidateUC.MoveCandidate(c.Request().Context(), params); err != nil {
+			if errors.Is(err, usecase.ErrInvalidStageTransition) {
+				return response.Error(c, http.StatusConflict, err.Error())
+			}
 			h.log.Error("move candidate error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -181,11 +185,84 @@ func (h *CandidateHandler) PostCandidateMove() echo.HandlerFunc {
 func (h *CandidateHandler) DeleteCandidate() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
-		if err := h.candidateUC.DeleteCandidate(c.Request().Context(), id); err != nil {
+		actorID := c.Get("id").(string)
+		teamID := c.Get("team_id").(string)
+		if err := h.candidateUC.DeleteCandidate(c.Request().Context(), id, actorID, teamID); err != nil {
 			h.log.Error("delete candidate error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
 
 		return response.NoContent(c, http.StatusNoContent)
+	}
+}
+
+func (h *CandidateHandler) GetCandidateHistory() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id := c.Param("id")
+		entries, err := h.candidateUC.GetStageHistory(c.Request().Context(), id)
+		if err != nil {
+			h.log.Error("get candidate history error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return response.OK(c, entries)
+	}
+}
+
+func (h *CandidateHandler) PatchCandidate() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id := c.Param("id")
+		var req updateCandidateRequest
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
+		}
+		if err := c.Validate(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
+		}
+
+		candidate := &domain.Candidate{
+			ID:        id,
+			FirstName: req.FirstName,
+			LastName:  req.LastName,
+			Email:     req.Email,
+			Location:  req.Location,
+			Skills:    req.Skills,
+		}
+
+		if err := h.candidateUC.UpdateByRecruiter(c.Request().Context(), candidate); err != nil {
+			h.log.Error("update candidate error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return response.OK(c, candidate)
+	}
+}
+
+func (h *CandidateHandler) PostConfirmReview() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id := c.Param("id")
+		var req updateCandidateRequest
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
+		}
+
+		candidate := &domain.Candidate{
+			ID:        id,
+			FirstName: req.FirstName,
+			LastName:  req.LastName,
+			Email:     req.Email,
+			Location:  req.Location,
+			Skills:    req.Skills,
+		}
+
+		if err := h.candidateUC.ConfirmManualReview(c.Request().Context(), candidate); err != nil {
+			if errors.Is(err, usecase.ErrCandidateNotNeedsReview) {
+				return response.Error(c, http.StatusConflict, err.Error())
+			}
+			h.log.Error("confirm review error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return response.OK(c, map[string]bool{"success": true})
 	}
 }

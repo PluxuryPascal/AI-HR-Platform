@@ -36,6 +36,7 @@ type MoveCandidateParams struct {
 type CreateStageParams struct {
 	JobID      *string `json:"job_id,omitempty"`
 	TeamID     string  `json:"team_id"`
+	ActorID    string  `json:"actor_id"`
 	Code       string  `json:"code"`
 	Title      string  `json:"title"`
 	Position   int     `json:"position"`

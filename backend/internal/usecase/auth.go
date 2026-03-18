@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"backend/internal/audit"
 	"backend/internal/cache"
 	"backend/internal/domain"
 	"backend/internal/repo"
@@ -33,6 +34,7 @@ type authUseCase struct {
 	token        *token.JWTtoken
 	hash         hash.Hash
 	enforcer     *rbac.CasbinClient
+	auditor      *audit.Logger
 }
 
 func (a *authUseCase) Logout(ctx context.Context, tokenStr string) error {
@@ -42,6 +44,16 @@ func (a *authUseCase) Logout(ctx context.Context, tokenStr string) error {
 	}
 
 	sessionID := token.Subject()
+
+	sess, err := cache.Get(ctx, a.cacheManager, cache.SessionKey, sessionID)
+	if err == nil {
+		_ = a.auditor.Log(ctx, audit.Entry{
+			TeamID:    sess.TeamID,
+			ActorType: audit.ActorUser,
+			ActorID:   &sess.UserID,
+			Action:    audit.AuthUserLoggedOut,
+		})
+	}
 
 	if err := cache.Delete(ctx, a.cacheManager, cache.SessionKey, sessionID); err != nil {
 		return fmt.Errorf("delete session: %w", err)
@@ -95,6 +107,14 @@ func (a *authUseCase) RegisterOwner(ctx context.Context, req domain.RegisterOwne
 
 	tokenString := string(signed)
 
+	_ = a.auditor.Log(ctx, audit.Entry{
+		TeamID:    userData.TeamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &userData.ID,
+		Action:    audit.AuthOwnerRegistered,
+		TargetID:  &userData.TeamID,
+	})
+
 	return &tokenString, a.token.ExpireAt, nil
 }
 
@@ -134,16 +154,24 @@ func (a *authUseCase) Login(ctx context.Context, email string, password string) 
 
 	tokenString := string(signed)
 
+	_ = a.auditor.Log(ctx, audit.Entry{
+		TeamID:    user.TeamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &user.ID,
+		Action:    audit.AuthUserLoggedIn,
+	})
+
 	return &tokenString, a.token.ExpireAt, nil
 }
 
-func NewAuthUseCase(repo repo.UserRepository, cacheManager *cache.Manager, token *token.JWTtoken, hash hash.Hash, enforcer *rbac.CasbinClient) AuthUseCase {
+func NewAuthUseCase(repo repo.UserRepository, cacheManager *cache.Manager, token *token.JWTtoken, hash hash.Hash, enforcer *rbac.CasbinClient, auditor *audit.Logger) AuthUseCase {
 	return &authUseCase{
 		repo:         repo,
 		cacheManager: cacheManager,
 		token:        token,
 		hash:         hash,
 		enforcer:     enforcer,
+		auditor:      auditor,
 	}
 }
 

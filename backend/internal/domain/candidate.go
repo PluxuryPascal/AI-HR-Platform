@@ -92,6 +92,7 @@ type CreateCandidateParams struct {
 	JobID    string
 	Filename string
 	File     io.Reader
+	ActorID  string
 }
 
 type AIParsingResult struct {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/internal/audit"
 	"backend/internal/db"
 	"backend/internal/llm"
 	"backend/internal/repo"
@@ -17,6 +18,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	"go.uber.org/zap"
 )
 
 type infrastructureComponents struct {
@@ -44,7 +47,7 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	infra, err := initInfrastructure()
+	infra, err := initInfrastructure(ctx)
 	if err != nil {
 		return fmt.Errorf("init infrastructure error: %w", err)
 	}
@@ -67,7 +70,7 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func initInfrastructure() (*infrastructureComponents, error) {
+func initInfrastructure(ctx context.Context) (*infrastructureComponents, error) {
 	conf, err := config.LoadConfig("config.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("load config error: %w", err)
@@ -100,6 +103,11 @@ func initInfrastructure() (*infrastructureComponents, error) {
 
 	pdfExtractor := pdf.NewExtractor(pdf.Config{})
 
+	auditor := audit.NewLogger(zapLog.Log, pool)
+	if err := auditor.SeedActionTypes(ctx); err != nil {
+		zapLog.Log.Warn("failed to seed audit action types", zap.Error(err))
+	}
+
 	activities := activity.NewActivities(
 		zapLog.Log,
 		pdfExtractor,
@@ -114,6 +122,7 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		jobRepo,
 		commRepo,
 		hiringGRPC,
+		auditor,
 	)
 
 	temporalWorker := temporal.NewWorker(zapLog.Log, temporalClient, &conf.Temporal, activities)
