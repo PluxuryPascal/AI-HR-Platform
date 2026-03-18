@@ -7,6 +7,8 @@ option go_package = "internal/proto/ai_engine/v1;aienginev1";
 service AIEngineService {
   rpc GetCandidateScore(GetCandidateScoreRequest)
       returns (GetCandidateScoreResponse);
+  rpc GetCandidateScores(GetCandidateScoresRequest)
+      returns (GetCandidateScoresResponse);
   rpc GenerateCandidateEmail(GenerateCandidateEmailRequest)
       returns (GenerateCandidateEmailResponse);
   rpc GetCandidateEmails(GetCandidateEmailsRequest)
@@ -31,6 +33,15 @@ message GetCandidateScoreResponse {
   int32             match_score  = 1;
   repeated ScoreFactor factors   = 2;
   bool              has_score    = 3;
+}
+
+message GetCandidateScoresRequest {
+  repeated string candidate_ids = 1;
+}
+
+message GetCandidateScoresResponse {
+  // key = candidate_id
+  map<string, GetCandidateScoreResponse> scores = 1;
 }
 
 enum EmailType {

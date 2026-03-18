@@ -42,6 +42,25 @@ func (h *Handler) GetCandidateScore(ctx context.Context, req *pb.GetCandidateSco
 	}, nil
 }
 
+func (h *Handler) GetCandidateScores(ctx context.Context, req *pb.GetCandidateScoresRequest) (*pb.GetCandidateScoresResponse, error) {
+	scores, err := h.candidateRepo.GetScoresByCandidateIDs(ctx, req.GetCandidateIds())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "get candidate scores: %v", err)
+	}
+
+	protoScores := make(map[string]*pb.GetCandidateScoreResponse)
+	for id, score := range scores {
+		protoScores[id] = &pb.GetCandidateScoreResponse{
+			HasScore:   true,
+			MatchScore: int32(score.MatchScore),
+		}
+	}
+
+	return &pb.GetCandidateScoresResponse{
+		Scores: protoScores,
+	}, nil
+}
+
 func (h *Handler) GenerateCandidateEmail(ctx context.Context, req *pb.GenerateCandidateEmailRequest) (*pb.GenerateCandidateEmailResponse, error) {
 	cand, _, _, err := h.candidateRepo.GetByID(ctx, req.GetCandidateId())
 	if err != nil {

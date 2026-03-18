@@ -7,11 +7,14 @@ import (
 	grpchiring "backend/internal/grpc-handler/hiring"
 	handler "backend/internal/http-handler"
 	"backend/internal/middleware"
+	pbAI "backend/internal/proto/ai_engine/v1"
+	pbAuth "backend/internal/proto/auth/v1"
 	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
 	"backend/internal/server"
 	"backend/internal/server/router/access"
 	"backend/internal/server/router/candidate"
+	"backend/internal/server/router/dashboard"
 	"backend/internal/server/router/department"
 	"backend/internal/server/router/job"
 	"backend/internal/server/router/pipeline"
@@ -38,6 +41,7 @@ type repos struct {
 	job        repo.JobRepository
 	candidate  repo.CandidateRepository
 	pipeline   repo.PipelineRepository
+	dashboard  repo.DashboardRepository
 }
 
 type usecases struct {
@@ -46,6 +50,7 @@ type usecases struct {
 	job        usecase.JobUseCase
 	candidate  usecase.CandidateUseCase
 	pipeline   usecase.PipelineUseCase
+	dashboard  usecase.DashboardUseCase
 }
 
 type handlers struct {
@@ -54,6 +59,7 @@ type handlers struct {
 	access     *handler.AccessHandler
 	pipeline   *handler.PipelineHandler
 	department *handler.DepartmentHandler
+	dashboard  *handler.DashboardHandler
 }
 
 type infrastructureComponents struct {
@@ -62,6 +68,8 @@ type infrastructureComponents struct {
 	pool         *db.PostgresClient
 	redisPool    *db.RedisClient
 	grpcServer   *grpc.Server
+	authClient   *grpc.Client
+	aiClient     *grpc.Client
 	storage      *storage.CloudinaryStorage
 	casbinClient *rbac.CasbinClient
 	mqClient     *mq.RabbitMQ
@@ -165,12 +173,20 @@ func initInfrastructure() (*infrastructureComponents, error) {
 	serverCfg := conf.GRPC.Servers["hiring"]
 	grpcServer := grpc.NewServer("hiring", zapLog.Log, &serverCfg)
 
+	authClientCfg := conf.GRPC.Clients["auth"]
+	authGrpcClient := grpc.NewClient("auth", zapLog.Log, &authClientCfg)
+
+	aiClientCfg := conf.GRPC.Clients["ai_engine"]
+	aiGrpcClient := grpc.NewClient("ai_engine", zapLog.Log, &aiClientCfg)
+
 	return &infrastructureComponents{
 		cfg:          conf,
 		log:          zapLog,
 		pool:         pool,
 		redisPool:    redisPool,
 		grpcServer:   grpcServer,
+		authClient:   authGrpcClient,
+		aiClient:     aiGrpcClient,
 		storage:      storage,
 		casbinClient: casbinClient,
 		mqClient:     mqClient,
@@ -204,16 +220,28 @@ func initRepositories(infra *infrastructureComponents) repos {
 		job:        repo.NewJobRepo(infra.pool),
 		candidate:  repo.NewCandidateRepo(infra.pool),
 		pipeline:   repo.NewPipelineRepo(infra.pool),
+		dashboard:  repo.NewDashboardRepo(infra.pool),
 	}
 }
 
 func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos, auditor *audit.Logger) usecases {
+	var authSvcClient pbAuth.AuthServiceClient
+	infra.authClient.OnInit(func(c *grpc.Client) {
+		authSvcClient = pbAuth.NewAuthServiceClient(c.GetConn())
+	})
+
+	var aiSvcClient pbAI.AIEngineServiceClient
+	infra.aiClient.OnInit(func(c *grpc.Client) {
+		aiSvcClient = pbAI.NewAIEngineServiceClient(c.GetConn())
+	})
+
 	return usecases{
 		access:     usecase.NewAccessUseCase(r.access, auditor),
 		department: usecase.NewDepartmentUseCase(r.department),
 		job:        usecase.NewJobUseCase(r.job, auditor),
 		candidate:  usecase.NewCandidateUseCase(infra.log.Log, r.candidate, r.pipeline, r.job, infra.storage, infra.mqPublisher, auditor),
 		pipeline:   usecase.NewPipelineUseCase(r.pipeline, auditor),
+		dashboard:  usecase.NewDashboardUseCase(infra.log.Log, r.dashboard, authSvcClient, aiSvcClient),
 	}
 }
 
@@ -231,6 +259,7 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 		access:     handler.NewAccessHandler(infra.log.Log, u.access),
 		pipeline:   handler.NewPipelineHandler(infra.log.Log, u.pipeline),
 		department: handler.NewDepartmentHandler(infra.log.Log, u.department),
+		dashboard:  handler.NewDashboardHandler(infra.log.Log, u.dashboard),
 	}
 
 	return h, mw
@@ -258,6 +287,9 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		),
 		server.WithRouterGroup(ctx, "/departments",
 			department.NewRouter(h.department, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/dashboard",
+			dashboard.NewRouter(h.dashboard, mw.Session(t), mw.RBAC()),
 		),
 	)
 }

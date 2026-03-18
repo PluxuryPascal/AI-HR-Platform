@@ -286,6 +286,95 @@ func (x *GetCandidateScoreResponse) GetHasScore() bool {
 	return false
 }
 
+type GetCandidateScoresRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CandidateIds  []string               `protobuf:"bytes,1,rep,name=candidate_ids,json=candidateIds,proto3" json:"candidate_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCandidateScoresRequest) Reset() {
+	*x = GetCandidateScoresRequest{}
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCandidateScoresRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCandidateScoresRequest) ProtoMessage() {}
+
+func (x *GetCandidateScoresRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCandidateScoresRequest.ProtoReflect.Descriptor instead.
+func (*GetCandidateScoresRequest) Descriptor() ([]byte, []int) {
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetCandidateScoresRequest) GetCandidateIds() []string {
+	if x != nil {
+		return x.CandidateIds
+	}
+	return nil
+}
+
+type GetCandidateScoresResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key = candidate_id
+	Scores        map[string]*GetCandidateScoreResponse `protobuf:"bytes,1,rep,name=scores,proto3" json:"scores,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCandidateScoresResponse) Reset() {
+	*x = GetCandidateScoresResponse{}
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCandidateScoresResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCandidateScoresResponse) ProtoMessage() {}
+
+func (x *GetCandidateScoresResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCandidateScoresResponse.ProtoReflect.Descriptor instead.
+func (*GetCandidateScoresResponse) Descriptor() ([]byte, []int) {
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetCandidateScoresResponse) GetScores() map[string]*GetCandidateScoreResponse {
+	if x != nil {
+		return x.Scores
+	}
+	return nil
+}
+
 type GenerateCandidateEmailRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	CandidateId       string                 `protobuf:"bytes,1,opt,name=candidate_id,json=candidateId,proto3" json:"candidate_id,omitempty"`
@@ -301,7 +390,7 @@ type GenerateCandidateEmailRequest struct {
 
 func (x *GenerateCandidateEmailRequest) Reset() {
 	*x = GenerateCandidateEmailRequest{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[3]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -313,7 +402,7 @@ func (x *GenerateCandidateEmailRequest) String() string {
 func (*GenerateCandidateEmailRequest) ProtoMessage() {}
 
 func (x *GenerateCandidateEmailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[3]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -326,7 +415,7 @@ func (x *GenerateCandidateEmailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateCandidateEmailRequest.ProtoReflect.Descriptor instead.
 func (*GenerateCandidateEmailRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{3}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GenerateCandidateEmailRequest) GetCandidateId() string {
@@ -389,7 +478,7 @@ type GenerateCandidateEmailResponse struct {
 
 func (x *GenerateCandidateEmailResponse) Reset() {
 	*x = GenerateCandidateEmailResponse{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[4]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -401,7 +490,7 @@ func (x *GenerateCandidateEmailResponse) String() string {
 func (*GenerateCandidateEmailResponse) ProtoMessage() {}
 
 func (x *GenerateCandidateEmailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[4]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -414,7 +503,7 @@ func (x *GenerateCandidateEmailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateCandidateEmailResponse.ProtoReflect.Descriptor instead.
 func (*GenerateCandidateEmailResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{4}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GenerateCandidateEmailResponse) GetCommunicationId() string {
@@ -447,7 +536,7 @@ type GetCandidateEmailsRequest struct {
 
 func (x *GetCandidateEmailsRequest) Reset() {
 	*x = GetCandidateEmailsRequest{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[5]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -459,7 +548,7 @@ func (x *GetCandidateEmailsRequest) String() string {
 func (*GetCandidateEmailsRequest) ProtoMessage() {}
 
 func (x *GetCandidateEmailsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[5]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -472,7 +561,7 @@ func (x *GetCandidateEmailsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCandidateEmailsRequest.ProtoReflect.Descriptor instead.
 func (*GetCandidateEmailsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{5}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetCandidateEmailsRequest) GetCandidateId() string {
@@ -497,7 +586,7 @@ type CommunicationEntry struct {
 
 func (x *CommunicationEntry) Reset() {
 	*x = CommunicationEntry{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[6]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -509,7 +598,7 @@ func (x *CommunicationEntry) String() string {
 func (*CommunicationEntry) ProtoMessage() {}
 
 func (x *CommunicationEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[6]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -522,7 +611,7 @@ func (x *CommunicationEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommunicationEntry.ProtoReflect.Descriptor instead.
 func (*CommunicationEntry) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{6}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CommunicationEntry) GetCommunicationId() string {
@@ -583,7 +672,7 @@ type GetCandidateEmailsResponse struct {
 
 func (x *GetCandidateEmailsResponse) Reset() {
 	*x = GetCandidateEmailsResponse{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[7]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -595,7 +684,7 @@ func (x *GetCandidateEmailsResponse) String() string {
 func (*GetCandidateEmailsResponse) ProtoMessage() {}
 
 func (x *GetCandidateEmailsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[7]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -608,7 +697,7 @@ func (x *GetCandidateEmailsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCandidateEmailsResponse.ProtoReflect.Descriptor instead.
 func (*GetCandidateEmailsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{7}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetCandidateEmailsResponse) GetEmails() []*CommunicationEntry {
@@ -633,7 +722,7 @@ type CandidateForComparison struct {
 
 func (x *CandidateForComparison) Reset() {
 	*x = CandidateForComparison{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[8]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -645,7 +734,7 @@ func (x *CandidateForComparison) String() string {
 func (*CandidateForComparison) ProtoMessage() {}
 
 func (x *CandidateForComparison) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[8]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -658,7 +747,7 @@ func (x *CandidateForComparison) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CandidateForComparison.ProtoReflect.Descriptor instead.
 func (*CandidateForComparison) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{8}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CandidateForComparison) GetCandidateId() string {
@@ -720,7 +809,7 @@ type CompareCandidatesRequest struct {
 
 func (x *CompareCandidatesRequest) Reset() {
 	*x = CompareCandidatesRequest{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[9]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -732,7 +821,7 @@ func (x *CompareCandidatesRequest) String() string {
 func (*CompareCandidatesRequest) ProtoMessage() {}
 
 func (x *CompareCandidatesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[9]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -745,7 +834,7 @@ func (x *CompareCandidatesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompareCandidatesRequest.ProtoReflect.Descriptor instead.
 func (*CompareCandidatesRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{9}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CompareCandidatesRequest) GetCandidates() []*CandidateForComparison {
@@ -775,7 +864,7 @@ type CandidateComparisonEntry struct {
 
 func (x *CandidateComparisonEntry) Reset() {
 	*x = CandidateComparisonEntry{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[10]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -787,7 +876,7 @@ func (x *CandidateComparisonEntry) String() string {
 func (*CandidateComparisonEntry) ProtoMessage() {}
 
 func (x *CandidateComparisonEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[10]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -800,7 +889,7 @@ func (x *CandidateComparisonEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CandidateComparisonEntry.ProtoReflect.Descriptor instead.
 func (*CandidateComparisonEntry) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{10}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CandidateComparisonEntry) GetExperience() string {
@@ -848,7 +937,7 @@ type CompareCandidatesResponse struct {
 
 func (x *CompareCandidatesResponse) Reset() {
 	*x = CompareCandidatesResponse{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[11]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -860,7 +949,7 @@ func (x *CompareCandidatesResponse) String() string {
 func (*CompareCandidatesResponse) ProtoMessage() {}
 
 func (x *CompareCandidatesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[11]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -873,7 +962,7 @@ func (x *CompareCandidatesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompareCandidatesResponse.ProtoReflect.Descriptor instead.
 func (*CompareCandidatesResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{11}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CompareCandidatesResponse) GetResults() map[string]*CandidateComparisonEntry {
@@ -893,7 +982,7 @@ type ParseJobDescriptionRequest struct {
 
 func (x *ParseJobDescriptionRequest) Reset() {
 	*x = ParseJobDescriptionRequest{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[12]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -905,7 +994,7 @@ func (x *ParseJobDescriptionRequest) String() string {
 func (*ParseJobDescriptionRequest) ProtoMessage() {}
 
 func (x *ParseJobDescriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[12]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -918,7 +1007,7 @@ func (x *ParseJobDescriptionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParseJobDescriptionRequest.ProtoReflect.Descriptor instead.
 func (*ParseJobDescriptionRequest) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{12}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ParseJobDescriptionRequest) GetRawText() string {
@@ -950,7 +1039,7 @@ type ParseJobDescriptionResponse struct {
 
 func (x *ParseJobDescriptionResponse) Reset() {
 	*x = ParseJobDescriptionResponse{}
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[13]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -962,7 +1051,7 @@ func (x *ParseJobDescriptionResponse) String() string {
 func (*ParseJobDescriptionResponse) ProtoMessage() {}
 
 func (x *ParseJobDescriptionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[13]
+	mi := &file_proto_ai_engine_v1_ai_engine_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,7 +1064,7 @@ func (x *ParseJobDescriptionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParseJobDescriptionResponse.ProtoReflect.Descriptor instead.
 func (*ParseJobDescriptionResponse) Descriptor() ([]byte, []int) {
-	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{13}
+	return file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ParseJobDescriptionResponse) GetTitle() string {
@@ -1042,7 +1131,14 @@ const file_proto_ai_engine_v1_ai_engine_proto_rawDesc = "" +
 	"\vmatch_score\x18\x01 \x01(\x05R\n" +
 	"matchScore\x123\n" +
 	"\afactors\x18\x02 \x03(\v2\x19.ai_engine.v1.ScoreFactorR\afactors\x12\x1b\n" +
-	"\thas_score\x18\x03 \x01(\bR\bhasScore\"\xaf\x02\n" +
+	"\thas_score\x18\x03 \x01(\bR\bhasScore\"@\n" +
+	"\x19GetCandidateScoresRequest\x12#\n" +
+	"\rcandidate_ids\x18\x01 \x03(\tR\fcandidateIds\"\xce\x01\n" +
+	"\x1aGetCandidateScoresResponse\x12L\n" +
+	"\x06scores\x18\x01 \x03(\v24.ai_engine.v1.GetCandidateScoresResponse.ScoresEntryR\x06scores\x1ab\n" +
+	"\vScoresEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12=\n" +
+	"\x05value\x18\x02 \x01(\v2'.ai_engine.v1.GetCandidateScoreResponseR\x05value:\x028\x01\"\xaf\x02\n" +
 	"\x1dGenerateCandidateEmailRequest\x12!\n" +
 	"\fcandidate_id\x18\x01 \x01(\tR\vcandidateId\x12/\n" +
 	"\x14generated_by_user_id\x18\x02 \x01(\tR\x11generatedByUserId\x12+\n" +
@@ -1118,9 +1214,10 @@ const file_proto_ai_engine_v1_ai_engine_proto_rawDesc = "" +
 	"\x16EMAIL_TONE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17EMAIL_TONE_PROFESSIONAL\x10\x01\x12\x17\n" +
 	"\x13EMAIL_TONE_FRIENDLY\x10\x02\x12\x14\n" +
-	"\x10EMAIL_TONE_BRIEF\x10\x032\xa7\x04\n" +
+	"\x10EMAIL_TONE_BRIEF\x10\x032\x90\x05\n" +
 	"\x0fAIEngineService\x12d\n" +
-	"\x11GetCandidateScore\x12&.ai_engine.v1.GetCandidateScoreRequest\x1a'.ai_engine.v1.GetCandidateScoreResponse\x12s\n" +
+	"\x11GetCandidateScore\x12&.ai_engine.v1.GetCandidateScoreRequest\x1a'.ai_engine.v1.GetCandidateScoreResponse\x12g\n" +
+	"\x12GetCandidateScores\x12'.ai_engine.v1.GetCandidateScoresRequest\x1a(.ai_engine.v1.GetCandidateScoresResponse\x12s\n" +
 	"\x16GenerateCandidateEmail\x12+.ai_engine.v1.GenerateCandidateEmailRequest\x1a,.ai_engine.v1.GenerateCandidateEmailResponse\x12g\n" +
 	"\x12GetCandidateEmails\x12'.ai_engine.v1.GetCandidateEmailsRequest\x1a(.ai_engine.v1.GetCandidateEmailsResponse\x12d\n" +
 	"\x11CompareCandidates\x12&.ai_engine.v1.CompareCandidatesRequest\x1a'.ai_engine.v1.CompareCandidatesResponse\x12j\n" +
@@ -1139,50 +1236,57 @@ func file_proto_ai_engine_v1_ai_engine_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_ai_engine_v1_ai_engine_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_ai_engine_v1_ai_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_proto_ai_engine_v1_ai_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_proto_ai_engine_v1_ai_engine_proto_goTypes = []any{
 	(EmailType)(0),                         // 0: ai_engine.v1.EmailType
 	(EmailTone)(0),                         // 1: ai_engine.v1.EmailTone
 	(*GetCandidateScoreRequest)(nil),       // 2: ai_engine.v1.GetCandidateScoreRequest
 	(*ScoreFactor)(nil),                    // 3: ai_engine.v1.ScoreFactor
 	(*GetCandidateScoreResponse)(nil),      // 4: ai_engine.v1.GetCandidateScoreResponse
-	(*GenerateCandidateEmailRequest)(nil),  // 5: ai_engine.v1.GenerateCandidateEmailRequest
-	(*GenerateCandidateEmailResponse)(nil), // 6: ai_engine.v1.GenerateCandidateEmailResponse
-	(*GetCandidateEmailsRequest)(nil),      // 7: ai_engine.v1.GetCandidateEmailsRequest
-	(*CommunicationEntry)(nil),             // 8: ai_engine.v1.CommunicationEntry
-	(*GetCandidateEmailsResponse)(nil),     // 9: ai_engine.v1.GetCandidateEmailsResponse
-	(*CandidateForComparison)(nil),         // 10: ai_engine.v1.CandidateForComparison
-	(*CompareCandidatesRequest)(nil),       // 11: ai_engine.v1.CompareCandidatesRequest
-	(*CandidateComparisonEntry)(nil),       // 12: ai_engine.v1.CandidateComparisonEntry
-	(*CompareCandidatesResponse)(nil),      // 13: ai_engine.v1.CompareCandidatesResponse
-	(*ParseJobDescriptionRequest)(nil),     // 14: ai_engine.v1.ParseJobDescriptionRequest
-	(*ParseJobDescriptionResponse)(nil),    // 15: ai_engine.v1.ParseJobDescriptionResponse
-	nil,                                    // 16: ai_engine.v1.CompareCandidatesResponse.ResultsEntry
+	(*GetCandidateScoresRequest)(nil),      // 5: ai_engine.v1.GetCandidateScoresRequest
+	(*GetCandidateScoresResponse)(nil),     // 6: ai_engine.v1.GetCandidateScoresResponse
+	(*GenerateCandidateEmailRequest)(nil),  // 7: ai_engine.v1.GenerateCandidateEmailRequest
+	(*GenerateCandidateEmailResponse)(nil), // 8: ai_engine.v1.GenerateCandidateEmailResponse
+	(*GetCandidateEmailsRequest)(nil),      // 9: ai_engine.v1.GetCandidateEmailsRequest
+	(*CommunicationEntry)(nil),             // 10: ai_engine.v1.CommunicationEntry
+	(*GetCandidateEmailsResponse)(nil),     // 11: ai_engine.v1.GetCandidateEmailsResponse
+	(*CandidateForComparison)(nil),         // 12: ai_engine.v1.CandidateForComparison
+	(*CompareCandidatesRequest)(nil),       // 13: ai_engine.v1.CompareCandidatesRequest
+	(*CandidateComparisonEntry)(nil),       // 14: ai_engine.v1.CandidateComparisonEntry
+	(*CompareCandidatesResponse)(nil),      // 15: ai_engine.v1.CompareCandidatesResponse
+	(*ParseJobDescriptionRequest)(nil),     // 16: ai_engine.v1.ParseJobDescriptionRequest
+	(*ParseJobDescriptionResponse)(nil),    // 17: ai_engine.v1.ParseJobDescriptionResponse
+	nil,                                    // 18: ai_engine.v1.GetCandidateScoresResponse.ScoresEntry
+	nil,                                    // 19: ai_engine.v1.CompareCandidatesResponse.ResultsEntry
 }
 var file_proto_ai_engine_v1_ai_engine_proto_depIdxs = []int32{
 	3,  // 0: ai_engine.v1.GetCandidateScoreResponse.factors:type_name -> ai_engine.v1.ScoreFactor
-	0,  // 1: ai_engine.v1.GenerateCandidateEmailRequest.type:type_name -> ai_engine.v1.EmailType
-	1,  // 2: ai_engine.v1.GenerateCandidateEmailRequest.tone:type_name -> ai_engine.v1.EmailTone
-	0,  // 3: ai_engine.v1.CommunicationEntry.type:type_name -> ai_engine.v1.EmailType
-	8,  // 4: ai_engine.v1.GetCandidateEmailsResponse.emails:type_name -> ai_engine.v1.CommunicationEntry
-	10, // 5: ai_engine.v1.CompareCandidatesRequest.candidates:type_name -> ai_engine.v1.CandidateForComparison
-	16, // 6: ai_engine.v1.CompareCandidatesResponse.results:type_name -> ai_engine.v1.CompareCandidatesResponse.ResultsEntry
-	12, // 7: ai_engine.v1.CompareCandidatesResponse.ResultsEntry.value:type_name -> ai_engine.v1.CandidateComparisonEntry
-	2,  // 8: ai_engine.v1.AIEngineService.GetCandidateScore:input_type -> ai_engine.v1.GetCandidateScoreRequest
-	5,  // 9: ai_engine.v1.AIEngineService.GenerateCandidateEmail:input_type -> ai_engine.v1.GenerateCandidateEmailRequest
-	7,  // 10: ai_engine.v1.AIEngineService.GetCandidateEmails:input_type -> ai_engine.v1.GetCandidateEmailsRequest
-	11, // 11: ai_engine.v1.AIEngineService.CompareCandidates:input_type -> ai_engine.v1.CompareCandidatesRequest
-	14, // 12: ai_engine.v1.AIEngineService.ParseJobDescription:input_type -> ai_engine.v1.ParseJobDescriptionRequest
-	4,  // 13: ai_engine.v1.AIEngineService.GetCandidateScore:output_type -> ai_engine.v1.GetCandidateScoreResponse
-	6,  // 14: ai_engine.v1.AIEngineService.GenerateCandidateEmail:output_type -> ai_engine.v1.GenerateCandidateEmailResponse
-	9,  // 15: ai_engine.v1.AIEngineService.GetCandidateEmails:output_type -> ai_engine.v1.GetCandidateEmailsResponse
-	13, // 16: ai_engine.v1.AIEngineService.CompareCandidates:output_type -> ai_engine.v1.CompareCandidatesResponse
-	15, // 17: ai_engine.v1.AIEngineService.ParseJobDescription:output_type -> ai_engine.v1.ParseJobDescriptionResponse
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	18, // 1: ai_engine.v1.GetCandidateScoresResponse.scores:type_name -> ai_engine.v1.GetCandidateScoresResponse.ScoresEntry
+	0,  // 2: ai_engine.v1.GenerateCandidateEmailRequest.type:type_name -> ai_engine.v1.EmailType
+	1,  // 3: ai_engine.v1.GenerateCandidateEmailRequest.tone:type_name -> ai_engine.v1.EmailTone
+	0,  // 4: ai_engine.v1.CommunicationEntry.type:type_name -> ai_engine.v1.EmailType
+	10, // 5: ai_engine.v1.GetCandidateEmailsResponse.emails:type_name -> ai_engine.v1.CommunicationEntry
+	12, // 6: ai_engine.v1.CompareCandidatesRequest.candidates:type_name -> ai_engine.v1.CandidateForComparison
+	19, // 7: ai_engine.v1.CompareCandidatesResponse.results:type_name -> ai_engine.v1.CompareCandidatesResponse.ResultsEntry
+	4,  // 8: ai_engine.v1.GetCandidateScoresResponse.ScoresEntry.value:type_name -> ai_engine.v1.GetCandidateScoreResponse
+	14, // 9: ai_engine.v1.CompareCandidatesResponse.ResultsEntry.value:type_name -> ai_engine.v1.CandidateComparisonEntry
+	2,  // 10: ai_engine.v1.AIEngineService.GetCandidateScore:input_type -> ai_engine.v1.GetCandidateScoreRequest
+	5,  // 11: ai_engine.v1.AIEngineService.GetCandidateScores:input_type -> ai_engine.v1.GetCandidateScoresRequest
+	7,  // 12: ai_engine.v1.AIEngineService.GenerateCandidateEmail:input_type -> ai_engine.v1.GenerateCandidateEmailRequest
+	9,  // 13: ai_engine.v1.AIEngineService.GetCandidateEmails:input_type -> ai_engine.v1.GetCandidateEmailsRequest
+	13, // 14: ai_engine.v1.AIEngineService.CompareCandidates:input_type -> ai_engine.v1.CompareCandidatesRequest
+	16, // 15: ai_engine.v1.AIEngineService.ParseJobDescription:input_type -> ai_engine.v1.ParseJobDescriptionRequest
+	4,  // 16: ai_engine.v1.AIEngineService.GetCandidateScore:output_type -> ai_engine.v1.GetCandidateScoreResponse
+	6,  // 17: ai_engine.v1.AIEngineService.GetCandidateScores:output_type -> ai_engine.v1.GetCandidateScoresResponse
+	8,  // 18: ai_engine.v1.AIEngineService.GenerateCandidateEmail:output_type -> ai_engine.v1.GenerateCandidateEmailResponse
+	11, // 19: ai_engine.v1.AIEngineService.GetCandidateEmails:output_type -> ai_engine.v1.GetCandidateEmailsResponse
+	15, // 20: ai_engine.v1.AIEngineService.CompareCandidates:output_type -> ai_engine.v1.CompareCandidatesResponse
+	17, // 21: ai_engine.v1.AIEngineService.ParseJobDescription:output_type -> ai_engine.v1.ParseJobDescriptionResponse
+	16, // [16:22] is the sub-list for method output_type
+	10, // [10:16] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_proto_ai_engine_v1_ai_engine_proto_init() }
@@ -1196,7 +1300,7 @@ func file_proto_ai_engine_v1_ai_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_ai_engine_v1_ai_engine_proto_rawDesc), len(file_proto_ai_engine_v1_ai_engine_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

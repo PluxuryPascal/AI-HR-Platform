@@ -27,7 +27,9 @@ type CandidateRepository interface {
 	// AI Support
 	SaveCandidateScore(ctx context.Context, score *domain.CandidateScore, factors []domain.ScoreFactor) error
 	GetScoreByCandidateID(ctx context.Context, candidateID string) (*domain.CandidateScore, []domain.ScoreFactor, error)
+	GetScoresByCandidateIDs(ctx context.Context, candidateIDs []string) (map[string]*domain.CandidateScore, error)
 	SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error
+
 }
 
 type candidateRepo struct {
@@ -577,6 +579,34 @@ func (r *candidateRepo) GetScoreByCandidateID(ctx context.Context, candidateID s
 	}
 
 	return &score, factors, nil
+}
+
+func (r *candidateRepo) GetScoresByCandidateIDs(ctx context.Context, candidateIDs []string) (map[string]*domain.CandidateScore, error) {
+	if len(candidateIDs) == 0 {
+		return map[string]*domain.CandidateScore{}, nil
+	}
+
+	const queryScore = `
+		SELECT candidate_id, match_score, analyzed_at
+		FROM ai_engine.t_candidate_scores
+		WHERE candidate_id = ANY(@ids)
+	`
+	rows, err := r.dbClient.Pool.Query(ctx, queryScore, pgx.NamedArgs{"ids": candidateIDs})
+	if err != nil {
+		return nil, fmt.Errorf("query scores: %w", err)
+	}
+
+	scores, err := pgx.CollectRows(rows, pgx.RowToStructByName[domain.CandidateScore])
+	if err != nil {
+		return nil, fmt.Errorf("scan scores: %w", err)
+	}
+
+	res := make(map[string]*domain.CandidateScore)
+	for i := range scores {
+		res[scores[i].CandidateID] = &scores[i]
+	}
+
+	return res, nil
 }
 
 func (r *candidateRepo) SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error {

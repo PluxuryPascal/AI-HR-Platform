@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "internal/proto/auth/v1;authv1";
+
+service AuthService {
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+}
+
+message GetUsersRequest {
+  repeated string user_ids = 1;
+}
+
+message UserObj {
+  string id         = 1;
+  string first_name = 2;
+  string last_name  = 3;
+  string email      = 4;
+}
+
+message GetUsersResponse {
+  // key = user_id
+  map<string, UserObj> users = 1;
+}

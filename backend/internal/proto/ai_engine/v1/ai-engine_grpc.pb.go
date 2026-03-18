@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	AIEngineService_GetCandidateScore_FullMethodName      = "/ai_engine.v1.AIEngineService/GetCandidateScore"
+	AIEngineService_GetCandidateScores_FullMethodName     = "/ai_engine.v1.AIEngineService/GetCandidateScores"
 	AIEngineService_GenerateCandidateEmail_FullMethodName = "/ai_engine.v1.AIEngineService/GenerateCandidateEmail"
 	AIEngineService_GetCandidateEmails_FullMethodName     = "/ai_engine.v1.AIEngineService/GetCandidateEmails"
 	AIEngineService_CompareCandidates_FullMethodName      = "/ai_engine.v1.AIEngineService/CompareCandidates"
@@ -31,6 +32,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AIEngineServiceClient interface {
 	GetCandidateScore(ctx context.Context, in *GetCandidateScoreRequest, opts ...grpc.CallOption) (*GetCandidateScoreResponse, error)
+	GetCandidateScores(ctx context.Context, in *GetCandidateScoresRequest, opts ...grpc.CallOption) (*GetCandidateScoresResponse, error)
 	GenerateCandidateEmail(ctx context.Context, in *GenerateCandidateEmailRequest, opts ...grpc.CallOption) (*GenerateCandidateEmailResponse, error)
 	GetCandidateEmails(ctx context.Context, in *GetCandidateEmailsRequest, opts ...grpc.CallOption) (*GetCandidateEmailsResponse, error)
 	CompareCandidates(ctx context.Context, in *CompareCandidatesRequest, opts ...grpc.CallOption) (*CompareCandidatesResponse, error)
@@ -49,6 +51,16 @@ func (c *aIEngineServiceClient) GetCandidateScore(ctx context.Context, in *GetCa
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetCandidateScoreResponse)
 	err := c.cc.Invoke(ctx, AIEngineService_GetCandidateScore_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aIEngineServiceClient) GetCandidateScores(ctx context.Context, in *GetCandidateScoresRequest, opts ...grpc.CallOption) (*GetCandidateScoresResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCandidateScoresResponse)
+	err := c.cc.Invoke(ctx, AIEngineService_GetCandidateScores_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +112,7 @@ func (c *aIEngineServiceClient) ParseJobDescription(ctx context.Context, in *Par
 // for forward compatibility.
 type AIEngineServiceServer interface {
 	GetCandidateScore(context.Context, *GetCandidateScoreRequest) (*GetCandidateScoreResponse, error)
+	GetCandidateScores(context.Context, *GetCandidateScoresRequest) (*GetCandidateScoresResponse, error)
 	GenerateCandidateEmail(context.Context, *GenerateCandidateEmailRequest) (*GenerateCandidateEmailResponse, error)
 	GetCandidateEmails(context.Context, *GetCandidateEmailsRequest) (*GetCandidateEmailsResponse, error)
 	CompareCandidates(context.Context, *CompareCandidatesRequest) (*CompareCandidatesResponse, error)
@@ -116,6 +129,9 @@ type UnimplementedAIEngineServiceServer struct{}
 
 func (UnimplementedAIEngineServiceServer) GetCandidateScore(context.Context, *GetCandidateScoreRequest) (*GetCandidateScoreResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetCandidateScore not implemented")
+}
+func (UnimplementedAIEngineServiceServer) GetCandidateScores(context.Context, *GetCandidateScoresRequest) (*GetCandidateScoresResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCandidateScores not implemented")
 }
 func (UnimplementedAIEngineServiceServer) GenerateCandidateEmail(context.Context, *GenerateCandidateEmailRequest) (*GenerateCandidateEmailResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GenerateCandidateEmail not implemented")
@@ -164,6 +180,24 @@ func _AIEngineService_GetCandidateScore_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AIEngineServiceServer).GetCandidateScore(ctx, req.(*GetCandidateScoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AIEngineService_GetCandidateScores_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCandidateScoresRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIEngineServiceServer).GetCandidateScores(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIEngineService_GetCandidateScores_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIEngineServiceServer).GetCandidateScores(ctx, req.(*GetCandidateScoresRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -250,6 +284,10 @@ var AIEngineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCandidateScore",
 			Handler:    _AIEngineService_GetCandidateScore_Handler,
+		},
+		{
+			MethodName: "GetCandidateScores",
+			Handler:    _AIEngineService_GetCandidateScores_Handler,
 		},
 		{
 			MethodName: "GenerateCandidateEmail",

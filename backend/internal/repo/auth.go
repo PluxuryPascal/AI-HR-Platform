@@ -13,6 +13,7 @@ import (
 type UserRepository interface {
 	Login(ctx context.Context, login string) (*domain.User, error)
 	RegisterOwner(ctx context.Context, user *domain.RegisterOwnerRequest) (*domain.User, error)
+	GetUsers(ctx context.Context, userIDs []string) ([]domain.User, error)
 }
 
 var ErrUserNotFound = errors.New("user not found")
@@ -139,6 +140,44 @@ func (i *userRepo) RegisterOwner(ctx context.Context, user *domain.RegisterOwner
 	}
 
 	return &createdUser, nil
+}
+
+func (i *userRepo) GetUsers(ctx context.Context, userIDs []string) ([]domain.User, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+
+	query := `
+	SELECT
+			u.id,
+			t.id AS team_id,
+			t.name AS team_name,
+			u.email,
+			u.first_name,
+			u.last_name,
+			u.role,
+			u.password_hash,
+			u.created_at,
+			u.updated_at,
+			COALESCE(u.locale, '') AS locale
+			FROM auth.t_users u
+			JOIN auth.t_teams t on t.id = u.team_id
+			WHERE u.id = ANY(@user_ids);
+			`
+
+	rows, err := i.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
+		"user_ids": userIDs,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query users: %w", err)
+	}
+
+	users, err := pgx.CollectRows(rows, pgx.RowToStructByName[domain.User])
+	if err != nil {
+		return nil, fmt.Errorf("collect users error: %w", err)
+	}
+
+	return users, nil
 }
 
 func NewUserRepo(dbClient *db.PostgresClient) UserRepository {

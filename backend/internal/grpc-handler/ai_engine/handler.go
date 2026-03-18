@@ -12,6 +12,7 @@ import (
 type CandidateRepository interface {
 	GetByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error)
 	GetScoreByCandidateID(ctx context.Context, candidateID string) (*domain.CandidateScore, []domain.ScoreFactor, error)
+	GetScoresByCandidateIDs(ctx context.Context, candidateIDs []string) (map[string]*domain.CandidateScore, error)
 }
 
 type CommunicationRepository interface {

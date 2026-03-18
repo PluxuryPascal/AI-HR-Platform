@@ -4,8 +4,10 @@ import (
 	"backend/internal/audit"
 	"backend/internal/cache"
 	"backend/internal/db"
+	auth_grpc "backend/internal/grpc-handler/auth"
 	httpHandler "backend/internal/http-handler"
 	"backend/internal/middleware"
+	authv1 "backend/internal/proto/auth/v1"
 	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
 	"backend/internal/server"
@@ -50,6 +52,7 @@ type infrastructureComponents struct {
 	redisPool *db.RedisClient
 	casbin    *rbac.CasbinClient
 	grpcCl    *grpc.Client
+	grpcSrv   *grpc.Server
 }
 
 type utilityComponents struct {
@@ -92,6 +95,7 @@ func run(ctx context.Context) error {
 	}
 
 	usecases := initUseCases(infra, utils, repos, &hiringClient, auditor)
+	initGrpcHandlers(infra, repos)
 	handlers, sessionMiddleware := initHandlers(infra, utils, usecases)
 
 	apiServer := createApiServer(ctx, infra.cfg, utils.t, infra.log, handlers, sessionMiddleware)
@@ -104,6 +108,7 @@ func run(ctx context.Context) error {
 		infra.casbin,
 		apiServer,
 		infra.grpcCl,
+		infra.grpcSrv,
 		recoveryWorker,
 	}); err != nil {
 		return fmt.Errorf("run service error: %w", err)
@@ -142,6 +147,9 @@ func initInfrastructure() (*infrastructureComponents, error) {
 	hiringClientCfg := conf.GRPC.Clients["hiring"]
 	grpcClient := grpc.NewClient("hiring", zapLog.Log, &hiringClientCfg)
 
+	serverCfg := conf.GRPC.Servers["auth"]
+	grpcServer := grpc.NewServer("auth", zapLog.Log, &serverCfg)
+
 	return &infrastructureComponents{
 		cfg:       conf,
 		log:       zapLog,
@@ -149,6 +157,7 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		redisPool: redisPool,
 		casbin:    casbinClient,
 		grpcCl:    grpcClient,
+		grpcSrv:   grpcServer,
 	}, nil
 }
 
@@ -185,6 +194,13 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, auditor),
 		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, hiringClient, auditor),
 	}
+}
+
+func initGrpcHandlers(infra *infrastructureComponents, r repos) {
+	authHandler := auth_grpc.NewAuthHandler(infra.log.Log, r.user)
+	infra.grpcSrv.OnInit(func(s *grpc.Server) {
+		authv1.RegisterAuthServiceServer(s.GetServer(), authHandler)
+	})
 }
 
 func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases) (handlers, middleware.Middleware) {
