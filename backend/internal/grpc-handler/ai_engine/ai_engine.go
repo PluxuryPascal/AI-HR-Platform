@@ -164,6 +164,7 @@ func (h *Handler) CompareCandidates(ctx context.Context, req *pb.CompareCandidat
 	input := activity.CandidateCompareInput{
 		Candidates:      candidates,
 		JobRequirements: req.GetJobRequirements(),
+		Locale:          req.GetLocale(),
 	}
 
 	workflowID := fmt.Sprintf("compare-%s", uuid.New().String())

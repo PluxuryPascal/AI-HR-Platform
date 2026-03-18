@@ -84,11 +84,17 @@ func (h *CandidateHandler) PostUploadResume() echo.HandlerFunc {
 		}
 		defer file.Close()
 
+		locale := c.FormValue("locale")
+		if locale == "" {
+			locale = "ru" // Default
+		}
+
 		candidate, err := h.candidateUC.CreateCandidate(c.Request().Context(), domain.CreateCandidateParams{
 			JobID:    jobID,
 			Filename: fh.Filename,
 			File:     file,
 			ActorID:  c.Get("id").(string),
+			Locale:   locale,
 		})
 		if err != nil {
 			switch {

@@ -10,12 +10,14 @@ type ResumePipelineInput struct {
 	JobID         string `json:"job_id"`
 	ResumeFileKey string `json:"resume_file_key"`
 	TeamID        string `json:"team_id"`
+	Locale        string `json:"locale"`
 }
 
 type LLMParseInput struct {
 	CandidateID string `json:"candidate_id"`
 	JobID       string `json:"job_id"`
 	ParsedText  string `json:"parsed_text"`
+	Locale      string `json:"locale"`
 }
 
 type LLMScoreInput struct {
@@ -23,6 +25,7 @@ type LLMScoreInput struct {
 	TeamID          string `json:"team_id"`
 	ParsedText      string `json:"parsed_text"`
 	JobRequirements string `json:"job_requirements"`
+	Locale          string `json:"locale"`
 }
 
 type LLMEmbedInput struct {
@@ -75,6 +78,7 @@ type CandidateCompareCandidate struct {
 type CandidateCompareInput struct {
 	Candidates      []CandidateCompareCandidate `json:"candidates"`
 	JobRequirements string                      `json:"job_requirements"`
+	Locale          string                      `json:"locale"`
 }
 
 type CompareResultEntry struct {

@@ -65,8 +65,8 @@ func NewScorer(client *openai.Client, cfg *config.OpenRouter) *Scorer {
 	}
 }
 
-func (s *Scorer) Score(ctx context.Context, resumeText, jobRequirements string) (*domain.ScoreResult, error) {
-	userContent := buildScoreUserPrompt(resumeText, jobRequirements)
+func (s *Scorer) Score(ctx context.Context, resumeText, jobRequirements, locale string) (*domain.ScoreResult, error) {
+	userContent := buildScoreUserPrompt(resumeText, jobRequirements, locale)
 
 	maxTokens := s.cfg.MaxTokensScore
 	if maxTokens == 0 {
@@ -111,8 +111,12 @@ func (s *Scorer) Score(ctx context.Context, resumeText, jobRequirements string) 
 	return result, nil
 }
 
-func buildScoreUserPrompt(resumeText, jobRequirements string) string {
+func buildScoreUserPrompt(resumeText, jobRequirements, locale string) string {
 	var sb strings.Builder
+
+	if locale != "" {
+		sb.WriteString(fmt.Sprintf("IMPORTANT: You must write the factor descriptions in the '%s' locale/language.\n\n", locale))
+	}
 
 	sb.WriteString("Job requirements:\n")
 	if jobRequirements != "" {

@@ -68,7 +68,7 @@ func NewCandidateComparator(client *openai.Client, cfg *config.OpenRouter) *Cand
 func (c *CandidateComparator) Compare(
 	ctx context.Context,
 	candidates []CandidateCompareInput,
-	jobRequirements string,
+	jobRequirements, locale string,
 ) (CompareResult, error) {
 	if len(candidates) < 2 {
 		return nil, fmt.Errorf("comparison requires at least 2 candidates, got %d", len(candidates))
@@ -86,7 +86,7 @@ func (c *CandidateComparator) Compare(
 
 	maxTokens = max(maxTokens, len(candidates)*300)
 
-	userContent := buildCompareUserPrompt(candidates, jobRequirements)
+	userContent := buildCompareUserPrompt(candidates, jobRequirements, locale)
 
 	resp, err := c.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: model,
@@ -130,8 +130,12 @@ func (c *CandidateComparator) Compare(
 	return result, nil
 }
 
-func buildCompareUserPrompt(candidates []CandidateCompareInput, jobRequirements string) string {
+func buildCompareUserPrompt(candidates []CandidateCompareInput, jobRequirements, locale string) string {
 	var sb strings.Builder
+
+	if locale != "" {
+		sb.WriteString(fmt.Sprintf("IMPORTANT: You must write all output text, including experience details, risks, and summary, in the '%s' locale/language.\n\n", locale))
+	}
 
 	if jobRequirements != "" {
 		sb.WriteString("Job requirements:\n")

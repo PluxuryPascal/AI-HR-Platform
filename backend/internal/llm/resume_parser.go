@@ -60,8 +60,8 @@ func NewResumeParser(client *openai.Client, cfg *config.OpenRouter) *ResumeParse
 	}
 }
 
-func (p *ResumeParser) Parse(ctx context.Context, resumeText, jobRequirements string) (*domain.ParseResult, error) {
-	userContent := buildParseUserPrompt(resumeText, jobRequirements)
+func (p *ResumeParser) Parse(ctx context.Context, resumeText, jobRequirements, locale string) (*domain.ParseResult, error) {
+	userContent := buildParseUserPrompt(resumeText, jobRequirements, locale)
 
 	maxTokens := p.cfg.MaxTokensParse
 	if maxTokens == 0 {
@@ -107,8 +107,12 @@ func (p *ResumeParser) Parse(ctx context.Context, resumeText, jobRequirements st
 	return result, nil
 }
 
-func buildParseUserPrompt(resumeText, jobRequirements string) string {
+func buildParseUserPrompt(resumeText, jobRequirements, locale string) string {
 	var sb strings.Builder
+
+	if locale != "" {
+		sb.WriteString(fmt.Sprintf("IMPORTANT: You must write the summary and any descriptive strings in the '%s' locale/language.\n\n", locale))
+	}
 
 	sb.WriteString("Resume text:\n")
 	sb.WriteString(resumeText)

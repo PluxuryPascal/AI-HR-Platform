@@ -53,7 +53,7 @@ func (u *dashboardUseCase) GetApplicationDynamics(ctx context.Context, req domai
 	if err != nil {
 		return nil, fmt.Errorf("invalid end_date format (expected YYYY-MM-DD): %w", err)
 	}
-	
+
 	if req.Type != "daily" && req.Type != "monthly" {
 		return nil, fmt.Errorf("type must be daily or monthly")
 	}
@@ -97,19 +97,21 @@ func (u *dashboardUseCase) GetRecentActivity(ctx context.Context, teamID string,
 
 	scoresMap := make(map[string]*pbAI.GetCandidateScoreResponse)
 	if len(candidateIDs) > 0 && u.aiClient != nil {
-		scoreRes, aiErr := u.aiClient.GetCandidateScores(ctx, &pbAI.GetCandidateScoresRequest{CandidateIds: candidateIDs})
-		if aiErr != nil {
-			u.log.Error("failed to fetch candidate scores from ai_engine", zap.Error(aiErr))
-		} else {
-			if scoreRes != nil && scoreRes.GetScores() != nil {
-				scoresMap = scoreRes.GetScores()
+		for _, candidateID := range candidateIDs {
+			scoreRes, aiErr := u.aiClient.GetCandidateScore(ctx, &pbAI.GetCandidateScoreRequest{CandidateId: candidateID})
+			if aiErr != nil {
+				u.log.Error("failed to fetch candidate scores from ai_engine", zap.Error(aiErr))
+			} else {
+				if scoreRes != nil && scoreRes.GetHasScore() {
+					scoresMap[candidateID] = scoreRes
+				}
 			}
 		}
 	}
 
 	for i := range logs {
 		l := &logs[i]
-		
+
 		if l.ActorType == "user" && l.ActorID != nil {
 			if u, ok := usersMap[l.ActorID.String()]; ok {
 				name := u.FirstName

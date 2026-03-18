@@ -27,7 +27,7 @@ func (a *Activities) CompareCandidates(ctx context.Context, input CandidateCompa
 		}
 	}
 
-	result, err := a.comparator.Compare(ctx, candidates, input.JobRequirements)
+	result, err := a.comparator.Compare(ctx, candidates, input.JobRequirements, input.Locale)
 	if err != nil {
 		logger.Error("Failed to compare candidates", zap.Error(err))
 		return nil, fmt.Errorf("failed to compare candidates: %w", err)

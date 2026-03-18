@@ -13,11 +13,11 @@ import (
 )
 
 type ResumeParser interface {
-	Parse(ctx context.Context, text, jobRequirements string) (*domain.ParseResult, error)
+	Parse(ctx context.Context, text, jobRequirements, locale string) (*domain.ParseResult, error)
 }
 
 type Scorer interface {
-	Score(ctx context.Context, text, jobRequirements string) (*domain.ScoreResult, error)
+	Score(ctx context.Context, text, jobRequirements, locale string) (*domain.ScoreResult, error)
 }
 
 type Embedder interface {
@@ -29,7 +29,7 @@ type EmailGenerator interface {
 }
 
 type CandidateComparator interface {
-	Compare(ctx context.Context, candidates []llm.CandidateCompareInput, jobRequirements string) (llm.CompareResult, error)
+	Compare(ctx context.Context, candidates []llm.CandidateCompareInput, jobRequirements, locale string) (llm.CompareResult, error)
 }
 
 type JobParser interface {

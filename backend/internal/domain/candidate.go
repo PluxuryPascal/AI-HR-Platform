@@ -93,6 +93,7 @@ type CreateCandidateParams struct {
 	Filename string
 	File     io.Reader
 	ActorID  string
+	Locale   string
 }
 
 type AIParsingResult struct {

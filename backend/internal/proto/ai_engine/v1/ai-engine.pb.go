@@ -803,6 +803,7 @@ type CompareCandidatesRequest struct {
 	state           protoimpl.MessageState    `protogen:"open.v1"`
 	Candidates      []*CandidateForComparison `protobuf:"bytes,1,rep,name=candidates,proto3" json:"candidates,omitempty"`
 	JobRequirements string                    `protobuf:"bytes,2,opt,name=job_requirements,json=jobRequirements,proto3" json:"job_requirements,omitempty"`
+	Locale          string                    `protobuf:"bytes,3,opt,name=locale,proto3" json:"locale,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -847,6 +848,13 @@ func (x *CompareCandidatesRequest) GetCandidates() []*CandidateForComparison {
 func (x *CompareCandidatesRequest) GetJobRequirements() string {
 	if x != nil {
 		return x.JobRequirements
+	}
+	return ""
+}
+
+func (x *CompareCandidatesRequest) GetLocale() string {
+	if x != nil {
+		return x.Locale
 	}
 	return ""
 }
@@ -1173,12 +1181,13 @@ const file_proto_ai_engine_v1_ai_engine_proto_rawDesc = "" +
 	"matchScore\x12\x16\n" +
 	"\x06skills\x18\x06 \x03(\tR\x06skills\x12\x1f\n" +
 	"\vparsed_text\x18\a \x01(\tR\n" +
-	"parsedText\"\x8b\x01\n" +
+	"parsedText\"\xa3\x01\n" +
 	"\x18CompareCandidatesRequest\x12D\n" +
 	"\n" +
 	"candidates\x18\x01 \x03(\v2$.ai_engine.v1.CandidateForComparisonR\n" +
 	"candidates\x12)\n" +
-	"\x10job_requirements\x18\x02 \x01(\tR\x0fjobRequirements\"\xa5\x01\n" +
+	"\x10job_requirements\x18\x02 \x01(\tR\x0fjobRequirements\x12\x16\n" +
+	"\x06locale\x18\x03 \x01(\tR\x06locale\"\xa5\x01\n" +
 	"\x18CandidateComparisonEntry\x12\x1e\n" +
 	"\n" +
 	"experience\x18\x01 \x01(\tR\n" +

@@ -35,6 +35,7 @@ func NewCandidateConsumerHandler(log *zap.Logger, temporalClient *temporal.Clien
 			JobID:         event.JobID,
 			ResumeFileKey: event.ResumeFileKey,
 			TeamID:        event.TeamID,
+			Locale:        event.Locale,
 		}
 
 		workflowID := fmt.Sprintf("resume-pipeline-%s", event.CandidateID)

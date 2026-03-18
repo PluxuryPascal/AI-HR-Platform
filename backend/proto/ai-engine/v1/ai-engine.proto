@@ -104,6 +104,7 @@ message CandidateForComparison {
 message CompareCandidatesRequest {
   repeated CandidateForComparison candidates = 1;
   string job_requirements = 2;
+  string locale = 3;
 }
 
 message CandidateComparisonEntry {

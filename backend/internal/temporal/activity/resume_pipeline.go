@@ -57,7 +57,7 @@ func (a *Activities) LLMParse(ctx context.Context, input LLMParseInput) (*domain
 		jobRequirements = string(jobRequirementsBytes)
 	}
 
-	result, err := a.parser.Parse(ctx, input.ParsedText, jobRequirements)
+	result, err := a.parser.Parse(ctx, input.ParsedText, jobRequirements, input.Locale)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse: %w", err)
 	}
@@ -74,7 +74,7 @@ func (a *Activities) LLMScore(ctx context.Context, input LLMScoreInput) (*domain
 
 	logger.Info("LLMScore started", "candidate_id", input.CandidateID)
 
-	result, err := a.scorer.Score(ctx, input.ParsedText, input.JobRequirements)
+	result, err := a.scorer.Score(ctx, input.ParsedText, input.JobRequirements, input.Locale)
 	if err != nil {
 		return nil, fmt.Errorf("failed to score: %w", err)
 	}

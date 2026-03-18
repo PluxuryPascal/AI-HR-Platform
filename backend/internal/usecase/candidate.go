@@ -120,6 +120,7 @@ func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.Cr
 		JobID:         candidate.JobID,
 		ResumeFileKey: *candidate.ResumeFileKey,
 		TeamID:        job.TeamID,
+		Locale:        params.Locale,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("marshal candidate created event: %w", err)

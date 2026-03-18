@@ -49,6 +49,7 @@ func ResumePipelineWorkflow(ctx workflow.Context, input activity.ResumePipelineI
 			CandidateID: input.CandidateID,
 			JobID:       input.JobID,
 			ParsedText:  parsedText,
+			Locale:      input.Locale,
 		},
 	).Get(ctx, &parseResult); err != nil {
 		return fmt.Errorf("failed to parse: %w", err)
@@ -69,6 +70,7 @@ func ResumePipelineWorkflow(ctx workflow.Context, input activity.ResumePipelineI
 			CandidateID:     input.CandidateID,
 			ParsedText:      parsedText,
 			JobRequirements: parseResult.JobRequirements,
+			Locale:          input.Locale,
 		},
 	), func(f workflow.Future) {
 		scoreErr = f.Get(ctx, nil)
