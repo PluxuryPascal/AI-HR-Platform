@@ -12,6 +12,7 @@ import (
 	"backend/internal/server"
 	"backend/internal/server/router/access"
 	"backend/internal/server/router/candidate"
+	"backend/internal/server/router/department"
 	"backend/internal/server/router/job"
 	"backend/internal/server/router/pipeline"
 	"backend/internal/usecase"
@@ -48,10 +49,11 @@ type usecases struct {
 }
 
 type handlers struct {
-	job       *handler.JobHandler
-	candidate *handler.CandidateHandler
-	access    *handler.AccessHandler
-	pipeline  *handler.PipelineHandler
+	job        *handler.JobHandler
+	candidate  *handler.CandidateHandler
+	access     *handler.AccessHandler
+	pipeline   *handler.PipelineHandler
+	department *handler.DepartmentHandler
 }
 
 type infrastructureComponents struct {
@@ -224,10 +226,11 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 	)
 
 	h := handlers{
-		job:       handler.NewJobHandler(infra.log.Log, u.job),
-		candidate: handler.NewCandidateHandler(infra.log.Log, u.candidate),
-		access:    handler.NewAccessHandler(infra.log.Log, u.access),
-		pipeline:  handler.NewPipelineHandler(infra.log.Log, u.pipeline),
+		job:        handler.NewJobHandler(infra.log.Log, u.job),
+		candidate:  handler.NewCandidateHandler(infra.log.Log, u.candidate),
+		access:     handler.NewAccessHandler(infra.log.Log, u.access),
+		pipeline:   handler.NewPipelineHandler(infra.log.Log, u.pipeline),
+		department: handler.NewDepartmentHandler(infra.log.Log, u.department),
 	}
 
 	return h, mw
@@ -252,6 +255,9 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		),
 		server.WithRouterGroup(ctx, "/jobs/:job_id/access",
 			access.NewRouter(h.access, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/departments",
+			department.NewRouter(h.department, mw.Session(t), mw.RBAC()),
 		),
 	)
 }
