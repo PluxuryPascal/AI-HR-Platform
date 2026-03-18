@@ -24,6 +24,7 @@ type Config struct {
 	GRPC           GRPC                 `yaml:"grpc"`
 	Temporal       Temporal             `yaml:"temporal"`
 	OpenRouter     OpenRouter           `yaml:"openrouter"`
+	SMTP           SMTP                 `yaml:"smtp"`
 }
 
 type OpenRouter struct {
@@ -50,6 +51,15 @@ type Temporal struct {
 	QueueName       string        `yaml:"queue-name"`
 	Namespace       string        `yaml:"namespace"`
 	WorkerCount     int           `yaml:"worker-count"`
+}
+
+type SMTP struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	From     string `yaml:"from"`
+	UseTLS   bool   `yaml:"use_tls"`
 }
 
 type Invite struct {

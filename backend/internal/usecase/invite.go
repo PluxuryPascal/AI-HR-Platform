@@ -8,9 +8,11 @@ import (
 	"backend/internal/repo"
 	"backend/pkg/config"
 	"backend/pkg/hash"
+	"backend/pkg/mq"
 	"backend/pkg/rbac"
 	"backend/pkg/token"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -46,6 +48,7 @@ type inviteUseCase struct {
 	enforcer     *rbac.CasbinClient
 	hiringClient *pb.HiringServiceClient
 	auditor      *audit.Logger
+	publisher    *mq.MQPublisher
 }
 
 func NewInviteUseCase(
@@ -58,6 +61,7 @@ func NewInviteUseCase(
 	enforcer *rbac.CasbinClient,
 	hiringClient *pb.HiringServiceClient,
 	auditor *audit.Logger,
+	publisher *mq.MQPublisher,
 ) InviteUseCase {
 	return &inviteUseCase{
 		cfg:          cfg,
@@ -69,6 +73,7 @@ func NewInviteUseCase(
 		enforcer:     enforcer,
 		hiringClient: hiringClient,
 		auditor:      auditor,
+		publisher:    publisher,
 	}
 }
 
@@ -111,8 +116,23 @@ func (i *inviteUseCase) InviteUser(ctx context.Context, tokenStr string, req dom
 		Payload:   map[string]string{"email": req.Email, "role": req.Role},
 	})
 
-	// TODO: hand the token to an email-sending service here.
-	// e.g. emailSvc.SendInvite(ctx, invite.Email, inviteToken)
+	payload, err := json.Marshal(domain.InviteCreatedEvent{
+		InviteID: invite.ID,
+		Email:    invite.Email,
+		Token:    inviteToken,
+		TeamID:   invite.TeamID,
+		Role:     invite.Role,
+	})
+	if err != nil {
+		return fmt.Errorf("marshal invite created event: %w", err)
+	}
+
+	if err := i.publisher.Publish(ctx, payload,
+		mq.WithExchange("hiring.events"),
+		mq.WithRoutingKey("invite.created"),
+	); err != nil {
+		return fmt.Errorf("publish invite created event: %w", err)
+	}
 
 	return nil
 }

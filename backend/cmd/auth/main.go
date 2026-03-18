@@ -19,6 +19,7 @@ import (
 	"backend/pkg/grpc"
 	"backend/pkg/hash"
 	"backend/pkg/logger"
+	"backend/pkg/mq"
 	"backend/pkg/rbac"
 	"backend/pkg/svc"
 	"backend/pkg/token"
@@ -53,6 +54,8 @@ type infrastructureComponents struct {
 	casbin    *rbac.CasbinClient
 	grpcCl    *grpc.Client
 	grpcSrv   *grpc.Server
+	rabbitMQ  *mq.RabbitMQ
+	publisher *mq.MQPublisher
 }
 
 type utilityComponents struct {
@@ -109,6 +112,8 @@ func run(ctx context.Context) error {
 		apiServer,
 		infra.grpcCl,
 		infra.grpcSrv,
+		infra.rabbitMQ,
+		infra.publisher,
 		recoveryWorker,
 	}); err != nil {
 		return fmt.Errorf("run service error: %w", err)
@@ -150,6 +155,9 @@ func initInfrastructure() (*infrastructureComponents, error) {
 	serverCfg := conf.GRPC.Servers["auth"]
 	grpcServer := grpc.NewServer("auth", zapLog.Log, &serverCfg)
 
+	rabbitMQ := mq.NewRabbitMQ(zapLog.Log, &conf.RabbitMQ)
+	publisher := mq.NewMQPublisher(zapLog.Log, rabbitMQ)
+
 	return &infrastructureComponents{
 		cfg:       conf,
 		log:       zapLog,
@@ -158,6 +166,8 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		casbin:    casbinClient,
 		grpcCl:    grpcClient,
 		grpcSrv:   grpcServer,
+		rabbitMQ:   rabbitMQ,
+		publisher: publisher,
 	}, nil
 }
 
@@ -192,7 +202,7 @@ func initRepositories(infra *infrastructureComponents) repos {
 func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r repos, hiringClient *pb.HiringServiceClient, auditor *audit.Logger) usecases {
 	return usecases{
 		auth:   usecase.NewAuthUseCase(r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, auditor),
-		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, hiringClient, auditor),
+		invite: usecase.NewInviteUseCase(infra.cfg, r.invite, r.user, utils.cacheManager, utils.t, utils.h, infra.casbin, hiringClient, auditor, infra.publisher),
 	}
 }
 
