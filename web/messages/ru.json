@@ -146,7 +146,24 @@
         "title": "Настройки",
         "general": "Общие настройки",
         "language": "Язык интерфейса",
-        "languageDesc": "Выберите предпочтительный язык для приложения."
+        "languageDesc": "Выберите предпочтительный язык для приложения.",
+        "ai": "Настройки ИИ"
+    },
+    "AISettings": {
+        "title": "Настройки ИИ",
+        "apiKeyTitle": "OpenRouter API Key",
+        "apiKeyDesc": "Укажите ваш API ключ для доступа к моделям через OpenRouter.",
+        "parseModelTitle": "Parse Model",
+        "parseModelDesc": "Модель, используемая для парсинга резюме и описаний вакансий.",
+        "scoreModelTitle": "Score Model",
+        "scoreModelDesc": "Модель для оценки соответствия кандидатов вакансиям.",
+        "embedModelTitle": "Embed Model",
+        "embedModelDesc": "Модель для создания векторных представлений (embeddings).",
+        "chatModeTitle": "Chat Mode",
+        "chatModeDesc": "Модель для общения в чате с ИИ-ассистентом и генерации писем.",
+        "save": "Сохранить",
+        "success": "Настройки успешно обновлены",
+        "error": "Ошибка при обновлении настроек"
     },
     "JobWizard": {
         "title": "Создание вакансии",

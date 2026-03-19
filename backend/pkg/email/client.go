@@ -10,8 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// Client реализует svc.Service и предоставляет метод Send для отправки email.
-// Использует библиотеку github.com/wneessen/go-mail.
 type Client struct {
 	log *zap.Logger
 	cfg *config.SMTP
@@ -26,7 +24,6 @@ func NewClient(log *zap.Logger, cfg *config.SMTP) *Client {
 func (c *Client) Name() string        { return "email" }
 func (c *Client) DependsOn() []string { return []string{"logger"} }
 
-// Init валидирует конфигурацию SMTP.
 func (c *Client) Init(_ context.Context) error {
 	if c.cfg == nil {
 		return fmt.Errorf("smtp config is nil")
@@ -46,7 +43,6 @@ func (c *Client) Init(_ context.Context) error {
 	return nil
 }
 
-// HealthCheck проверяет наличие конфигурации.
 func (c *Client) HealthCheck(_ context.Context) error {
 	if c.cfg == nil {
 		return fmt.Errorf("email client is not configured")
@@ -55,21 +51,17 @@ func (c *Client) HealthCheck(_ context.Context) error {
 	return nil
 }
 
-// Run — no-op: отправка синхронная через Send().
 func (c *Client) Run(_ context.Context) error { return nil }
 
-// Stop — no-op: нет долгоживущих ресурсов.
 func (c *Client) Stop(_ context.Context) error { return nil }
 
-// Send отправляет email-сообщение.
-// Создает go-mail.Msg и отправляет его через go-mail.Client.
 func (c *Client) Send(ctx context.Context, to, subject, body string) error {
 	m := mail.NewMsg()
-	
+
 	if err := m.From(c.cfg.From); err != nil {
 		return fmt.Errorf("failed to set From address: %w", err)
 	}
-	
+
 	if err := m.To(to); err != nil {
 		return fmt.Errorf("failed to set To address: %w", err)
 	}
@@ -88,9 +80,9 @@ func (c *Client) Send(ctx context.Context, to, subject, body string) error {
 	}
 
 	if c.cfg.Username != "" {
-		opts = append(opts, 
-			mail.WithSMTPAuth(mail.SMTPAuthPlain), 
-			mail.WithUsername(c.cfg.Username), 
+		opts = append(opts,
+			mail.WithSMTPAuth(mail.SMTPAuthPlain),
+			mail.WithUsername(c.cfg.Username),
 			mail.WithPassword(c.cfg.Password),
 		)
 	}

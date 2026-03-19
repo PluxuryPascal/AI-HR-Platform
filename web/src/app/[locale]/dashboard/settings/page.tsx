@@ -14,6 +14,7 @@ import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { useTranslations } from "next-intl";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamManagement } from "@/features/settings/components/team-management";
+import { AISettingsForm } from "@/features/settings/components/ai-settings-form";
 import { useAuth } from "@/store/use-auth";
 
 export default function SettingsPage() {
@@ -46,12 +47,15 @@ export default function SettingsPage() {
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
-            <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
+            <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
+            </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="general">{t("general")}</TabsTrigger>
                     {isOwner && <TabsTrigger value="team">Team</TabsTrigger>}
+                    <TabsTrigger value="ai">{t("ai")}</TabsTrigger>
                     <TabsTrigger value="billing">Billing</TabsTrigger>
                 </TabsList>
 
@@ -79,6 +83,10 @@ export default function SettingsPage() {
                         <TeamManagement />
                     </TabsContent>
                 )}
+
+                <TabsContent value="ai" className="space-y-4">
+                    <AISettingsForm />
+                </TabsContent>
 
                 <TabsContent value="billing" className="space-y-4">
                     <Card>

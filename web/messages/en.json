@@ -141,7 +141,24 @@
         "title": "Settings",
         "general": "General Settings",
         "language": "Interface Language",
-        "languageDesc": "Select your preferred language for the application."
+        "languageDesc": "Select your preferred language for the application.",
+        "ai": "AI Settings"
+    },
+    "AISettings": {
+        "title": "AI Settings",
+        "apiKeyTitle": "OpenRouter API Key",
+        "apiKeyDesc": "Enter your API key to access models via OpenRouter.",
+        "parseModelTitle": "Parse Model",
+        "parseModelDesc": "Model used for parsing resumes and job descriptions.",
+        "scoreModelTitle": "Score Model",
+        "scoreModelDesc": "Model used for candidate matching and scoring.",
+        "embedModelTitle": "Embed Model",
+        "embedModelDesc": "Model used for creating vector embeddings.",
+        "chatModeTitle": "Chat Mode",
+        "chatModeDesc": "Model used for interacting with the AI assistant chat and generating emails.",
+        "save": "Save",
+        "success": "Settings updated successfully",
+        "error": "Failed to update settings"
     },
     "JobWizard": {
         "title": "Create Job",
