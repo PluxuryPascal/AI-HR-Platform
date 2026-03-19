@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	HiringService_UpdateCandidateProfile_FullMethodName = "/hiring.v1.HiringService/UpdateCandidateProfile"
 	HiringService_TransferJobAccess_FullMethodName      = "/hiring.v1.HiringService/TransferJobAccess"
+	HiringService_GetCandidate_FullMethodName           = "/hiring.v1.HiringService/GetCandidate"
 )
 
 // HiringServiceClient is the client API for HiringService service.
@@ -33,6 +34,8 @@ type HiringServiceClient interface {
 	UpdateCandidateProfile(ctx context.Context, in *UpdateCandidateProfileRequest, opts ...grpc.CallOption) (*UpdateCandidateProfileResponse, error)
 	// From Auth service after user accept invite
 	TransferJobAccess(ctx context.Context, in *TransferJobAccessRequest, opts ...grpc.CallOption) (*TransferJobAccessResponse, error)
+	// Get candidate data (parsed text etc)
+	GetCandidate(ctx context.Context, in *GetCandidateRequest, opts ...grpc.CallOption) (*GetCandidateResponse, error)
 }
 
 type hiringServiceClient struct {
@@ -63,6 +66,16 @@ func (c *hiringServiceClient) TransferJobAccess(ctx context.Context, in *Transfe
 	return out, nil
 }
 
+func (c *hiringServiceClient) GetCandidate(ctx context.Context, in *GetCandidateRequest, opts ...grpc.CallOption) (*GetCandidateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCandidateResponse)
+	err := c.cc.Invoke(ctx, HiringService_GetCandidate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HiringServiceServer is the server API for HiringService service.
 // All implementations must embed UnimplementedHiringServiceServer
 // for forward compatibility.
@@ -73,6 +86,8 @@ type HiringServiceServer interface {
 	UpdateCandidateProfile(context.Context, *UpdateCandidateProfileRequest) (*UpdateCandidateProfileResponse, error)
 	// From Auth service after user accept invite
 	TransferJobAccess(context.Context, *TransferJobAccessRequest) (*TransferJobAccessResponse, error)
+	// Get candidate data (parsed text etc)
+	GetCandidate(context.Context, *GetCandidateRequest) (*GetCandidateResponse, error)
 	mustEmbedUnimplementedHiringServiceServer()
 }
 
@@ -88,6 +103,9 @@ func (UnimplementedHiringServiceServer) UpdateCandidateProfile(context.Context, 
 }
 func (UnimplementedHiringServiceServer) TransferJobAccess(context.Context, *TransferJobAccessRequest) (*TransferJobAccessResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method TransferJobAccess not implemented")
+}
+func (UnimplementedHiringServiceServer) GetCandidate(context.Context, *GetCandidateRequest) (*GetCandidateResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCandidate not implemented")
 }
 func (UnimplementedHiringServiceServer) mustEmbedUnimplementedHiringServiceServer() {}
 func (UnimplementedHiringServiceServer) testEmbeddedByValue()                       {}
@@ -146,6 +164,24 @@ func _HiringService_TransferJobAccess_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HiringService_GetCandidate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCandidateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HiringServiceServer).GetCandidate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HiringService_GetCandidate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HiringServiceServer).GetCandidate(ctx, req.(*GetCandidateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HiringService_ServiceDesc is the grpc.ServiceDesc for HiringService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +196,10 @@ var HiringService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TransferJobAccess",
 			Handler:    _HiringService_TransferJobAccess_Handler,
+		},
+		{
+			MethodName: "GetCandidate",
+			Handler:    _HiringService_GetCandidate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

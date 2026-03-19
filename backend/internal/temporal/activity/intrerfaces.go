@@ -36,9 +36,18 @@ type JobParser interface {
 	Parse(ctx context.Context, rawtext, locale string, teamID string) (*llm.JobParseResult, error)
 }
 
+type ChatAssistant interface {
+	GenerateResponse(ctx context.Context, teamID string, history []domain.ChatMessage, contextChunks []string, question string, locale string) (string, error)
+}
+
+type InterviewGenerator interface {
+	Generate(ctx context.Context, teamID string, resumeText string, locale string) ([]llm.InterviewQuestion, error)
+}
+
 type CandidateStore interface {
 	SaveCandidateScore(ctx context.Context, score *domain.CandidateScore, factors []domain.ScoreFactor) error
 	SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error
+	SearchEmbeddings(ctx context.Context, teamID string, candidateID *string, queryVector []float32, limit int) ([]domain.ResumeEmbedding, error)
 }
 
 type JobStore interface {
@@ -48,6 +57,11 @@ type JobStore interface {
 type CommunicationStore interface {
 	Create(ctx context.Context, c *domain.Communication) error
 	GetByCandidateID(ctx context.Context, candidateID string) ([]domain.Communication, error)
+}
+
+type ChatStore interface {
+	AddMessage(ctx context.Context, message *domain.ChatMessage) error
+	GetHistory(ctx context.Context, sessionID string) ([]domain.ChatMessage, error)
 }
 
 type Activities struct {
@@ -65,9 +79,12 @@ type Activities struct {
 	commDB       CommunicationStore
 	hiringGRPC   *grpc.Client
 	auditor      *audit.Logger
+	chatAsst     ChatAssistant
+	chatDB       ChatStore
+	interviewGen InterviewGenerator
 }
 
-func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.FileStorage, parser ResumeParser, scorer Scorer, embedder Embedder, emailGen EmailGenerator, comparator CandidateComparator, jobParser JobParser, candidateDB CandidateStore, jobDB JobStore, commDB CommunicationStore, hiringGRPC *grpc.Client, auditor *audit.Logger) *Activities {
+func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.FileStorage, parser ResumeParser, scorer Scorer, embedder Embedder, emailGen EmailGenerator, comparator CandidateComparator, jobParser JobParser, candidateDB CandidateStore, jobDB JobStore, commDB CommunicationStore, hiringGRPC *grpc.Client, auditor *audit.Logger, chatAsst ChatAssistant, chatDB ChatStore, interviewGen InterviewGenerator) *Activities {
 	return &Activities{
 		log:          log,
 		pdfExtractor: pdfExtractor,
@@ -83,5 +100,8 @@ func NewActivities(log *zap.Logger, pdfExtractor pdf.Extractor, storage storage.
 		commDB:       commDB,
 		hiringGRPC:   hiringGRPC,
 		auditor:      auditor,
+		chatAsst:     chatAsst,
+		chatDB:       chatDB,
+		interviewGen: interviewGen,
 	}
 }

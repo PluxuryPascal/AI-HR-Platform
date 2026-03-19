@@ -53,6 +53,8 @@ func (w *Worker) Init(ctx context.Context) error {
 	w.TemporalWorker.RegisterWorkflow(workflow.CompareCandidatesWorkflow)
 	w.TemporalWorker.RegisterWorkflow(workflow.JobParseWorkflow)
 	w.TemporalWorker.RegisterWorkflow(workflow.EmailGenerateWorkflow)
+	w.TemporalWorker.RegisterWorkflow(workflow.ChatWorkflow)
+	w.TemporalWorker.RegisterWorkflow(workflow.InterviewQuestionsWorkflow)
 
 	w.TemporalWorker.RegisterActivity(w.activities)
 

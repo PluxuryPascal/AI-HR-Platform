@@ -108,3 +108,31 @@ type JobParseOutput struct {
 	SalaryMax    int      `json:"salary_max"`
 	Currency     string   `json:"currency"`
 }
+
+type ChatInput struct {
+	SessionID   string               `json:"session_id"`
+	TeamID      string               `json:"team_id"`
+	CandidateID *string              `json:"candidate_id,omitempty"`
+	Question    string               `json:"question"`
+	Locale      string               `json:"locale"`
+	History     []domain.ChatMessage `json:"history,omitempty"`
+}
+
+type ChatOutput struct {
+	Answer string `json:"answer"`
+}
+
+type InterviewPair struct {
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+}
+
+type InterviewInput struct {
+	CandidateID string `json:"candidate_id"`
+	TeamID      string `json:"team_id"`
+	Locale      string `json:"locale"`
+}
+
+type InterviewOutput struct {
+	Questions []InterviewPair `json:"questions"`
+}

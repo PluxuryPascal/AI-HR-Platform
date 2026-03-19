@@ -128,3 +128,27 @@ func NewMiddleware(log *logger.Log, redisClient *db.RedisClient, cacheManager *c
 }
 
 var _ Middleware = (*middleware)(nil)
+
+func GetUserID(c echo.Context) string {
+	id, ok := c.Get("id").(string)
+	if !ok {
+		return ""
+	}
+	return id
+}
+
+func GetTeamID(c echo.Context) string {
+	id, ok := c.Get("team_id").(string)
+	if !ok {
+		return ""
+	}
+	return id
+}
+
+func GetRole(c echo.Context) string {
+	role, ok := c.Get("role").(string)
+	if !ok {
+		return ""
+	}
+	return role
+}

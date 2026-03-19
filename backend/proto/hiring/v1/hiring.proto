@@ -12,6 +12,9 @@ service HiringService {
 
     // From Auth service after user accept invite
     rpc TransferJobAccess(TransferJobAccessRequest) returns (TransferJobAccessResponse);
+
+    // Get candidate data (parsed text etc)
+    rpc GetCandidate(GetCandidateRequest) returns (GetCandidateResponse);
 }
 
 enum ParsingStatus {
@@ -53,4 +56,15 @@ message TransferJobAccessRequest {
 
 message TransferJobAccessResponse {
     bool success = 1;
+}
+
+message GetCandidateRequest {
+    string candidate_id = 1;
+}
+
+message GetCandidateResponse {
+    string candidate_id = 1;
+    string parsed_text = 2;
+    string first_name = 3;
+    string last_name = 4;
 }

@@ -29,7 +29,7 @@ type CandidateRepository interface {
 	GetScoreByCandidateID(ctx context.Context, candidateID string) (*domain.CandidateScore, []domain.ScoreFactor, error)
 	GetScoresByCandidateIDs(ctx context.Context, candidateIDs []string) (map[string]*domain.CandidateScore, error)
 	SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error
-
+	SearchEmbeddings(ctx context.Context, teamID string, candidateID *string, queryVector []float32, limit int) ([]domain.ResumeEmbedding, error)
 }
 
 type candidateRepo struct {
@@ -607,6 +607,41 @@ func (r *candidateRepo) GetScoresByCandidateIDs(ctx context.Context, candidateID
 	}
 
 	return res, nil
+}
+
+func (r *candidateRepo) SearchEmbeddings(ctx context.Context, teamID string, candidateID *string, queryVector []float32, limit int) ([]domain.ResumeEmbedding, error) {
+	const query = `
+		SELECT id, team_id, candidate_id, chunk_text, (embedding <=> @query_vector) AS distance
+		FROM ai_engine.t_resume_embeddings
+		WHERE team_id = @team_id
+		  AND (@candidate_id::uuid IS NULL OR candidate_id = @candidate_id)
+		ORDER BY distance ASC
+		LIMIT @limit
+	`
+
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
+		"team_id":      teamID,
+		"candidate_id": candidateID,
+		"query_vector": pgvector.NewVector(queryVector),
+		"limit":        limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query embeddings: %w", err)
+	}
+	defer rows.Close()
+
+	var results []domain.ResumeEmbedding
+	for rows.Next() {
+		var e domain.ResumeEmbedding
+		var distance float64
+		err := rows.Scan(&e.ID, &e.TeamID, &e.CandidateID, &e.ChunkText, &distance)
+		if err != nil {
+			return nil, fmt.Errorf("scan embedding: %w", err)
+		}
+		results = append(results, e)
+	}
+
+	return results, nil
 }
 
 func (r *candidateRepo) SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error {

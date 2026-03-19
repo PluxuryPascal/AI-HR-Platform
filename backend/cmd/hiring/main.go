@@ -12,11 +12,14 @@ import (
 	pb "backend/internal/proto/hiring/v1"
 	"backend/internal/repo"
 	"backend/internal/server"
+	"backend/internal/temporal"
 	"backend/internal/server/router/access"
 	"backend/internal/server/router/ai_settings"
 	"backend/internal/server/router/candidate"
+	"backend/internal/server/router/chat"
 	"backend/internal/server/router/dashboard"
 	"backend/internal/server/router/department"
+	"backend/internal/server/router/interview"
 	"backend/internal/server/router/job"
 	"backend/internal/server/router/pipeline"
 	"backend/internal/openrouter"
@@ -45,6 +48,7 @@ type repos struct {
 	pipeline   repo.PipelineRepository
 	dashboard  repo.DashboardRepository
 	aiSettings repo.AiSettingsRepository
+	chat       repo.ChatRepository
 }
 
 type usecases struct {
@@ -54,6 +58,8 @@ type usecases struct {
 	candidate  usecase.CandidateUseCase
 	pipeline   usecase.PipelineUseCase
 	dashboard  usecase.DashboardUseCase
+	chat       usecase.ChatUseCase
+	interview  usecase.InterviewUseCase
 }
 
 type handlers struct {
@@ -64,6 +70,8 @@ type handlers struct {
 	department *handler.DepartmentHandler
 	dashboard  *handler.DashboardHandler
 	aiSettings *handler.AiSettingsHandler
+	chat       *handler.ChatHandler
+	interview  *handler.InterviewHandler
 }
 
 type infrastructureComponents struct {
@@ -79,6 +87,7 @@ type infrastructureComponents struct {
 	mqClient     *mq.RabbitMQ
 	mqPublisher  *mq.MQPublisher
 	openRouter   *openrouter.Client
+	temporalClient *temporal.Client
 }
 
 type utilityComponents struct {
@@ -199,6 +208,7 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		mqClient:     mqClient,
 		mqPublisher:  mqPublisher,
 		openRouter:   openRouter,
+		temporalClient: temporal.NewClient(zapLog.Log, nil, &conf.Temporal),
 	}, nil
 }
 
@@ -230,6 +240,7 @@ func initRepositories(infra *infrastructureComponents) repos {
 		pipeline:   repo.NewPipelineRepo(infra.pool),
 		dashboard:  repo.NewDashboardRepo(infra.pool),
 		aiSettings: repo.NewAiSettingsRepo(infra.pool),
+		chat:       repo.NewChatRepo(infra.pool),
 	}
 }
 
@@ -251,6 +262,8 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 		candidate:  usecase.NewCandidateUseCase(infra.log.Log, r.candidate, r.pipeline, r.job, infra.storage, infra.mqPublisher, auditor),
 		pipeline:   usecase.NewPipelineUseCase(r.pipeline, auditor),
 		dashboard:  usecase.NewDashboardUseCase(infra.log.Log, r.dashboard, authSvcClient, aiSvcClient),
+		chat:       usecase.NewChatUseCase(infra.log.Log, r.chat, infra.temporalClient),
+		interview:  usecase.NewInterviewUseCase(infra.log.Log, infra.temporalClient.TemporalClient),
 	}
 }
 
@@ -270,6 +283,7 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 		department: handler.NewDepartmentHandler(infra.log.Log, u.department),
 		dashboard:  handler.NewDashboardHandler(infra.log.Log, u.dashboard),
 		aiSettings: handler.NewAiSettingsHandler(infra.log.Log, r.aiSettings, infra.openRouter),
+		chat:       handler.NewChatHandler(infra.log.Log, u.chat),
 	}
 
 	return h, mw
@@ -303,6 +317,12 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		),
 		server.WithRouterGroup(ctx, "/ai-settings",
 			ai_settings.NewRouter(h.aiSettings, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/chat",
+			chat.NewRouter(h.chat, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/interview",
+			interview.NewRouter(h.interview, mw.Session(t), mw.RBAC()),
 		),
 	)
 }

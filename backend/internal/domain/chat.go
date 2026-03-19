@@ -42,3 +42,13 @@ type ChatMessage struct {
 	TokensUsed *int        `json:"tokens_used,omitempty" db:"tokens_used"`
 	CreatedAt  time.Time   `json:"created_at" db:"created_at"`
 }
+
+type ChatRequest struct {
+	CandidateID *string `json:"candidate_id,omitempty"`
+	Question    string  `json:"question" validate:"required"`
+	Locale      string  `json:"locale" validate:"required"`
+}
+
+type ChatResponse struct {
+	Answer string `json:"answer"`
+}

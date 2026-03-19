@@ -2,14 +2,51 @@ package hiring
 
 import (
 	"context"
+	"errors"
 
 	"backend/internal/domain"
 	pb "backend/internal/proto/hiring/v1"
+	"backend/internal/usecase"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+func (h *Handler) GetCandidate(ctx context.Context, req *pb.GetCandidateRequest) (*pb.GetCandidateResponse, error) {
+	if req.GetCandidateId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "candidate_id is required")
+	}
+
+	candidate, _, parsedText, err := h.candidateUC.GetCandidateByID(ctx, req.GetCandidateId())
+	if err != nil {
+		if errors.Is(err, usecase.ErrCandidateNotFound) {
+			return nil, status.Error(codes.NotFound, "candidate not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get candidate: %v", err)
+	}
+
+	text := ""
+	if parsedText != nil {
+		text = *parsedText
+	}
+
+	fname := ""
+	if candidate.FirstName != nil {
+		fname = *candidate.FirstName
+	}
+	lname := ""
+	if candidate.LastName != nil {
+		lname = *candidate.LastName
+	}
+
+	return &pb.GetCandidateResponse{
+		CandidateId: candidate.ID,
+		ParsedText:  text,
+		FirstName:   fname,
+		LastName:    lname,
+	}, nil
+}
 
 func (h *Handler) UpdateCandidateProfile(ctx context.Context, req *pb.UpdateCandidateProfileRequest) (*pb.UpdateCandidateProfileResponse, error) {
 	if req.GetCandidateId() == "" {
@@ -98,3 +135,4 @@ func collectMissingFields(r domain.AIParsingResult) []string {
 
 	return missing
 }
+

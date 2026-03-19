@@ -109,6 +109,7 @@ func initInfrastructure(ctx context.Context) (*infrastructureComponents, error) 
 	}
 
 	aiSettingsRepo := repo.NewAiSettingsRepo(pool)
+	chatRepo := repo.NewChatRepo(pool)
 	llmProvider := llm.NewProvider(zapLog.Log, &conf.OpenRouter, aiSettingsRepo)
 
 	activities := activity.NewActivities(
@@ -126,6 +127,9 @@ func initInfrastructure(ctx context.Context) (*infrastructureComponents, error) 
 		commRepo,
 		hiringGRPC,
 		auditor,
+		llm.NewChatAssistant(llmProvider),
+		chatRepo,
+		llm.NewInterviewGenerator(llmProvider),
 	)
 
 	temporalWorker := temporal.NewWorker(zapLog.Log, temporalClient, &conf.Temporal, activities)
