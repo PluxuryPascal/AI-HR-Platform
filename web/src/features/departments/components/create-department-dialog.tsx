@@ -14,12 +14,12 @@ import {
     DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog"
-import { useDepartmentsStore } from "@/store/use-departments-store"
+import { useCreateDepartment } from "../api/use-departments"
 import { toast } from "sonner"
 
 export function CreateDepartmentDialog() {
     const t = useTranslations("Departments")
-    const { addDepartment } = useDepartmentsStore()
+    const { mutate: createDepartment, isPending } = useCreateDepartment()
     const [open, setOpen] = useState(false)
     const [name, setName] = useState("")
 
@@ -27,10 +27,12 @@ export function CreateDepartmentDialog() {
         e.preventDefault()
         if (!name.trim()) return
 
-        addDepartment(name.trim())
-        toast.success(t("createSuccess"))
-        setName("")
-        setOpen(false)
+        createDepartment({ name: name.trim() }, {
+            onSuccess: () => {
+                setName("")
+                setOpen(false)
+            }
+        })
     }
 
     return (
@@ -62,8 +64,8 @@ export function CreateDepartmentDialog() {
                         <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                             {t("cancel")}
                         </Button>
-                        <Button type="submit" disabled={!name.trim()}>
-                            {t("save")}
+                        <Button type="submit" disabled={!name.trim() || isPending}>
+                            {isPending ? "Сохранение..." : t("save")}
                         </Button>
                     </DialogFooter>
                 </form>

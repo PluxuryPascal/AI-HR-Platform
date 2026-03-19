@@ -6,64 +6,56 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Briefcase, UserCheck, MessageSquare, Clock, Sparkles } from "lucide-react";
 import { glassCard } from "@/lib/styles";
+import { useGetRecentActivity } from "@/features/dashboard/api/use-dashboard";
 
 export function RecentActivity() {
     const t = useTranslations("Dashboard.activity");
+    const { data: rawActivities = [], isLoading } = useGetRecentActivity(10);
 
-    const activities = [
-        {
-            type: "screening",
-            user: "AI Agent",
-            action: "finished screening",
-            target: "Alex Doe",
-            meta: "92% Match",
-            time: "10m ago",
-            icon: Sparkles,
-            color: "text-indigo-500",
-            isAi: true,
-        },
-        {
-            type: "job",
-            user: "System",
-            action: "New Job",
-            target: "Senior Backend",
-            meta: "created",
-            time: "2h ago",
-            icon: Briefcase,
-            color: "text-blue-500",
-        },
-        {
-            type: "interview",
-            user: "Maria Garcia",
-            action: "moved to",
-            target: "Interview",
-            meta: "",
-            time: "5h ago",
-            icon: MessageSquare,
-            color: "text-purple-500",
-        },
-        {
-            type: "screening",
-            user: "AI Agent",
-            action: "finished screening",
-            target: "Sarah Smith",
-            meta: "45% Match",
-            time: "1d ago",
-            icon: Sparkles,
-            color: "text-indigo-500",
-            isAi: true,
-        },
-        {
-            type: "job",
-            user: "System",
-            action: "New Job",
-            target: "Product Designer",
-            meta: "created",
-            time: "1d ago",
-            icon: Briefcase,
-            color: "text-blue-500",
-        },
-    ];
+    const formatRelativeTime = (date: Date) => {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return "только что";
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) return `${diffInMinutes} мин. назад`;
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours} ч. назад`;
+        const diffInDays = Math.floor(diffInHours / 24);
+        return `${diffInDays} дн. назад`;
+    };
+
+    const activities = rawActivities.map(log => {
+        let icon = Clock;
+        let color = "text-muted-foreground";
+        let action = log.action_code;
+        let target = log.job_title || log.candidate_first_name || "Object";
+        let isAi = log.actor_type === "ai";
+
+        if (log.action_code.includes("screening")) {
+            icon = Sparkles;
+            color = "text-indigo-500";
+        } else if (log.action_code.includes("job")) {
+            icon = Briefcase;
+            color = "text-blue-500";
+        } else if (log.action_code.includes("interview")) {
+            icon = MessageSquare;
+            color = "text-purple-500";
+        }
+
+        return {
+            id: log.id,
+            type: log.action_code,
+            user: log.actor_name || "System",
+            action: action,
+            target: target,
+            meta: log.match_score ? `${log.match_score}% Match` : "",
+            time: formatRelativeTime(new Date(log.created_at)),
+            icon: icon,
+            color: color,
+            isAi: isAi,
+        };
+    });
 
     return (
         <Card className={`col-span-1 ${glassCard}`}>
@@ -76,9 +68,9 @@ export function RecentActivity() {
                         {activities.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-4">{t("empty")}</p>
                         ) : (
-                            activities.map((activity, index) => (
+                            activities.map((activity) => (
                                 <div
-                                    key={index}
+                                    key={activity.id}
                                     className={`flex items-start gap-4 p-3 rounded-xl transition-all ${activity.isAi
                                         ? "bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10"
                                         : "hover:bg-white/5 border border-transparent"

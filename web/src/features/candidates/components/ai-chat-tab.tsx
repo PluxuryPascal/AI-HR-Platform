@@ -5,6 +5,9 @@ import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCandidateChat } from "../api/use-candidate-ai";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
 
 type Message = {
     id: string;
@@ -15,16 +18,19 @@ type Message = {
 
 export const AIChatTab = () => {
     const t = useTranslations("CandidateProfile");
+    const params = useParams();
+    const candidateId = params.candidateId as string;
+
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
-            text: "Hello! I've analyzed this candidate's profile. Ask me anything about their experience or skills.",
+            text: "Привет! Я проанализировал профиль этого кандидата. Спрашивайте меня о чем угодно касательно его опыта или навыков.",
             sender: "ai",
             timestamp: new Date(),
         },
     ]);
     const [inputValue, setInputValue] = useState("");
-    const [isTyping, setIsTyping] = useState(false);
+    const { mutate: sendMessage, isPending: isTyping } = useCandidateChat();
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -34,40 +40,37 @@ export const AIChatTab = () => {
     }, [messages, isTyping]);
 
     const handleSend = () => {
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() || isTyping) return;
 
+        const userText = inputValue;
         const newUserMessage: Message = {
             id: Date.now().toString(),
-            text: inputValue,
+            text: userText,
             sender: "user",
             timestamp: new Date(),
         };
 
         setMessages((prev) => [...prev, newUserMessage]);
         setInputValue("");
-        setIsTyping(true);
 
-        // Simulate AI response
-        setTimeout(() => {
-            const responses = [
-                "Based on the resume, the candidate has significant experience in that area.",
-                "Yes, they mention that skill in their recent project at TechCorp.",
-                "That's a good question. While not explicitly stated, their background suggests familiarity with it.",
-                "The candidate's strength lies more in frontend development than backend engineering.",
-            ];
-            const randomResponse =
-                responses[Math.floor(Math.random() * responses.length)];
-
-            const newAiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                text: randomResponse,
-                sender: "ai",
-                timestamp: new Date(),
-            };
-
-            setMessages((prev) => [...prev, newAiMessage]);
-            setIsTyping(false);
-        }, 1500);
+        sendMessage({
+            candidate_id: candidateId,
+            question: userText,
+            locale: "ru"
+        }, {
+            onSuccess: (data) => {
+                const newAiMessage: Message = {
+                    id: Date.now().toString(),
+                    text: data.answer,
+                    sender: "ai",
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, newAiMessage]);
+            },
+            onError: () => {
+                toast.error("Ошибка при получении ответа от ИИ");
+            }
+        });
     };
 
     return (

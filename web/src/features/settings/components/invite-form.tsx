@@ -40,13 +40,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const mockJobs = [
-    { id: "1", title: "Senior Frontend Developer" },
-    { id: "2", title: "Product Manager" },
-    { id: "3", title: "UI Designer" },
-    { id: "4", title: "Backend Engineer" },
-    { id: "5", title: "QA Specialist" },
-];
+import { useGetJobs } from "@/features/jobs/api/use-get-jobs";
 
 export const inviteSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
@@ -59,10 +53,12 @@ export type InviteFormValues = z.infer<typeof inviteSchema>;
 interface InviteFormProps {
     form: UseFormReturn<InviteFormValues>;
     onSubmit: (values: InviteFormValues) => void;
+    isPending?: boolean;
 }
 
-export function InviteForm({ form, onSubmit }: InviteFormProps) {
+export function InviteForm({ form, onSubmit, isPending }: InviteFormProps) {
     const t = useTranslations("Team");
+    const { data: jobs } = useGetJobs();
     const watchRole = form.watch("role");
 
     return (
@@ -75,7 +71,7 @@ export function InviteForm({ form, onSubmit }: InviteFormProps) {
                         <FormItem>
                             <FormLabel>{t("inviteModal.emailLabel")}</FormLabel>
                             <FormControl>
-                                <Input placeholder="colleague@company.com" {...field} />
+                                <Input placeholder="colleague@company.com" {...field} disabled={isPending} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -87,7 +83,7 @@ export function InviteForm({ form, onSubmit }: InviteFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>{t("inviteModal.roleLabel")}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isPending}>
                                 <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a role" />
@@ -104,7 +100,7 @@ export function InviteForm({ form, onSubmit }: InviteFormProps) {
                     )}
                 />
 
-                {watchRole === "manager" && (
+                {watchRole === "manager" && jobs && (
                     <FormField
                         control={form.control}
                         name="jobs"
@@ -117,6 +113,7 @@ export function InviteForm({ form, onSubmit }: InviteFormProps) {
                                             <Button
                                                 variant="outline"
                                                 role="combobox"
+                                                disabled={isPending}
                                                 className={cn(
                                                     "w-full justify-between",
                                                     !field.value?.length && "text-muted-foreground"
@@ -135,7 +132,7 @@ export function InviteForm({ form, onSubmit }: InviteFormProps) {
                                             <CommandList>
                                                 <CommandEmpty>No job found.</CommandEmpty>
                                                 <CommandGroup>
-                                                    {mockJobs.map((job) => (
+                                                    {jobs.data.map((job) => (
                                                         <CommandItem
                                                             value={job.title}
                                                             key={job.id}
@@ -170,7 +167,9 @@ export function InviteForm({ form, onSubmit }: InviteFormProps) {
                 )}
 
                 <DialogFooter>
-                    <Button type="submit">{t("inviteModal.sendBtn")}</Button>
+                    <Button type="submit" disabled={isPending}>
+                        {isPending ? "Отправка..." : t("inviteModal.sendBtn")}
+                    </Button>
                 </DialogFooter>
             </form>
         </Form>

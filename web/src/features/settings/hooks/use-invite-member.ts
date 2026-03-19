@@ -1,40 +1,47 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { inviteSchema, InviteFormValues } from "../components/invite-form";
-import { Member } from "../components/team-table";
-
-const initialMembers: Member[] = [
-    {
-        id: "1",
-        name: "Alice Johnson",
-        email: "alice@example.com",
-        role: "owner",
-        status: "active",
-        avatar: "https://i.pravatar.cc/150?u=alice",
-    },
-    {
-        id: "2",
-        name: "Bob Smith",
-        email: "bob@example.com",
-        role: "recruiter",
-        status: "active",
-        avatar: "https://i.pravatar.cc/150?u=bob",
-    },
-    {
-        id: "3",
-        name: "Charlie Brown",
-        email: "charlie@example.com",
-        role: "manager",
-        status: "pending",
-        avatar: "https://i.pravatar.cc/150?u=charlie",
-        assignedJobs: ["1", "3"],
-    },
-];
+import { Member, Role } from "../components/team-table";
+import { useGetTeamMembers, useGetTeamInvites, useInviteUser } from "../api/team";
 
 export function useInviteMember() {
-    const [members, setMembers] = useState<Member[]>(initialMembers);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
+    
+    const { data: membersRaw, isLoading: isLoadingMembers } = useGetTeamMembers();
+    const { data: invitesRaw, isLoading: isLoadingInvites } = useGetTeamInvites();
+    const inviteMutation = useInviteUser();
+
+    const members = useMemo(() => {
+        const result: Member[] = [];
+        
+        if (membersRaw) {
+            membersRaw.forEach(m => {
+                result.push({
+                    id: m.id,
+                    name: `${m.first_name || ""} ${m.last_name || ""}`.trim() || m.email.split('@')[0],
+                    email: m.email,
+                    role: m.role as Role,
+                    status: "active",
+                    avatar: m.avatar || `https://i.pravatar.cc/150?u=${m.id}`,
+                });
+            });
+        }
+        
+        if (invitesRaw) {
+            invitesRaw.forEach(i => {
+                result.push({
+                    id: i.id,
+                    name: i.email.split('@')[0],
+                    email: i.email,
+                    role: i.role as Role,
+                    status: "pending",
+                });
+            });
+        }
+        
+        return result;
+    }, [membersRaw, invitesRaw]);
 
     const form = useForm<InviteFormValues>({
         resolver: zodResolver(inviteSchema),
@@ -45,27 +52,24 @@ export function useInviteMember() {
         },
     });
 
-    const onSubmit = useCallback((values: InviteFormValues) => {
-        const newMember: Member = {
-            id: Math.random().toString(36).substr(2, 9),
-            name: values.email.split("@")[0], // Placeholder name
+    const onSubmit = useCallback(async (values: InviteFormValues) => {
+        await inviteMutation.mutateAsync({
             email: values.email,
             role: values.role,
-            status: "pending",
-            assignedJobs: values.role === "manager" ? values.jobs : undefined,
-        };
-
-        setMembers(prev => [...prev, newMember]);
+            job_ids: values.jobs && values.jobs.length > 0 ? values.jobs : undefined,
+        });
+        
         setIsInviteOpen(false);
         form.reset();
-        return newMember;
-    }, [form]);
+    }, [inviteMutation, form]);
 
     return {
         members,
+        isLoading: isLoadingMembers || isLoadingInvites,
         isInviteOpen,
         setIsInviteOpen,
         form,
         onSubmit,
+        isSubmitting: inviteMutation.isPending,
     };
 }

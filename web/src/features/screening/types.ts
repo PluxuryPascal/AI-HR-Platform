@@ -1,3 +1,5 @@
+export type ColumnId = string;
+
 export interface ScoreFactor {
     id: string;
     type: "positive" | "negative" | "neutral";

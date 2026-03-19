@@ -22,6 +22,7 @@ type InviteRepository interface {
 	RollbackInviteToPending(ctx context.Context, id string) error
 	GetStuckInvites(ctx context.Context, threshold time.Duration) ([]domain.Invite, error)
 	GetInviteJobIDs(ctx context.Context, inviteID string) ([]string, error)
+	GetInvitesByTeamID(ctx context.Context, teamID string) ([]domain.Invite, error)
 }
 
 type inviteRepo struct {
@@ -258,4 +259,24 @@ func (r *inviteRepo) GetInviteJobIDs(ctx context.Context, inviteID string) ([]st
 	}
 
 	return jobIDs, nil
+}
+ 
+func (r *inviteRepo) GetInvitesByTeamID(ctx context.Context, teamID string) ([]domain.Invite, error) {
+	const query = `
+		SELECT id, team_id, email, role, token, status, expires_at, created_at, updated_at
+		FROM auth.t_invites
+		WHERE team_id = @team_id AND status = 'pending'
+	`
+ 
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{"team_id": teamID})
+	if err != nil {
+		return nil, fmt.Errorf("query team invites: %w", err)
+	}
+ 
+	invites, err := pgx.CollectRows(rows, pgx.RowToStructByName[domain.Invite])
+	if err != nil {
+		return nil, fmt.Errorf("collect team invites: %w", err)
+	}
+ 
+	return invites, nil
 }

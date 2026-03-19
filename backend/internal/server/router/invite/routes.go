@@ -11,6 +11,7 @@ type InviteRoutes interface {
 	PostInvite() echo.HandlerFunc
 	GetValidate() echo.HandlerFunc
 	PostCreateUser() echo.HandlerFunc
+	GetInvites() echo.HandlerFunc
 }
 
 type inviteRouter struct {
@@ -45,5 +46,6 @@ func (r *inviteRouter) initRoutes() {
 		router.NewRoute(http.MethodPost, "/invite", r.handler.PostInvite, r.rateLimit, r.session, r.rbac),
 		router.NewRoute(http.MethodGet, "/validate", r.handler.GetValidate, r.rateLimit),
 		router.NewRoute(http.MethodPost, "/create-user", r.handler.PostCreateUser, r.rateLimit),
+		router.NewRoute(http.MethodGet, "/list", r.handler.GetInvites, r.rateLimit, r.session, r.rbac),
 	}
 }

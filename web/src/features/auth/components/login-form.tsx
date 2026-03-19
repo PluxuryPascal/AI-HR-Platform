@@ -8,7 +8,8 @@ import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 
 import { Link, useRouter } from "@/i18n/routing";
-import { useAuth } from "@/store/use-auth";
+import { useLogin } from "../api/use-auth";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -23,14 +24,13 @@ import {
 
 const loginSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6),
+    password: z.string().min(8),
 });
 
 export function LoginForm() {
     const t = useTranslations("Auth");
     const router = useRouter();
-    const { login } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
+    const login = useLogin();
 
     const form = useForm<z.infer<typeof loginSchema>>({
         resolver: zodResolver(loginSchema),
@@ -41,23 +41,21 @@ export function LoginForm() {
     });
 
     async function onSubmit(values: z.infer<typeof loginSchema>) {
-        setIsLoading(true);
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        login({
-            id: "1",
-            name: "John Doe",
-            email: values.email,
-            avatar: "https://github.com/shadcn.png",
+        login.mutate(values, {
+            onSuccess: () => {
+                toast.success(t("successMessage") || "Welcome back!");
+                router.push("/dashboard");
+            },
+            onError: (error: any) => {
+                toast.error(error?.response?.data?.message || "Invalid credentials");
+            }
         });
-
-        setIsLoading(false);
-        router.push("/dashboard");
     }
 
     // Common input class to ensure contrast on glass background
     const inputClass = "bg-white/50 dark:bg-black/50 border-white/20 dark:border-white/10";
+
+    const isLoading = login.isPending;
 
     return (
         <div className="w-full bg-transparent">
@@ -76,7 +74,7 @@ export function LoginForm() {
                                 <FormItem className="space-y-1">
                                     <FormLabel>{t("email")}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="m@example.com" {...field} className={inputClass} />
+                                        <Input placeholder="m@example.com" disabled={isLoading} {...field} className={inputClass} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -89,7 +87,7 @@ export function LoginForm() {
                                 <FormItem className="space-y-1">
                                     <FormLabel>{t("password")}</FormLabel>
                                     <FormControl>
-                                        <PasswordInput {...field} className={inputClass} />
+                                        <PasswordInput disabled={isLoading} {...field} className={inputClass} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

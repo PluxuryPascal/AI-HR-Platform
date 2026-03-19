@@ -134,3 +134,16 @@ func (i *InviteHandler) PostCreateUser() echo.HandlerFunc {
 		return response.NoContent(c, http.StatusCreated)
 	}
 }
+
+func (i *InviteHandler) GetInvites() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		teamID := c.Get("team_id").(string)
+
+		invites, err := i.usecase.GetTeamInvites(c.Request().Context(), teamID)
+		if err != nil {
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("get invites error: %v", err))
+		}
+
+		return response.OK(c, invites)
+	}
+}

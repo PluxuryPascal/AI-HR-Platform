@@ -5,7 +5,7 @@ interface User {
     name: string;
     email: string;
     avatar?: string;
-    role?: "owner" | "recruiter" | "manager";
+    role?: string;
 }
 
 interface AuthState {
@@ -16,13 +16,8 @@ interface AuthState {
 }
 
 export const useAuth = create<AuthState>((set) => ({
-    isAuthenticated: true, // Default to true for testing
-    user: {
-        id: "1",
-        name: "Test User",
-        email: "test@example.com",
-        role: "owner", // Default to owner
-    },
+    isAuthenticated: false,
+    user: null,
     login: (userData) => set({ isAuthenticated: true, user: userData }),
     logout: () => set({ isAuthenticated: false, user: null }),
 }));

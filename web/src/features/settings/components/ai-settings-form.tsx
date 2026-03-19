@@ -30,21 +30,21 @@ function APIKeyForm({ initialValue, onSave }: { initialValue: string, onSave: (v
     const t = useTranslations("AISettings");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const apiKeySchema = z.object({
-        openrouter_api_key: z.string().min(1, t("error")),
+        api_key: z.string().min(1, t("error")),
     });
 
     const form = useForm({
         resolver: zodResolver(apiKeySchema),
-        defaultValues: { openrouter_api_key: initialValue },
+        defaultValues: { api_key: initialValue },
     });
 
     useEffect(() => {
-        form.reset({ openrouter_api_key: initialValue });
+        form.reset({ api_key: initialValue });
     }, [initialValue, form]);
 
     const onSubmit = async (values: z.infer<typeof apiKeySchema>) => {
         setIsSubmitting(true);
-        await onSave(values.openrouter_api_key);
+        await onSave(values.api_key);
         setIsSubmitting(false);
         form.reset(values);
     };
@@ -60,7 +60,7 @@ function APIKeyForm({ initialValue, onSave }: { initialValue: string, onSave: (v
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
                         <FormField
                             control={form.control}
-                            name="openrouter_api_key"
+                            name="api_key"
                             render={({ field }) => (
                                 <FormItem className="flex-1">
                                     <FormLabel>API Key</FormLabel>
@@ -177,8 +177,8 @@ export function AISettingsForm() {
     return (
         <div className="space-y-6">
             <APIKeyForm 
-                initialValue={settings.openrouter_api_key} 
-                onSave={(val) => updateSetting("openrouter_api_key", val)} 
+                initialValue={settings.api_key || ""} 
+                onSave={(val) => updateSetting("api_key", val)} 
             />
             
             <ModelSelectionForm 
@@ -186,7 +186,7 @@ export function AISettingsForm() {
                 description={t("parseModelDesc")}
                 label={t("parseModelTitle")}
                 fieldName="parse_model"
-                initialValue={settings.parse_model}
+                initialValue={settings.parse_model || ""}
                 models={models}
                 onSave={(val) => updateSetting("parse_model", val)}
             />
@@ -196,7 +196,7 @@ export function AISettingsForm() {
                 description={t("scoreModelDesc")}
                 label={t("scoreModelTitle")}
                 fieldName="score_model"
-                initialValue={settings.score_model}
+                initialValue={settings.score_model || ""}
                 models={models}
                 onSave={(val) => updateSetting("score_model", val)}
             />
@@ -206,7 +206,7 @@ export function AISettingsForm() {
                 description={t("embedModelDesc")}
                 label={t("embedModelTitle")}
                 fieldName="embed_model"
-                initialValue={settings.embed_model}
+                initialValue={settings.embed_model || ""}
                 models={models}
                 onSave={(val) => updateSetting("embed_model", val)}
             />
@@ -215,10 +215,10 @@ export function AISettingsForm() {
                 title={t("chatModeTitle")}
                 description={t("chatModeDesc")}
                 label={t("chatModeTitle")}
-                fieldName="chat_mode"
-                initialValue={settings.chat_mode}
+                fieldName="chat_model"
+                initialValue={settings.chat_model || ""}
                 models={models}
-                onSave={(val) => updateSetting("chat_mode", val)}
+                onSave={(val) => updateSetting("chat_model", val)}
             />
         </div>
     );

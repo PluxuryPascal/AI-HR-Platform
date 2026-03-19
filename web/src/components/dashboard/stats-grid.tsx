@@ -4,41 +4,54 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Briefcase, Clock, CalendarCheck } from "lucide-react";
 import { glassCard } from "@/lib/styles";
+import { useGetDashboardStats } from "@/features/dashboard/api/use-dashboard";
 
 export function StatsGrid() {
     const t = useTranslations("Dashboard.stats");
     const tStats = useTranslations("Stats");
 
+    const { data: dashboardStats, isLoading } = useGetDashboardStats();
+
     const stats = [
         {
             title: t("applicants"),
-            value: "1,240",
+            value: dashboardStats?.total_candidates.toLocaleString() || "0",
             icon: Users,
-            trend: "+12%",
-            trendUp: true,
+            trend: dashboardStats?.total_candidates_delta ? `${dashboardStats.total_candidates_delta > 0 ? "+" : ""}${dashboardStats.total_candidates_delta}%` : "0%",
+            trendUp: (dashboardStats?.total_candidates_delta || 0) >= 0,
         },
         {
             title: t("activeJobs"),
-            value: "8",
+            value: dashboardStats?.active_jobs.toString() || "0",
             icon: Briefcase,
-            trend: "+2",
-            trendUp: true,
+            trend: dashboardStats?.active_jobs_delta ? `${dashboardStats.active_jobs_delta > 0 ? "+" : ""}${dashboardStats.active_jobs_delta}` : "0",
+            trendUp: (dashboardStats?.active_jobs_delta || 0) >= 0,
         },
         {
             title: t("interviews"),
-            value: "12",
+            value: dashboardStats?.upcoming_interviews.toString() || "0",
             icon: CalendarCheck,
-            trend: "+4",
-            trendUp: true,
+            trend: dashboardStats?.interviews_delta ? `${dashboardStats.interviews_delta > 0 ? "+" : ""}${dashboardStats.interviews_delta}` : "0",
+            trendUp: (dashboardStats?.interviews_delta || 0) >= 0,
         },
         {
             title: t("timeToHire"),
-            value: "12 Days",
+            value: `${dashboardStats?.avg_time_to_hire_days.toFixed(1) || "0"} ${tStats("days")}`,
             icon: Clock,
-            trend: "-3 Days",
-            trendUp: true, // actually good in this context
+            trend: dashboardStats?.avg_time_to_hire_delta ? `${dashboardStats.avg_time_to_hire_delta > 0 ? "+" : ""}${dashboardStats.avg_time_to_hire_delta.toFixed(1)} ${tStats("days")}` : `0 ${tStats("days")}`,
+            trendUp: (dashboardStats?.avg_time_to_hire_delta || 0) <= 0, // Lower is better for time to hire
         },
     ];
+
+    if (isLoading) {
+        return (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                    <Card key={i} className={`${glassCard} animate-pulse h-32`} />
+                ))}
+            </div>
+        );
+    }
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

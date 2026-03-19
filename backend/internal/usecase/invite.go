@@ -34,6 +34,7 @@ type InviteUseCase interface {
 	AcceptInvite(ctx context.Context, req domain.CreateUserParams) (*string, time.Duration, error)
 	CompleteInvite(ctx context.Context, inviteID string, userID string, jobIDs []string) error
 	ProcessStuckInvites(ctx context.Context) error
+	GetTeamInvites(ctx context.Context, teamID string) ([]domain.Invite, error)
 }
 
 var _ InviteUseCase = (*inviteUseCase)(nil)
@@ -284,4 +285,12 @@ func (i *inviteUseCase) ProcessStuckInvites(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (i *inviteUseCase) GetTeamInvites(ctx context.Context, teamID string) ([]domain.Invite, error) {
+	invites, err := i.repo.GetInvitesByTeamID(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("repo get team invites: %w", err)
+	}
+	return invites, nil
 }

@@ -55,7 +55,9 @@
         "noAccount": "Нет аккаунта?",
         "signUp": "Регистрация",
         "signUpDesc": "Создайте аккаунт, чтобы начать скрининг",
-        "fullName": "Имя Фамилия",
+        "firstName": "Имя",
+        "lastName": "Фамилия",
+        "teamName": "Название организации",
         "signUpBtn": "Создать аккаунт",
         "hasAccount": "Уже есть аккаунт?"
     },
@@ -110,7 +112,8 @@
         "totalCandidates": "Всего кандидатов",
         "pendingScreenings": "Ожидают скрининга",
         "fromLastMonth": "+{count} с прошлого месяца",
-        "requiresAttention": "Требует внимания"
+        "requiresAttention": "Требует внимания",
+        "days": "дн."
     },
     "DashboardPage": {
         "title": "Дашборд",
@@ -125,6 +128,7 @@
         "statusActive": "Активные",
         "statusClosed": "Закрытые",
         "statusDraft": "Черновики",
+        "error": "Не удалось загрузить вакансии",
         "table": {
             "title": "Название",
             "department": "Отдел",

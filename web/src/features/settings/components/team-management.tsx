@@ -21,11 +21,10 @@ import { useInviteMember } from "../hooks/use-invite-member";
 
 export function TeamManagement() {
     const t = useTranslations("Team");
-    const { members, isInviteOpen, setIsInviteOpen, form, onSubmit } = useInviteMember();
+    const { members, isLoading, isInviteOpen, setIsInviteOpen, form, onSubmit, isSubmitting } = useInviteMember();
 
-    const handleSubmit = (values: Parameters<typeof onSubmit>[0]) => {
-        onSubmit(values);
-        toast.success(t("inviteModal.sendBtn") + " success!");
+    const handleSubmit = async (values: Parameters<typeof onSubmit>[0]) => {
+        await onSubmit(values);
     };
 
     return (
@@ -38,7 +37,7 @@ export function TeamManagement() {
                     </div>
                     <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                         <DialogTrigger asChild>
-                            <Button>
+                            <Button disabled={isLoading}>
                                 <Plus className="mr-2 h-4 w-4" />
                                 {t("inviteBtn")}
                             </Button>
@@ -50,13 +49,17 @@ export function TeamManagement() {
                                     {t("description")}
                                 </DialogDescription>
                             </DialogHeader>
-                            <InviteForm form={form} onSubmit={handleSubmit} />
+                            <InviteForm form={form} onSubmit={handleSubmit} isPending={isSubmitting} />
                         </DialogContent>
                     </Dialog>
                 </div>
             </CardHeader>
             <CardContent>
-                <TeamTable members={members} />
+                {isLoading ? (
+                    <div className="flex justify-center py-8">Загрузка...</div>
+                ) : (
+                    <TeamTable members={members} />
+                )}
             </CardContent>
         </Card>
     );

@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,6 +7,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { useAuth } from "@/store/use-auth";
+import { useGetProfile, useUpdateProfile } from "../api/use-profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,29 +33,55 @@ const personalInfoSchema = z.object({
 
 export function PersonalInfoForm() {
     const t = useTranslations("Profile.personalInfo");
-    const { user, login } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
+    const { login } = useAuth();
+    
+    const { data: profile, isLoading: isFetching } = useGetProfile();
+    const updateProfile = useUpdateProfile();
 
     const form = useForm<z.infer<typeof personalInfoSchema>>({
         resolver: zodResolver(personalInfoSchema),
         defaultValues: {
-            name: user?.name || "",
-            email: user?.email || "",
+            name: "",
+            email: "",
         },
     });
 
-    async function onSubmit(values: z.infer<typeof personalInfoSchema>) {
-        setIsLoading(true);
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        if (user) {
-            login({ ...user, ...values });
-            toast.success("Profile updated successfully");
+    useEffect(() => {
+        if (profile) {
+            form.reset({
+                name: `${profile.first_name} ${profile.last_name}`.trim(),
+                email: profile.email,
+            });
         }
+    }, [profile, form]);
 
-        setIsLoading(false);
+    async function onSubmit(values: z.infer<typeof personalInfoSchema>) {
+        const [firstName, ...lastNameParts] = values.name.trim().split(/\s+/);
+        const lastName = lastNameParts.join(" ") || "-";
+
+        updateProfile.mutate({
+            first_name: firstName,
+            last_name: lastName,
+            email: values.email,
+        }, {
+            onSuccess: () => {
+                toast.success(t("successMessage") || "Profile updated successfully");
+                // Update local auth store
+                if (profile) {
+                    login({
+                        ...profile,
+                        name: values.name,
+                        email: values.email,
+                    });
+                }
+            },
+            onError: (error: any) => {
+                toast.error(error?.response?.data?.message || "Failed to update profile");
+            }
+        });
     }
+
+    const isLoading = isFetching || updateProfile.isPending;
 
     return (
         <Card>
@@ -74,7 +99,7 @@ export function PersonalInfoForm() {
                                 <FormItem>
                                     <FormLabel>{t("nameLabel")}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="John Doe" {...field} />
+                                        <Input placeholder="John Doe" disabled={isLoading} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -87,7 +112,7 @@ export function PersonalInfoForm() {
                                 <FormItem>
                                     <FormLabel>{t("emailLabel")}</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="m@example.com" {...field} />
+                                        <Input placeholder="m@example.com" disabled={isLoading} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -95,7 +120,7 @@ export function PersonalInfoForm() {
                         />
                         <div className="flex justify-end">
                             <Button type="submit" disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {updateProfile.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {t("saveBtn")}
                             </Button>
                         </div>

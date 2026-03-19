@@ -46,42 +46,10 @@ const DEFAULT_STAGES: Stage[] = [
     { id: "rejected", title: "Rejected" },
 ]
 
-const MOCK_JOBS: Job[] = [
-    {
-        id: "1",
-        title: "Senior Frontend Engineer",
-        department: "Engineering",
-        createdDate: "2024-03-01",
-        candidatesCount: 12,
-        status: "Active",
-        stages: [...DEFAULT_STAGES],
-    },
-    {
-        id: "2",
-        title: "AI Researcher",
-        department: "Engineering",
-        createdDate: "2024-03-05",
-        candidatesCount: 8,
-        status: "Active",
-        stages: [...DEFAULT_STAGES],
-    },
-    {
-        id: "3",
-        title: "Product Designer",
-        department: "Design",
-        createdDate: "2024-02-28",
-        candidatesCount: 15,
-        status: "Active",
-        stages: [...DEFAULT_STAGES],
-    },
-]
+const MOCK_JOBS: Job[] = [];
 
 // Initialize boards with candidates for each stage
-const INITIAL_BOARDS: Record<string, Record<string, CandidateCard[]>> = {
-    "1": initialColumns,
-    "2": JSON.parse(JSON.stringify(initialColumns)),
-    "3": JSON.parse(JSON.stringify(initialColumns)),
-}
+const INITIAL_BOARDS: Record<string, Record<string, CandidateCard[]>> = {};
 
 export const useJobsStore = create<JobsState>()(
     persist(

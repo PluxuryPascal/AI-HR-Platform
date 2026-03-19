@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
 import { CandidateCard, ColumnId } from "@/features/screening/types";
 import { toast } from "sonner";
+import { ApiResponse } from "@/types";
+import { MoveCandidateRequest } from "../types/candidate";
 
 interface MoveCandidatePayload {
     candidateId: string;
@@ -12,11 +15,16 @@ interface MoveCandidatePayload {
     optimisticSnapshot?: Record<ColumnId, CandidateCard[]>;
 }
 
-// Simulated API call
-const moveCandidateApi = async ({ optimisticSnapshot, ...payload }: MoveCandidatePayload) => {
-    // In a real app, payload would be sanitized
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return { success: true };
+// Real API call
+const moveCandidateApi = async ({ candidateId, targetColumnId, newIndex }: MoveCandidatePayload) => {
+    const response = await apiClient.post<ApiResponse<{ success: boolean }>>(
+        `/candidates/${candidateId}/move`,
+        {
+            to_stage_id: targetColumnId,
+            new_position: newIndex,
+        } as MoveCandidateRequest
+    );
+    return response.data;
 };
 
 export function useMoveCandidate() {

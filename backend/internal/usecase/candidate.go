@@ -24,7 +24,7 @@ var (
 
 type CandidateUseCase interface {
 	CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error)
-	GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error)
+	GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, *domain.CandidateScore, []domain.ScoreFactor, error)
 	GetCandidatesByJob(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error)
 	DeleteCandidate(ctx context.Context, id, actorID, teamID string) error
 	MoveCandidate(ctx context.Context, p domain.MoveCandidateParams) error
@@ -150,17 +150,24 @@ func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.Cr
 	return candidate, nil
 }
 
-func (u *candidateUseCase) GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error) {
+func (u *candidateUseCase) GetCandidateByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, *domain.CandidateScore, []domain.ScoreFactor, error) {
 	cand, profile, stageID, err := u.candidateRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil, nil, ErrCandidateNotFound
+			return nil, nil, nil, nil, nil, ErrCandidateNotFound
 		}
 
-		return nil, nil, nil, fmt.Errorf("get candidate by id: %w", err)
+		return nil, nil, nil, nil, nil, fmt.Errorf("get candidate by id: %w", err)
 	}
 
-	return cand, profile, stageID, nil
+	score, factors, err := u.candidateRepo.GetScoreByCandidateID(ctx, id)
+	if err != nil {
+		// If score is not found, it's not a fatal error for basic details
+		u.log.Debug("candidate score not found", zap.String("candidate_id", id), zap.Error(err))
+		return cand, profile, stageID, nil, nil, nil
+	}
+
+	return cand, profile, stageID, score, factors, nil
 }
 
 func (u *candidateUseCase) GetCandidatesByJob(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error) {

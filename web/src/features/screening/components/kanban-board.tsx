@@ -15,19 +15,22 @@ import { ComparisonModal } from "./comparison-modal";
 import { OutreachDrawer } from "./outreach-drawer";
 import { KanbanDragOverlay } from "./kanban-drag-overlay";
 import { KanbanToolbar } from "./kanban-toolbar";
+import { toast } from "sonner";
 
 import { useKanbanDnd } from "../hooks/use-kanban-dnd";
 import { useKanbanSelection } from "../hooks/use-kanban-selection";
 import { useKanbanOutreach } from "../hooks/use-kanban-outreach";
-import { useJobsStore } from "@/store/use-jobs-store";
+
+import { useGetStages } from "../../jobs/api/use-get-stages";
+import { useGetCandidates } from "../../candidates/api/use-get-candidates";
+import { CandidateCard } from "../types";
 
 export function KanbanBoard({ jobId }: { jobId: string }) {
     const t = useTranslations("Screening");
     const [isEditMode, setIsEditMode] = useState(false);
 
-    const { jobs, addStage, removeStage, renameStage, reorderStages } = useJobsStore();
-    const job = jobs.find(j => j.id === jobId);
-    const stages = job?.stages || [];
+    const { data: stages = [], isLoading: isLoadingStages } = useGetStages(jobId);
+    const { data: groupedCandidates = {}, isLoading: isLoadingCandidates } = useGetCandidates(jobId);
 
     const { outreachState, handleColumnChange, closeOutreach } = useKanbanOutreach();
 
@@ -42,8 +45,28 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
         getSelectedCandidates,
     } = useKanbanSelection();
 
+    // Map backend candidates to CandidateCard UI format
+    const boardColumns = useMemo(() => {
+        const mapped: Record<string, CandidateCard[]> = {};
+        stages.forEach(stage => {
+            const candidates = groupedCandidates[stage.id] || [];
+            mapped[stage.id] = (candidates as any[]).map(c => ({
+                id: c.id,
+                name: `${c.first_name || ""} ${c.last_name || ""}`.trim() || t("unknownCandidate") || "Unknown",
+                role: t("candidateRole") || "Candidate",
+                score: 0,
+                avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.id}`,
+                email: c.email || "-",
+                appliedDate: new Date(c.created_at).toLocaleDateString(),
+                status: c.parsing_status,
+                matchSummary: "",
+                scoreBreakdown: []
+            }));
+        });
+        return mapped;
+    }, [stages, groupedCandidates, t]);
+
     const {
-        columns,
         activeCard,
         sensors,
         collisionDetectionStrategy,
@@ -53,18 +76,17 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
     } = useKanbanDnd({
         jobId,
         isSelectionMode,
+        initialColumns: boardColumns,
         onColumnChange: handleColumnChange as (candidateId: string, card: any, sourceColumn: string, targetColumn: string) => void,
     });
 
     const isBoardEmpty = useMemo(() => {
-        return Object.values(columns).every(col => (col as any[]).length === 0);
-    }, [columns]);
+        return Object.values(boardColumns).every(col => col.length === 0);
+    }, [boardColumns]);
 
     const handleAddStage = () => {
-        const title = window.prompt(t("addStagePrompt"));
-        if (title) {
-            addStage(jobId, title);
-        }
+        // In a real app, this would call useCreateStage mutation
+        toast.info("Эта фича будет доступна скоро");
     };
 
     return (
@@ -95,15 +117,15 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
                             key={stage.id}
                             id={stage.id}
                             title={stage.title}
-                            candidates={columns[stage.id] || []}
+                            candidates={boardColumns[stage.id] || []}
                             selectedCandidateIds={selectedCandidateIds}
                             onToggleSelection={handleToggleSelection}
                             isSelectionMode={isSelectionMode}
                             isEditMode={isEditMode}
-                            onRename={(newTitle) => renameStage(jobId, stage.id, newTitle)}
+                            onRename={(newTitle) => toast.info("Rename feature coming soon")}
                             onDelete={() => {
                                 if (window.confirm(t("deleteStageConfirm"))) {
-                                    removeStage(jobId, stage.id);
+                                    toast.info("Delete feature coming soon");
                                 }
                             }}
                         />

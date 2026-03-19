@@ -39,6 +39,8 @@ type candidateDetailResponse struct {
 	Candidate *domain.Candidate        `json:"candidate"`
 	Profile   *domain.CandidateProfile `json:"profile"`
 	StageID   *string                  `json:"stage_id"`
+	Score     *domain.CandidateScore   `json:"score"`
+	Factors   []domain.ScoreFactor     `json:"factors"`
 }
 
 type updateCandidateRequest struct {
@@ -140,7 +142,7 @@ func (h *CandidateHandler) PostCandidateList() echo.HandlerFunc {
 func (h *CandidateHandler) GetCandidate() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
-		candidate, profile, stageID, err := h.candidateUC.GetCandidateByID(c.Request().Context(), id)
+		candidate, profile, stageID, score, factors, err := h.candidateUC.GetCandidateByID(c.Request().Context(), id)
 		if err != nil {
 			if errors.Is(err, usecase.ErrCandidateNotFound) {
 				return response.Error(c, http.StatusNotFound, "candidate not found")
@@ -153,6 +155,8 @@ func (h *CandidateHandler) GetCandidate() echo.HandlerFunc {
 			Candidate: candidate,
 			Profile:   profile,
 			StageID:   stageID,
+			Score:     score,
+			Factors:   factors,
 		})
 	}
 }

@@ -1,8 +1,7 @@
-"use client";
-
 import { useMemo } from "react";
 import { useGetCandidates } from "../api/use-get-candidates";
 import { CandidateCard, ColumnId } from "@/features/screening/types";
+import { Candidate as BackendCandidate } from "../types/candidate";
 
 export type Candidate = CandidateCard;
 
@@ -12,12 +11,15 @@ export function useCandidates() {
     const candidates = useMemo(() => {
         if (!columns) return [];
         const list: Candidate[] = [];
-        (Object.entries(columns) as [ColumnId, CandidateCard[]][]).forEach(([colId, cards]) => {
+        (Object.entries(columns) as [string, BackendCandidate[]][]).forEach(([colId, cards]) => {
             cards.forEach(card => {
-                // Ensure status is set based on column if missing
                 list.push({
-                    ...card,
-                    status: card.status || colId
+                    id: card.id,
+                    name: `${card.first_name || ""} ${card.last_name || ""}`.trim() || "Anonymous",
+                    role: "Candidate",
+                    score: 0,
+                    email: card.email,
+                    status: card.stage_id || colId
                 });
             });
         });

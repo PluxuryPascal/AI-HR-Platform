@@ -11,13 +11,18 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { useDepartmentsStore } from "@/store/use-departments-store"
+import { useGetDepartments, useDeleteDepartment } from "../api/use-departments"
 import { EmptyState } from "@/components/shared/empty-state"
 import { CreateDepartmentDialog } from "./create-department-dialog"
 
 export function DepartmentsList() {
     const t = useTranslations("Departments")
-    const { departments, deleteDepartment } = useDepartmentsStore()
+    const { data: departments = [], isLoading } = useGetDepartments()
+    const { mutate: deleteDepartment } = useDeleteDepartment()
+
+    if (isLoading) {
+        return <div className="p-8 text-center">Загрузка...</div>
+    }
 
     if (departments.length === 0) {
         return (
@@ -25,8 +30,7 @@ export function DepartmentsList() {
                 icon={Building2}
                 title={t("empty.title")}
                 description={t("empty.desc")}
-                actionLabel={t("empty.button")}
-                onAction={() => {}} // Could open dialog internally but we have trigger outside
+                action={<CreateDepartmentDialog />}
             />
         )
     }

@@ -26,6 +26,10 @@ type AuthUseCase interface {
 	Login(ctx context.Context, email string, password string) (*string, time.Duration, error)
 	RegisterOwner(ctx context.Context, req domain.RegisterOwnerRequest) (*string, time.Duration, error)
 	Logout(ctx context.Context, tokenStr string) error
+	GetTeamMembers(ctx context.Context, teamID string) ([]domain.User, error)
+	GetProfile(ctx context.Context, userID string) (*domain.User, error)
+	UpdateProfile(ctx context.Context, userID string, firstName, lastName, email string) error
+	UpdatePassword(ctx context.Context, userID string, currentPassword, newPassword string) error
 }
 
 type authUseCase struct {
@@ -162,6 +166,66 @@ func (a *authUseCase) Login(ctx context.Context, email string, password string) 
 	})
 
 	return &tokenString, a.token.ExpireAt, nil
+}
+
+func (a *authUseCase) GetTeamMembers(ctx context.Context, teamID string) ([]domain.User, error) {
+	users, err := a.repo.GetUsersByTeamID(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("repo get team users: %w", err)
+	}
+	return users, nil
+}
+
+func (a *authUseCase) GetProfile(ctx context.Context, userID string) (*domain.User, error) {
+	user, err := a.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("repo get user: %w", err)
+	}
+	return user, nil
+}
+
+func (a *authUseCase) UpdateProfile(ctx context.Context, userID string, firstName, lastName, email string) error {
+	user, err := a.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("repo get user: %w", err)
+	}
+
+	user.FirstName = firstName
+	user.LastName = lastName
+	user.Email = email
+
+	if err := a.repo.UpdateUser(ctx, user); err != nil {
+		return fmt.Errorf("repo update user: %w", err)
+	}
+
+	return nil
+}
+
+func (a *authUseCase) UpdatePassword(ctx context.Context, userID string, currentPassword, newPassword string) error {
+	user, err := a.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("repo get user: %w", err)
+	}
+
+	verified, err := a.hash.Verify(currentPassword, user.PasswordHash)
+	if err != nil {
+		return fmt.Errorf("verify current password: %w", err)
+	}
+
+	if !verified {
+		return errors.New("invalid current password")
+	}
+
+	hashedPassword, err := a.hash.Hash(newPassword)
+	if err != nil {
+		return fmt.Errorf("hash new password: %w", err)
+	}
+
+	if err := a.repo.UpdatePassword(ctx, userID, hashedPassword); err != nil {
+		return fmt.Errorf("repo update password: %w", err)
+	}
+
+	return nil
 }
 
 func NewAuthUseCase(repo repo.UserRepository, cacheManager *cache.Manager, token *token.JWTtoken, hash hash.Hash, enforcer *rbac.CasbinClient, auditor *audit.Logger) AuthUseCase {

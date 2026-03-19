@@ -7,9 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChevronDown, ChevronUp, RefreshCw, Sparkles } from "lucide-react";
+import { useGenerateInterview, useGetInterviewGuide } from "../api/use-candidate-ai";
+import { useParams } from "next/navigation";
 
 interface InterviewGuideProps {
     matchScore: number;
+    candidateId: string;
 }
 
 interface Question {
@@ -17,44 +20,29 @@ interface Question {
     title: string;
     context: string;
     expected: string;
-    type: "expert" | "foundational";
+    type: string;
 }
 
-export function InterviewGuide({ matchScore }: InterviewGuideProps) {
+export function InterviewGuide({ matchScore, candidateId }: InterviewGuideProps) {
     const t = useTranslations("InterviewPrep");
-    const [loading, setLoading] = useState(true);
-    const [questions, setQuestions] = useState<Question[]>([]);
     const [expandedIds, setExpandedIds] = useState<string[]>([]);
+
+    const { data: guide, isLoading } = useGetInterviewGuide(candidateId);
+    const { mutate: generate, isPending: isGenerating } = useGenerateInterview();
 
     const isExpert = matchScore >= 80;
 
-    const generateQuestions = () => {
-        setLoading(true);
-        setExpandedIds([]);
-
-        // Simulate AI generation delay
-        setTimeout(() => {
-            const keys = ["q1", "q2", "q3", "q4", "q5"];
-            const type = isExpert ? "expert" : "foundational";
-
-            // In a real app, this would be an API call. 
-            // Here we map from translations based on the score.
-            const newQuestions = keys.map((key) => ({
-                id: `${type}-${key}-${Date.now()}`,
-                title: t(`mockQuestions.${type}.${key}.title`),
-                context: t(`mockQuestions.${type}.${key}.context`),
-                expected: t(`mockQuestions.${type}.${key}.expected`),
-                type: type as "expert" | "foundational",
-            }));
-
-            setQuestions(newQuestions);
-            setLoading(false);
-        }, 1500);
+    const handleGenerate = () => {
+        generate({ id: candidateId, locale: "ru" });
     };
 
-    useEffect(() => {
-        generateQuestions();
-    }, [matchScore]);
+    const questions: Question[] = guide?.questions.map(q => ({
+        id: q.id,
+        title: q.question,
+        context: q.category,
+        expected: q.answer,
+        type: q.category.toLowerCase().includes("expert") ? "expert" : "foundational"
+    })) || [];
 
     const toggleExpand = (id: string) => {
         setExpandedIds(prev =>
@@ -62,7 +50,7 @@ export function InterviewGuide({ matchScore }: InterviewGuideProps) {
         );
     };
 
-    if (loading) {
+    if (isLoading || isGenerating) {
         return (
             <div className="flex flex-col items-center justify-center p-12 space-y-4 text-center h-full">
                 <motion.div
@@ -93,8 +81,8 @@ export function InterviewGuide({ matchScore }: InterviewGuideProps) {
                         {t("description")}
                     </p>
                 </div>
-                <Button onClick={generateQuestions} variant="outline" size="sm">
-                    <RefreshCw className="w-4 h-4 mr-2" />
+                <Button onClick={handleGenerate} variant="outline" size="sm" disabled={isGenerating}>
+                    {isGenerating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                     {t("regenerate")}
                 </Button>
             </div>

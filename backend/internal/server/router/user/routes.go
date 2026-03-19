@@ -11,6 +11,10 @@ type UserRoutes interface {
 	PostLogin() echo.HandlerFunc
 	PostRegister() echo.HandlerFunc
 	PostLogout() echo.HandlerFunc
+	GetMembers() echo.HandlerFunc
+	GetProfile() echo.HandlerFunc
+	PatchProfile() echo.HandlerFunc
+	PatchPassword() echo.HandlerFunc
 }
 
 type userRouter struct {
@@ -43,5 +47,9 @@ func (r *userRouter) initRoutes() {
 		router.NewRoute(http.MethodPost, "/login", r.handler.PostLogin, r.rateLimit),
 		router.NewRoute(http.MethodPost, "/register", r.handler.PostRegister, r.rateLimit),
 		router.NewRoute(http.MethodPost, "/logout", r.handler.PostLogout, r.rateLimit, r.session),
+		router.NewRoute(http.MethodGet, "/members", r.handler.GetMembers, r.rateLimit, r.session),
+		router.NewRoute(http.MethodGet, "/profile", r.handler.GetProfile, r.rateLimit, r.session),
+		router.NewRoute(http.MethodPatch, "/profile", r.handler.PatchProfile, r.rateLimit, r.session),
+		router.NewRoute(http.MethodPatch, "/password", r.handler.PatchPassword, r.rateLimit, r.session),
 	}
 }

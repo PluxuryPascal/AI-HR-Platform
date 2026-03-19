@@ -55,7 +55,9 @@
         "noAccount": "Don't have an account?",
         "signUp": "Sign Up",
         "signUpDesc": "Create an account to start screening resumes",
-        "fullName": "Full Name",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "teamName": "Team Name",
         "signUpBtn": "create account",
         "hasAccount": "Already has an account?"
     },
@@ -110,7 +112,8 @@
         "totalCandidates": "Total Candidates",
         "pendingScreenings": "Pending Screenings",
         "fromLastMonth": "+{count} from last month",
-        "requiresAttention": "Requires attention"
+        "requiresAttention": "Requires attention",
+        "days": "days"
     },
     "DashboardPage": {
         "title": "Dashboard",
@@ -125,6 +128,7 @@
         "statusActive": "Active",
         "statusClosed": "Closed",
         "statusDraft": "Draft",
+        "error": "Failed to load jobs",
         "table": {
             "title": "Job Title",
             "department": "Department",

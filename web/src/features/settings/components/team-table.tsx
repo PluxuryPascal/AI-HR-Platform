@@ -23,8 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-type Role = "owner" | "recruiter" | "manager";
-type Status = "active" | "pending";
+export type Role = "owner" | "recruiter" | "manager";
+export type Status = "active" | "pending";
 
 export interface Member {
     id: string;

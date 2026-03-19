@@ -18,7 +18,7 @@ func (h *Handler) GetCandidate(ctx context.Context, req *pb.GetCandidateRequest)
 		return nil, status.Error(codes.InvalidArgument, "candidate_id is required")
 	}
 
-	candidate, _, parsedText, err := h.candidateUC.GetCandidateByID(ctx, req.GetCandidateId())
+	candidate, _, parsedText, _, _, err := h.candidateUC.GetCandidateByID(ctx, req.GetCandidateId())
 	if err != nil {
 		if errors.Is(err, usecase.ErrCandidateNotFound) {
 			return nil, status.Error(codes.NotFound, "candidate not found")

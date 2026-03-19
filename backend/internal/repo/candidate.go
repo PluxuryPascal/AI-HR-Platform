@@ -304,6 +304,7 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 					'location',        l.location,
 					'skills',          l.skills,
 					'parsing_status',  l.parsing_status,
+					'stage_id',        l.stage_id,
 					'created_at',      l.created_at,
 					'updated_at',      l.updated_at
 				)) AS build

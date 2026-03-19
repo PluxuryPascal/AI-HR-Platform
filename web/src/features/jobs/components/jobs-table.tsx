@@ -23,88 +23,41 @@ import { useTranslations } from "next-intl";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useRouter } from "@/i18n/routing";
 
-type JobStatus = "Active" | "Closed" | "Draft";
 
-interface Job {
-    id: string;
-    title: string;
-    department: string;
-    createdDate: string;
-    candidatesCount: number;
+import { useGetJobs } from "../api/use-get-jobs";
+import { JobStatus } from "../types/job";
+import { Loader2 } from "lucide-react";
+
+interface StatusBadgeProps {
     status: JobStatus;
 }
 
-const MOCK_JOBS: Job[] = [
-    {
-        id: "1",
-        title: "Senior Frontend Engineer",
-        department: "Engineering",
-        createdDate: "2024-03-01",
-        candidatesCount: 12,
-        status: "Active",
-    },
-    {
-        id: "2",
-        title: "AI Researcher",
-        department: "Engineering",
-        createdDate: "2024-03-05",
-        candidatesCount: 8,
-        status: "Active",
-    },
-    {
-        id: "3",
-        title: "Product Designer",
-        department: "Design",
-        createdDate: "2024-02-28",
-        candidatesCount: 15,
-        status: "Active",
-    },
-    {
-        id: "4",
-        title: "HR Manager",
-        department: "HR",
-        createdDate: "2024-02-15",
-        candidatesCount: 24,
-        status: "Closed",
-    },
-    {
-        id: "5",
-        title: "Marketing Lead",
-        department: "Marketing",
-        createdDate: "2024-03-10",
-        candidatesCount: 5,
-        status: "Draft",
-    },
-    {
-        id: "6",
-        title: "Backend Developer (Go)",
-        department: "Engineering",
-        createdDate: "2024-03-12",
-        candidatesCount: 3,
-        status: "Active",
-    },
-];
-
-const StatusBadge = ({ status }: { status: JobStatus }) => {
+const StatusBadge = ({ status }: StatusBadgeProps) => {
     const t = useTranslations("Jobs");
 
     switch (status) {
-        case "Active":
+        case "status_published":
             return (
                 <Badge className="bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200 shadow-none dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
                     {t("statusActive")}
                 </Badge>
             );
-        case "Closed":
+        case "status_closed":
             return (
                 <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100/80 border-slate-200 shadow-none dark:bg-slate-800 dark:text-slate-400 dark:border-slate-800">
                     {t("statusClosed")}
                 </Badge>
             );
-        case "Draft":
+        case "status_draft":
             return (
                 <Badge variant="outline" className="text-slate-500 border-slate-300 dark:text-slate-400 dark:border-slate-700">
                     {t("statusDraft")}
+                </Badge>
+            );
+        case "status_archived":
+            return (
+                <Badge variant="outline" className="text-slate-400 border-slate-200">
+                    {t("statusArchived") || "Archived"}
                 </Badge>
             );
         default:
@@ -115,8 +68,27 @@ const StatusBadge = ({ status }: { status: JobStatus }) => {
 export function JobsTable() {
     const t = useTranslations("Jobs");
     const router = useRouter();
+    const { data: jobsResponse, isLoading, error } = useGetJobs();
 
-    if (MOCK_JOBS.length === 0) {
+    if (isLoading) {
+        return (
+            <div className="flex justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 text-center text-red-500">
+                {t("error") || "Failed to load jobs"}
+            </div>
+        );
+    }
+
+    const jobs = jobsResponse?.data || [];
+
+    if (jobs.length === 0) {
         return (
             <EmptyState
                 icon={Briefcase}
@@ -129,25 +101,23 @@ export function JobsTable() {
     }
 
     return (
-        <div className="rounded-md border">
+        <div className="rounded-md border bg-card">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>{t("table.title")}</TableHead>
+                        <TableHead className="w-[40%]">{t("table.title")}</TableHead>
                         <TableHead>{t("table.department")}</TableHead>
                         <TableHead>{t("table.created")}</TableHead>
-                        <TableHead>{t("table.candidates")}</TableHead>
                         <TableHead>{t("table.status")}</TableHead>
                         <TableHead className="text-right">{t("table.actions")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {MOCK_JOBS.map((job) => (
-                        <TableRow key={job.id}>
+                    {jobs.map((job) => (
+                        <TableRow key={job.id} className="hover:bg-muted/50 transition-colors">
                             <TableCell className="font-medium">{job.title}</TableCell>
-                            <TableCell>{job.department}</TableCell>
-                            <TableCell>{job.createdDate}</TableCell>
-                            <TableCell>{job.candidatesCount}</TableCell>
+                            <TableCell>{job.department_name || "-"}</TableCell>
+                            <TableCell>{new Date(job.created_at).toLocaleDateString()}</TableCell>
                             <TableCell>
                                 <StatusBadge status={job.status} />
                             </TableCell>
@@ -161,7 +131,7 @@ export function JobsTable() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>{t("table.actions")}</DropdownMenuLabel>
-                                        <DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => router.push(`/dashboard/jobs/${job.id}`)}>
                                             <Eye className="mr-2 h-4 w-4" />
                                             {t("table.viewCandidates")}
                                         </DropdownMenuItem>

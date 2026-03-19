@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Share2, MoreHorizontal } from "lucide-react";
 import { Link } from "@/i18n/routing"; // Fixed Link import
 import { useTranslations } from "next-intl";
-import { getCandidateProfile } from "@/features/candidates/utils/mock-profile";
+import { useGetCandidate } from "@/features/candidates/api/use-get-candidate";
+import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PDFViewer } from "@/features/candidates/components/pdf-viewer";
 import { AIAnalysisTab } from "@/features/candidates/components/ai-analysis-tab";
 import { AIChatTab } from "@/features/candidates/components/ai-chat-tab";
@@ -22,13 +24,63 @@ import { MatchScoreBadge } from "@/features/candidates/components/match-score-ba
 
 
 import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
-import { useState } from "react";
 
-export default function CandidatePage() {
-    const params = useParams();
+
+export default function CandidatePage({ params }: { params: { candidateId: string; locale: string } }) {
     const t = useTranslations("CandidateProfile");
-    const profile = getCandidateProfile(params.candidateId as string);
     const [isOutreachOpen, setIsOutreachOpen] = useState(false);
+
+    const { data: detail, isLoading, error } = useGetCandidate(params.candidateId);
+
+    if (isLoading) {
+        return (
+            <div className="flex-1 space-y-4 p-8 pt-6">
+                <Skeleton className="h-20 w-full" />
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                    <Skeleton className="col-span-4 h-[600px]" />
+                    <Skeleton className="col-span-3 h-[600px]" />
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !detail) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-8">
+                <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-bold tracking-tight">Кандидат не найден</h2>
+                    <p className="text-muted-foreground">Не удалось загрузить данные кандидата.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const { candidate, profile, score, factors } = detail;
+
+    // Map backend data to UI format
+    const uiProfile = {
+        personal: {
+            name: `${candidate.first_name || ""} ${candidate.last_name || ""}`.trim() || "Unknown Candidate",
+            role: "Software Engineer", // This should come from Job, but for now hardcode or use parsed data
+            location: candidate.location || "Remote",
+            email: candidate.email || "",
+            phone: "+1 (555) 000-0000", // Mock if not in DB
+        },
+        aiAnalysis: {
+            score: score?.match_score || 0,
+            summary: candidate.parsed_text?.slice(0, 500) + "..." || "",
+            scoreBreakdown: factors?.map(f => ({
+                id: f.id,
+                text: f.description,
+                impact: f.impact > 0 ? `+${f.impact}` : `${f.impact}`,
+                type: f.type
+            })) || [],
+            strengths: factors?.filter(f => f.type === 'positive').map(f => f.description) || [],
+            weaknesses: factors?.filter(f => f.type === 'negative').map(f => f.description) || [],
+            skills: candidate.skills || [],
+        },
+        pdfUrl: candidate.resume_file_key ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/files/${candidate.resume_file_key}` : "",
+    };
 
     return (
         <div className="h-full flex flex-col bg-background">
@@ -42,14 +94,18 @@ export default function CandidatePage() {
                     </Button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="font-semibold text-lg">{profile.personal.name}</h1>
-                            <Badge variant="outline" className="text-xs font-normal">
-                                {profile.personal.role}
+                            <h1 className="font-semibold text-lg">{uiProfile.personal.name}</h1>
+                            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                                {uiProfile.personal.role}
                             </Badge>
-                            <MatchScoreBadge score={profile.aiAnalysis.score} breakdown={profile.aiAnalysis.scoreBreakdown} className="ml-2" />
+                            <MatchScoreBadge
+                                score={uiProfile.aiAnalysis.score}
+                                breakdown={uiProfile.aiAnalysis.scoreBreakdown}
+                                className="ml-2"
+                            />
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            Applied 2 days ago • {profile.personal.location}
+                            Applied 2 days ago • {uiProfile.personal.location}
                         </p>
                     </div>
                 </div>
@@ -79,7 +135,7 @@ export default function CandidatePage() {
                             </div>
                             <div className="flex-1 overflow-hidden relative">
                                 <WidgetErrorBoundary>
-                                    <PDFViewer url={profile.pdfUrl} />
+                                    <PDFViewer url={uiProfile.pdfUrl} />
                                 </WidgetErrorBoundary>
                             </div>
                         </div>
@@ -90,11 +146,11 @@ export default function CandidatePage() {
                     {/* Right Panel - AI Analysis & Chat */}
                     <ResizablePanel defaultSize={50} minSize={30}>
                         <div className="h-full flex flex-col bg-background">
-                            <Tabs defaultValue="overview" className="flex-1 flex flex-col h-full">
+                            <Tabs defaultValue="analysis" className="flex-1 flex flex-col h-full">
                                 <div className="h-12 border-b border-border/50 px-4 bg-background/80 backdrop-blur-md shrink-0 flex items-center">
                                     <TabsList className="h-full w-full justify-start bg-transparent p-0 gap-6">
                                         <TabsTrigger
-                                            value="overview"
+                                            value="analysis"
                                             className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 pt-2"
                                         >
                                             {t("tabs.overview")}
@@ -115,11 +171,8 @@ export default function CandidatePage() {
                                 </div>
 
                                 <div className="flex-1 overflow-hidden">
-                                    <TabsContent value="overview" className="h-full m-0 p-0 border-none select-text data-[state=active]:flex data-[state=active]:flex-col">
-                                        <AIAnalysisTab
-                                            data={profile.aiAnalysis}
-                                            onOutreach={() => setIsOutreachOpen(true)}
-                                        />
+                                    <TabsContent value="analysis" className="h-full m-0 p-0 border-none select-text data-[state=active]:flex data-[state=active]:flex-col overflow-y-auto">
+                                        <AIAnalysisTab data={uiProfile.aiAnalysis} onOutreach={() => setIsOutreachOpen(true)} />
                                     </TabsContent>
                                     <TabsContent value="chat" className="h-full m-0 p-0 border-none data-[state=active]:flex data-[state=active]:flex-col">
                                         <WidgetErrorBoundary>
@@ -127,7 +180,10 @@ export default function CandidatePage() {
                                         </WidgetErrorBoundary>
                                     </TabsContent>
                                     <TabsContent value="interview" className="h-full m-0 p-0 border-none select-text data-[state=active]:flex data-[state=active]:flex-col overflow-y-auto">
-                                        <InterviewGuide matchScore={profile.aiAnalysis.score} />
+                                        <InterviewGuide
+                                            matchScore={uiProfile.aiAnalysis.score}
+                                            candidateId={params.candidateId as string}
+                                        />
                                     </TabsContent>
                                 </div>
                             </Tabs>
@@ -141,13 +197,15 @@ export default function CandidatePage() {
                 isOpen={isOutreachOpen}
                 onClose={() => setIsOutreachOpen(false)}
                 candidate={{
-                    id: profile.id,
-                    name: profile.personal.name,
-                    role: profile.personal.role,
-                    score: profile.aiAnalysis.score,
-                    // Avatar URL is not in profile, can be omitted or mocked
+                    id: candidate.id,
+                    name: uiProfile.personal.name,
+                    role: uiProfile.personal.role,
+                    score: uiProfile.aiAnalysis.score,
+                    email: uiProfile.personal.email,
+                    matchSummary: uiProfile.aiAnalysis.summary,
+                    scoreBreakdown: uiProfile.aiAnalysis.scoreBreakdown as any,
                 }}
-                type="invitation" // Defaulting to invitation, could be dynamic based on status
+                type="invitation"
             />
         </div>
     );

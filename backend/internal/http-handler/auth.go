@@ -143,3 +143,82 @@ func (i *AuthHandler) PostLogout() echo.HandlerFunc {
 		return response.NoContent(c, http.StatusOK)
 	}
 }
+
+func (i *AuthHandler) GetMembers() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		teamID := c.Get("team_id").(string)
+
+		members, err := i.usecase.GetTeamMembers(c.Request().Context(), teamID)
+		if err != nil {
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("get members error: %v", err))
+		}
+
+		return response.OK(c, members)
+	}
+}
+
+type updateProfileRequest struct {
+	FirstName string `json:"first_name" validate:"required,min=2,max=32"`
+	LastName  string `json:"last_name"  validate:"required,min=2,max=32"`
+	Email     string `json:"email"      validate:"required,email"`
+}
+
+type updatePasswordRequest struct {
+	CurrentPassword string `json:"current_password" validate:"required"`
+	NewPassword     string `json:"new_password"     validate:"required,min=8,max=32"`
+}
+
+func (i *AuthHandler) GetProfile() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID := c.Get("user_id").(string)
+
+		user, err := i.usecase.GetProfile(c.Request().Context(), userID)
+		if err != nil {
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("get profile error: %v", err))
+		}
+
+		return response.OK(c, user)
+	}
+}
+
+func (i *AuthHandler) PatchProfile() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID := c.Get("user_id").(string)
+
+		var req updateProfileRequest
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect bind: %v", err))
+		}
+
+		if err := c.Validate(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect data: %v", err))
+		}
+
+		if err := i.usecase.UpdateProfile(c.Request().Context(), userID, req.FirstName, req.LastName, req.Email); err != nil {
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("update profile error: %v", err))
+		}
+
+		return response.NoContent(c, http.StatusOK)
+	}
+}
+
+func (i *AuthHandler) PatchPassword() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID := c.Get("user_id").(string)
+
+		var req updatePasswordRequest
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect bind: %v", err))
+		}
+
+		if err := c.Validate(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect data: %v", err))
+		}
+
+		if err := i.usecase.UpdatePassword(c.Request().Context(), userID, req.CurrentPassword, req.NewPassword); err != nil {
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("update password error: %v", err))
+		}
+
+		return response.NoContent(c, http.StatusOK)
+	}
+}

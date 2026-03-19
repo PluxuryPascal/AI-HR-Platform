@@ -115,6 +115,7 @@
         "statusActive": "Activo",
         "statusClosed": "Cerrado",
         "statusDraft": "Borrador",
+        "error": "Error al cargar vacantes",
         "table": {
             "title": "Título del empleo",
             "department": "Departamento",

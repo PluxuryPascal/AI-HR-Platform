@@ -13,20 +13,31 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
+import { useGetDashboardDynamics } from "@/features/dashboard/api/use-dashboard";
+import { useMemo } from "react";
 
-const data = [
-    { name: "Jan", total: 124 },
-    { name: "Feb", total: 145 },
-    { name: "Mar", total: 112 },
-    { name: "Apr", total: 178 },
-    { name: "May", total: 234 },
-    { name: "Jun", total: 215 },
-];
 
 import { glassCard } from "@/lib/styles";
 
 export function OverviewChart() {
     const t = useTranslations("Dashboard.charts");
+
+    const endDate = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const startDate = useMemo(() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - 6);
+        return d.toISOString().split('T')[0];
+    }, []);
+
+    const { data: rawData = [], isLoading } = useGetDashboardDynamics(startDate, endDate, "monthly");
+
+    const chartData = useMemo(() => {
+        const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'short' });
+        return rawData.map(d => ({
+            name: monthFormatter.format(new Date(d.date)).replace('.', ''),
+            total: d.count
+        }));
+    }, [rawData]);
 
     return (
         <Card className={`col-span-1 md:col-span-2 ${glassCard}`}>
@@ -38,7 +49,7 @@ export function OverviewChart() {
             <CardContent className="pl-2">
                 <WidgetErrorBoundary>
                     <ResponsiveContainer width="100%" height={350}>
-                        <ComposedChart data={data}>
+                        <ComposedChart data={isLoading ? [] : chartData}>
                             <defs>
                                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="var(--chart-gradient-start)" />

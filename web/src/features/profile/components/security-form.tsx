@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+import { useUpdatePassword } from "../api/use-profile";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import {
@@ -28,8 +28,8 @@ import {
 
 const securitySchema = z.object({
     currentPassword: z.string().min(1),
-    newPassword: z.string().min(6),
-    confirmPassword: z.string().min(6),
+    newPassword: z.string().min(8),
+    confirmPassword: z.string().min(8),
 }).refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
@@ -37,7 +37,7 @@ const securitySchema = z.object({
 
 export function SecurityForm() {
     const t = useTranslations("Profile.security");
-    const [isLoading, setIsLoading] = useState(false);
+    const updatePassword = useUpdatePassword();
 
     const form = useForm<z.infer<typeof securitySchema>>({
         resolver: zodResolver(securitySchema),
@@ -49,14 +49,21 @@ export function SecurityForm() {
     });
 
     async function onSubmit(values: z.infer<typeof securitySchema>) {
-        setIsLoading(true);
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        toast.success("Password updated successfully");
-        form.reset();
-        setIsLoading(false);
+        updatePassword.mutate({
+            current_password: values.currentPassword,
+            new_password: values.newPassword,
+        }, {
+            onSuccess: () => {
+                toast.success(t("successMessage") || "Password updated successfully");
+                form.reset();
+            },
+            onError: (error: any) => {
+                toast.error(error?.response?.data?.message || "Failed to update password");
+            }
+        });
     }
+
+    const isLoading = updatePassword.isPending;
 
     return (
         <Card>
@@ -74,7 +81,7 @@ export function SecurityForm() {
                                 <FormItem>
                                     <FormLabel>{t("currentPass")}</FormLabel>
                                     <FormControl>
-                                        <PasswordInput {...field} />
+                                        <PasswordInput disabled={isLoading} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -87,7 +94,7 @@ export function SecurityForm() {
                                 <FormItem>
                                     <FormLabel>{t("newPass")}</FormLabel>
                                     <FormControl>
-                                        <PasswordInput {...field} />
+                                        <PasswordInput disabled={isLoading} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -100,7 +107,7 @@ export function SecurityForm() {
                                 <FormItem>
                                     <FormLabel>{t("confirmPass")}</FormLabel>
                                     <FormControl>
-                                        <PasswordInput {...field} />
+                                        <PasswordInput disabled={isLoading} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

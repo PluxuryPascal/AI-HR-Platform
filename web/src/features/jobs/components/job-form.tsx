@@ -30,13 +30,15 @@ import {
     JobFormValues,
     JobType,
 } from "@/features/jobs/schemas/job-schema"
-import { useDepartmentsStore } from "@/store/use-departments-store"
+import { useGetDepartments } from "@/features/departments/api/use-departments"
+import { useCreateJob, CreateJobPayload } from "@/features/jobs/api/use-create-job"
 import { SmartPasteCard } from "./smart-paste-card"
 
 export function JobForm() {
     const t = useTranslations("JobWizard")
     const router = useRouter()
-    const { departments } = useDepartmentsStore()
+    const { data: departments = [], isLoading: isLoadingDepts } = useGetDepartments()
+    const createJobMutation = useCreateJob()
 
     const form = useForm<JobFormValues>({
         resolver: zodResolver(jobSchema),
@@ -50,10 +52,27 @@ export function JobForm() {
     })
 
     const onSubmit = async (data: JobFormValues) => {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        console.log("Job Created:", data)
-        toast.success(t("successMessage"))
+        const payload: CreateJobPayload = {
+            title: data.title,
+            department_id: data.department,
+            description: data.description,
+            work_format: data.type === JobType.Remote ? "remote" : data.type === JobType.Onsite ? "office" : "hybrid",
+        }
+
+        try {
+            await createJobMutation.mutateAsync(payload)
+            router.push("/dashboard/jobs")
+        } catch (error) {
+            // Error is handled in the mutation
+        }
+    }
+
+    if (isLoadingDepts) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
     }
 
     return (
@@ -78,6 +97,7 @@ export function JobForm() {
                                         id="title"
                                         placeholder={t("titlePlaceholder")}
                                         className="pl-9"
+                                        disabled={createJobMutation.isPending}
                                         {...form.register("title")}
                                     />
                                 </div>
@@ -89,16 +109,17 @@ export function JobForm() {
                             <div className="space-y-3">
                                 <Label htmlFor="department" className="mb-2 block">{t("fields.department")}</Label>
                                 <Select
-                                    onValueChange={(val) => form.setValue("department", val as any)}
+                                    onValueChange={(val) => form.setValue("department", val)}
                                     defaultValue={form.getValues("department")}
                                     value={form.watch("department")}
+                                    disabled={createJobMutation.isPending}
                                 >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder={t("departmentPlaceholder")} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {departments.map((dept) => (
-                                            <SelectItem key={dept.id} value={dept.name}>
+                                            <SelectItem key={dept.id} value={dept.id}>
                                                 {dept.name}
                                             </SelectItem>
                                         ))}
@@ -119,13 +140,15 @@ export function JobForm() {
                                         key={type}
                                         className={cn(
                                             "flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-all hover:bg-accent",
-                                            form.watch("type") === type ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-input"
+                                            form.watch("type") === type ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-input",
+                                            createJobMutation.isPending && "opacity-50 cursor-not-allowed"
                                         )}
                                     >
                                         <input
                                             type="radio"
                                             value={type}
                                             className="sr-only"
+                                            disabled={createJobMutation.isPending}
                                             {...form.register("type")}
                                         />
                                         <div className={cn(
@@ -147,6 +170,7 @@ export function JobForm() {
                                 id="description"
                                 placeholder={t("descriptionPlaceholder")}
                                 className="min-h-[200px]"
+                                disabled={createJobMutation.isPending}
                                 {...form.register("description")}
                             />
                             {form.formState.errors.description && (
@@ -158,11 +182,11 @@ export function JobForm() {
                 </Card>
 
                 <div className="flex justify-end gap-4">
-                    <Button type="button" variant="outline" onClick={() => router.back()}>
+                    <Button type="button" variant="outline" onClick={() => router.back()} disabled={createJobMutation.isPending}>
                         {t("cancel")}
                     </Button>
-                    <Button type="submit" disabled={form.formState.isSubmitting} className="min-w-[140px]">
-                        {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button type="submit" disabled={createJobMutation.isPending} className="min-w-[140px]">
+                        {createJobMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {t("submitBtn")}
                     </Button>
                 </div>

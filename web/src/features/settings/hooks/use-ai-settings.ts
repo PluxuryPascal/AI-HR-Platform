@@ -1,71 +1,43 @@
-import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { 
+    useGetAISettings, 
+    useGetAIModels, 
+    useUpdateAISetting,
+    AISettings,
+    AIModel 
+} from "../api/use-ai-settings";
 
-export type AIModel = {
-    id: string;
-    name: string;
-};
-
-export type AISettings = {
-    openrouter_api_key: string;
-    parse_model: string;
-    score_model: string;
-    embed_model: string;
-    chat_mode: string;
-};
-
-const MOCK_MODELS: AIModel[] = [
-    { id: "openai/gpt-4o", name: "GPT-4o" },
-    { id: "openai/gpt-4o-mini", name: "GPT-4o Mini" },
-    { id: "anthropic/claude-3.5-sonnet", name: "Claude 3.5 Sonnet" },
-    { id: "google/gemini-pro-1.5", name: "Gemini 1.5 Pro" },
-    { id: "meta-llama/llama-3.1-70b-instruct", name: "Llama 3.1 70B" },
-];
+export type { AISettings, AIModel };
 
 export function useAISettings() {
-    const [isLoading, setIsLoading] = useState(false);
-    const [models, setModels] = useState<AIModel[]>([]);
-    const [settings, setSettings] = useState<AISettings>({
-        openrouter_api_key: "",
-        parse_model: "",
-        score_model: "",
-        embed_model: "",
-        chat_mode: "",
-    });
+    const t = useTranslations("AISettings");
+    
+    const { data: settingsData, isLoading: isLoadingSettings } = useGetAISettings();
+    const { data: modelsData, isLoading: isLoadingModels } = useGetAIModels();
+    const { mutateAsync: updateSettingApi } = useUpdateAISetting();
 
-    useEffect(() => {
-        // Simulate fetching models and settings
-        const fetchData = async () => {
-            setIsLoading(true);
-            await new Promise((resolve) => setTimeout(resolve, 800));
-            setModels(MOCK_MODELS);
-            // Simulate initial settings being empty or some values
-            setSettings({
-                openrouter_api_key: "sk-or-v1-...",
-                parse_model: "openai/gpt-4o-mini",
-                score_model: "openai/gpt-4o",
-                embed_model: "openai/gpt-4o-mini",
-                chat_mode: "anthropic/claude-3.5-sonnet",
-            });
-            setIsLoading(false);
-        };
+    const isLoading = isLoadingSettings || isLoadingModels;
 
-        fetchData();
-    }, []);
+    const settings: AISettings = {
+        team_id: settingsData?.team_id || "",
+        api_key: settingsData?.api_key || "",
+        parse_model: settingsData?.parse_model || "",
+        score_model: settingsData?.score_model || "",
+        embed_model: settingsData?.embed_model || "",
+        chat_model: settingsData?.chat_model || "",
+    };
+
+    const models = modelsData || [];
 
     const updateSetting = async (key: keyof AISettings, value: string) => {
-        setIsLoading(true);
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            setSettings((prev) => ({ ...prev, [key]: value }));
-            toast.success("Настройки успешно обновлены");
+            await updateSettingApi({ field: key, value });
+            toast.success(t("success"));
             return true;
         } catch (error) {
-            toast.error("Ошибка при обновлении настроек");
+            toast.error(t("error"));
             return false;
-        } finally {
-            setIsLoading(false);
         }
     };
 

@@ -18,21 +18,20 @@ import {
     sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetCandidates } from "../../candidates/api/use-get-candidates";
-import { useJobsStore } from "@/store/use-jobs-store";
+import { useMoveCandidate } from "../../candidates/api/use-move-candidate";
 import { CandidateCard as CandidateCardType } from "../types";
 import { fireOfferConfetti } from "@/lib/confetti";
 
 interface UseKanbanDndOptions {
     jobId: string;
     isSelectionMode: boolean;
+    initialColumns: Record<string, CandidateCardType[]>;
     onColumnChange?: (candidateId: string, card: CandidateCardType, sourceColumn: string, targetColumn: string) => void;
 }
 
-export function useKanbanDnd({ jobId, isSelectionMode, onColumnChange }: UseKanbanDndOptions) {
+export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, onColumnChange }: UseKanbanDndOptions) {
     const queryClient = useQueryClient();
-    const { data: columns = {} as Record<string, CandidateCardType[]> } = useGetCandidates(jobId);
-    const moveCandidateStore = useJobsStore((state) => state.moveCandidate);
+    const { mutate: moveCandidateApi } = useMoveCandidate();
 
     const previousColumnsRef = useRef<Record<string, CandidateCardType[]> | null>(null);
 
@@ -178,7 +177,12 @@ export function useKanbanDnd({ jobId, isSelectionMode, onColumnChange }: UseKanb
                     };
                 });
 
-                moveCandidateStore(jobId, id as string, activeContainer, overContainer, overIndex);
+                moveCandidateApi({ 
+                    candidateId: id as string, 
+                    targetColumnId: activeContainer, 
+                    newIndex: overIndex,
+                    sourceColumnId: activeContainer 
+                });
             }
         }
 
@@ -188,7 +192,12 @@ export function useKanbanDnd({ jobId, isSelectionMode, onColumnChange }: UseKanb
                 const overItems = currentColumns[overContainer] || [];
                 const finalIndex = overItems.findIndex((c) => c.id === id);
                 if (finalIndex !== -1) {
-                    moveCandidateStore(jobId, id as string, activeColumn, overContainer, finalIndex);
+                    moveCandidateApi({ 
+                        candidateId: id as string, 
+                        targetColumnId: overContainer, 
+                        newIndex: finalIndex,
+                        sourceColumnId: activeColumn as string
+                    });
 
                     if (overContainer === "offer") {
                         fireOfferConfetti();
