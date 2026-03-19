@@ -2,7 +2,6 @@ package llm
 
 import (
 	"backend/internal/domain"
-	"backend/pkg/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -54,27 +53,38 @@ type scoreFactorJSON struct {
 }
 
 type Scorer struct {
-	client *openai.Client
-	cfg    *config.OpenRouter
+	provider Provider
 }
 
-func NewScorer(client *openai.Client, cfg *config.OpenRouter) *Scorer {
+func NewScorer(provider Provider) *Scorer {
 	return &Scorer{
-		client: client,
-		cfg:    cfg,
+		provider: provider,
 	}
 }
 
-func (s *Scorer) Score(ctx context.Context, resumeText, jobRequirements, locale string) (*domain.ScoreResult, error) {
+func (s *Scorer) Score(ctx context.Context, resumeText, jobRequirements, locale string, teamID string) (*domain.ScoreResult, error) {
+	client, settings, err := s.provider.GetClient(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get llm client: %w", err)
+	}
+
 	userContent := buildScoreUserPrompt(resumeText, jobRequirements, locale)
 
-	maxTokens := s.cfg.MaxTokensScore
+	cfg := s.provider.GetGlobalConfig()
+	maxTokens := cfg.MaxTokensScore
 	if maxTokens == 0 {
 		maxTokens = 1024
 	}
 
-	resp, err := s.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: s.cfg.ScoreModel,
+	model := "anthropic/claude-3-haiku"
+	if settings.ScoreModel != nil && *settings.ScoreModel != "" {
+		model = *settings.ScoreModel
+	} else if cfg.ScoreModel != "" {
+		model = cfg.ScoreModel
+	}
+
+	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,

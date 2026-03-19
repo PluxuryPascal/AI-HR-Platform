@@ -46,6 +46,7 @@ func ResumePipelineWorkflow(ctx workflow.Context, input activity.ResumePipelineI
 		workflow.WithActivityOptions(ctx, llmActivityOptions()),
 		a.LLMParse,
 		activity.LLMParseInput{
+			TeamID:      input.TeamID,
 			CandidateID: input.CandidateID,
 			JobID:       input.JobID,
 			ParsedText:  parsedText,

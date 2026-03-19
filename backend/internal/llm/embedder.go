@@ -2,7 +2,6 @@ package llm
 
 import (
 	"backend/internal/domain"
-	"backend/pkg/config"
 	"context"
 	"fmt"
 
@@ -15,42 +14,48 @@ const (
 )
 
 type Embedder struct {
-	client       *openai.Client
-	cfg          *config.OpenRouter
-	chunkSize    int
-	chunkOverlap int
+	provider Provider
 }
 
-func NewEmbedder(client *openai.Client, cfg *config.OpenRouter) *Embedder {
+func NewEmbedder(provider Provider) *Embedder {
+	return &Embedder{
+		provider: provider,
+	}
+}
+
+func (e *Embedder) EmbedChunks(ctx context.Context, text string, teamID string) ([]domain.EmbeddingChunk, error) {
+	cfg := e.provider.GetGlobalConfig()
 	chunkSize := cfg.ChunkSize
 	if chunkSize == 0 {
 		chunkSize = defaultChunkSize
 	}
-
 	chunkOverlap := cfg.ChunkOverlap
 	if chunkOverlap == 0 {
 		chunkOverlap = defaultChunkOverlap
 	}
 
-	return &Embedder{
-		client:       client,
-		cfg:          cfg,
-		chunkSize:    chunkSize,
-		chunkOverlap: chunkOverlap,
-	}
-}
-
-func (e *Embedder) EmbedChunks(ctx context.Context, text string) ([]domain.EmbeddingChunk, error) {
-	chunks := splitIntoChunks(text, e.chunkSize, e.chunkOverlap)
+	chunks := splitIntoChunks(text, chunkSize, chunkOverlap)
 
 	if len(chunks) == 0 {
 		return nil, fmt.Errorf("no chunks in text")
 	}
 
+	client, settings, err := e.provider.GetClient(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get llm client: %w", err)
+	}
+
+	model := "text-embedding-3-small"
+	if settings.EmbedModel != nil && *settings.EmbedModel != "" {
+		model = *settings.EmbedModel
+	} else if cfg.EmbedModel != "" {
+		model = cfg.EmbedModel
+	}
+
 	results := make([]domain.EmbeddingChunk, 0, len(chunks))
 
 	for _, chunk := range chunks {
-		embedding, err := e.embedSingle(ctx, chunk)
+		embedding, err := embedSingle(ctx, client, model, chunk)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create embeddings: %w", err)
 		}
@@ -64,9 +69,9 @@ func (e *Embedder) EmbedChunks(ctx context.Context, text string) ([]domain.Embed
 	return results, nil
 }
 
-func (e *Embedder) embedSingle(ctx context.Context, text string) ([]float32, error) {
-	resp, err := e.client.CreateEmbeddings(ctx, openai.EmbeddingRequest{
-		Model: openai.EmbeddingModel(e.cfg.EmbedModel),
+func embedSingle(ctx context.Context, client *openai.Client, model, text string) ([]float32, error) {
+	resp, err := client.CreateEmbeddings(ctx, openai.EmbeddingRequest{
+		Model: openai.EmbeddingModel(model),
 		Input: []string{text},
 	})
 	if err != nil {

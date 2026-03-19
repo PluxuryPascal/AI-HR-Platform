@@ -13,11 +13,13 @@ import (
 	"backend/internal/repo"
 	"backend/internal/server"
 	"backend/internal/server/router/access"
+	"backend/internal/server/router/ai_settings"
 	"backend/internal/server/router/candidate"
 	"backend/internal/server/router/dashboard"
 	"backend/internal/server/router/department"
 	"backend/internal/server/router/job"
 	"backend/internal/server/router/pipeline"
+	"backend/internal/openrouter"
 	"backend/internal/usecase"
 	"backend/pkg/config"
 	"backend/pkg/grpc"
@@ -42,6 +44,7 @@ type repos struct {
 	candidate  repo.CandidateRepository
 	pipeline   repo.PipelineRepository
 	dashboard  repo.DashboardRepository
+	aiSettings repo.AiSettingsRepository
 }
 
 type usecases struct {
@@ -60,6 +63,7 @@ type handlers struct {
 	pipeline   *handler.PipelineHandler
 	department *handler.DepartmentHandler
 	dashboard  *handler.DashboardHandler
+	aiSettings *handler.AiSettingsHandler
 }
 
 type infrastructureComponents struct {
@@ -74,6 +78,7 @@ type infrastructureComponents struct {
 	casbinClient *rbac.CasbinClient
 	mqClient     *mq.RabbitMQ
 	mqPublisher  *mq.MQPublisher
+	openRouter   *openrouter.Client
 }
 
 type utilityComponents struct {
@@ -111,7 +116,7 @@ func run(ctx context.Context) error {
 
 	usecases := initUseCases(infra, utils, repos, auditor)
 
-	handlers, sessionMiddleware := initHandlers(infra, utils, usecases, auditor)
+	handlers, sessionMiddleware := initHandlers(infra, utils, usecases, repos, auditor)
 
 	grpcHandler := grpchiring.NewHandler(infra.log.Log, usecases.access, usecases.candidate)
 
@@ -179,6 +184,8 @@ func initInfrastructure() (*infrastructureComponents, error) {
 	aiClientCfg := conf.GRPC.Clients["ai_engine"]
 	aiGrpcClient := grpc.NewClient("ai_engine", zapLog.Log, &aiClientCfg)
 
+	openRouter := openrouter.NewClient(zapLog.Log, conf.OpenRouter.BaseURL)
+
 	return &infrastructureComponents{
 		cfg:          conf,
 		log:          zapLog,
@@ -191,6 +198,7 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		casbinClient: casbinClient,
 		mqClient:     mqClient,
 		mqPublisher:  mqPublisher,
+		openRouter:   openRouter,
 	}, nil
 }
 
@@ -221,6 +229,7 @@ func initRepositories(infra *infrastructureComponents) repos {
 		candidate:  repo.NewCandidateRepo(infra.pool),
 		pipeline:   repo.NewPipelineRepo(infra.pool),
 		dashboard:  repo.NewDashboardRepo(infra.pool),
+		aiSettings: repo.NewAiSettingsRepo(infra.pool),
 	}
 }
 
@@ -245,7 +254,7 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 	}
 }
 
-func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases, auditor *audit.Logger) (handlers, middleware.Middleware) {
+func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u usecases, r repos, auditor *audit.Logger) (handlers, middleware.Middleware) {
 	mw := middleware.NewMiddleware(
 		infra.log,
 		infra.redisPool,
@@ -260,6 +269,7 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 		pipeline:   handler.NewPipelineHandler(infra.log.Log, u.pipeline),
 		department: handler.NewDepartmentHandler(infra.log.Log, u.department),
 		dashboard:  handler.NewDashboardHandler(infra.log.Log, u.dashboard),
+		aiSettings: handler.NewAiSettingsHandler(infra.log.Log, r.aiSettings, infra.openRouter),
 	}
 
 	return h, mw
@@ -290,6 +300,9 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		),
 		server.WithRouterGroup(ctx, "/dashboard",
 			dashboard.NewRouter(h.dashboard, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/ai-settings",
+			ai_settings.NewRouter(h.aiSettings, mw.Session(t), mw.RBAC()),
 		),
 	)
 }

@@ -13,7 +13,7 @@ func (a *Activities) ParseJob(ctx context.Context, input JobParseInput) (*JobPar
 
 	logger.Info("Parsing job started", zap.String("locale", input.Locale))
 
-	result, err := a.jobParser.Parse(ctx, input.RawText, input.Locale)
+	result, err := a.jobParser.Parse(ctx, input.RawText, input.Locale, input.TeamID)
 	if err != nil {
 		logger.Error("Failed to parse job", zap.Error(err))
 		return nil, fmt.Errorf("failed to parse job: %w", err)

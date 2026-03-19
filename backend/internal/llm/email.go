@@ -2,7 +2,6 @@ package llm
 
 import (
 	"backend/internal/domain"
-	"backend/pkg/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,6 +19,7 @@ const (
 )
 
 type EmailGenerateInput struct {
+	TeamID             string
 	CandidateFirstName string
 	CandidateLastName  string
 	CandidateEmail     string
@@ -65,28 +65,35 @@ Writing rules:
 - If CompanyName is provided, mention it naturally.`
 
 type EmailGenerator struct {
-	client *openai.Client
-	cfg    *config.OpenRouter
+	provider Provider
 }
 
-func NewEmailGenerator(client *openai.Client, cfg *config.OpenRouter) *EmailGenerator {
-	return &EmailGenerator{client: client, cfg: cfg}
+func NewEmailGenerator(provider Provider) *EmailGenerator {
+	return &EmailGenerator{provider: provider}
 }
 
 func (g *EmailGenerator) Generate(ctx context.Context, input EmailGenerateInput) (*EmailGenerateResult, error) {
-	model := g.cfg.ChatModel
-	if model == "" {
-		model = "anthropic/claude-3-haiku"
+	client, settings, err := g.provider.GetClient(ctx, input.TeamID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get llm client: %w", err)
 	}
 
-	maxTokens := g.cfg.MaxTokensChat
+	cfg := g.provider.GetGlobalConfig()
+	model := "anthropic/claude-3-haiku"
+	if settings.ChatModel != nil && *settings.ChatModel != "" {
+		model = *settings.ChatModel
+	} else if cfg.ChatModel != "" {
+		model = cfg.ChatModel
+	}
+
+	maxTokens := cfg.MaxTokensChat
 	if maxTokens == 0 {
 		maxTokens = 2048
 	}
 
 	userContent := buildEmailUserPrompt(input)
 
-	resp, err := g.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleSystem, Content: emailGeneratorSystemPrompt},

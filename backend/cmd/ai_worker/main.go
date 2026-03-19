@@ -108,16 +108,19 @@ func initInfrastructure(ctx context.Context) (*infrastructureComponents, error) 
 		zapLog.Log.Warn("failed to seed audit action types", zap.Error(err))
 	}
 
+	aiSettingsRepo := repo.NewAiSettingsRepo(pool)
+	llmProvider := llm.NewProvider(zapLog.Log, &conf.OpenRouter, aiSettingsRepo)
+
 	activities := activity.NewActivities(
 		zapLog.Log,
 		pdfExtractor,
 		cloudinary,
-		llm.NewResumeParser(llmClient.OpenAI, &conf.OpenRouter),
-		llm.NewScorer(llmClient.OpenAI, &conf.OpenRouter),
-		llm.NewEmbedder(llmClient.OpenAI, &conf.OpenRouter),
-		llm.NewEmailGenerator(llmClient.OpenAI, &conf.OpenRouter),
-		llm.NewCandidateComparator(llmClient.OpenAI, &conf.OpenRouter),
-		llm.NewJobParser(llmClient.OpenAI, &conf.OpenRouter),
+		llm.NewResumeParser(llmProvider),
+		llm.NewScorer(llmProvider),
+		llm.NewEmbedder(llmProvider),
+		llm.NewEmailGenerator(llmProvider),
+		llm.NewCandidateComparator(llmProvider),
+		llm.NewJobParser(llmProvider),
 		candidateRepo,
 		jobRepo,
 		commRepo,

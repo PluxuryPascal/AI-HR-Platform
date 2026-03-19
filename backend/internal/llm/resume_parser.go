@@ -2,7 +2,6 @@ package llm
 
 import (
 	"backend/internal/domain"
-	"backend/pkg/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -49,27 +48,38 @@ type parseResponseJSON struct {
 }
 
 type ResumeParser struct {
-	client *openai.Client
-	cfg    *config.OpenRouter
+	provider Provider
 }
 
-func NewResumeParser(client *openai.Client, cfg *config.OpenRouter) *ResumeParser {
+func NewResumeParser(provider Provider) *ResumeParser {
 	return &ResumeParser{
-		client: client,
-		cfg:    cfg,
+		provider: provider,
 	}
 }
 
-func (p *ResumeParser) Parse(ctx context.Context, resumeText, jobRequirements, locale string) (*domain.ParseResult, error) {
+func (p *ResumeParser) Parse(ctx context.Context, resumeText, jobRequirements, locale string, teamID string) (*domain.ParseResult, error) {
+	client, settings, err := p.provider.GetClient(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get llm client: %w", err)
+	}
+
 	userContent := buildParseUserPrompt(resumeText, jobRequirements, locale)
 
-	maxTokens := p.cfg.MaxTokensParse
+	cfg := p.provider.GetGlobalConfig()
+	maxTokens := cfg.MaxTokensParse
 	if maxTokens == 0 {
 		maxTokens = 1024
 	}
 
-	resp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: p.cfg.ParseModel,
+	model := "anthropic/claude-3-haiku"
+	if settings.ParseModel != nil && *settings.ParseModel != "" {
+		model = *settings.ParseModel
+	} else if cfg.ParseModel != "" {
+		model = cfg.ParseModel
+	}
+
+	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,

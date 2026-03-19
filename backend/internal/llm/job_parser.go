@@ -1,7 +1,6 @@
 package llm
 
 import (
-	"backend/pkg/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -52,25 +51,32 @@ Extraction rules:
 - "currency": "USD", "RUB", "EUR", etc. Empty string if not mentioned.`
 
 type JobParser struct {
-	client *openai.Client
-	cfg    *config.OpenRouter
+	provider Provider
 }
 
-func NewJobParser(client *openai.Client, cfg *config.OpenRouter) *JobParser {
-	return &JobParser{client: client, cfg: cfg}
+func NewJobParser(provider Provider) *JobParser {
+	return &JobParser{provider: provider}
 }
 
-func (p *JobParser) Parse(ctx context.Context, rawText, locale string) (*JobParseResult, error) {
+func (p *JobParser) Parse(ctx context.Context, rawText, locale string, teamID string) (*JobParseResult, error) {
 	if strings.TrimSpace(rawText) == "" {
 		return nil, fmt.Errorf("job parser: input text is empty")
 	}
 
-	model := p.cfg.ParseModel
-	if model == "" {
-		model = "anthropic/claude-3-haiku"
+	client, settings, err := p.provider.GetClient(ctx, teamID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get llm client: %w", err)
 	}
 
-	maxTokens := p.cfg.MaxTokensParse
+	cfg := p.provider.GetGlobalConfig()
+	model := "anthropic/claude-3-haiku"
+	if settings.ParseModel != nil && *settings.ParseModel != "" {
+		model = *settings.ParseModel
+	} else if cfg.ParseModel != "" {
+		model = cfg.ParseModel
+	}
+
+	maxTokens := cfg.MaxTokensParse
 	if maxTokens == 0 {
 		maxTokens = 1024
 	}
@@ -79,7 +85,7 @@ func (p *JobParser) Parse(ctx context.Context, rawText, locale string) (*JobPars
 		maxTokens = 1500
 	}
 
-	resp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+	resp, err := client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleSystem, Content: jobParserSystemPrompt},

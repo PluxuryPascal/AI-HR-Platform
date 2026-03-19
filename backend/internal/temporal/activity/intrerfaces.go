@@ -13,15 +13,15 @@ import (
 )
 
 type ResumeParser interface {
-	Parse(ctx context.Context, text, jobRequirements, locale string) (*domain.ParseResult, error)
+	Parse(ctx context.Context, text, jobRequirements, locale string, teamID string) (*domain.ParseResult, error)
 }
 
 type Scorer interface {
-	Score(ctx context.Context, text, jobRequirements, locale string) (*domain.ScoreResult, error)
+	Score(ctx context.Context, text, jobRequirements, locale string, teamID string) (*domain.ScoreResult, error)
 }
 
 type Embedder interface {
-	EmbedChunks(ctx context.Context, text string) ([]domain.EmbeddingChunk, error)
+	EmbedChunks(ctx context.Context, text string, teamID string) ([]domain.EmbeddingChunk, error)
 }
 
 type EmailGenerator interface {
@@ -29,11 +29,11 @@ type EmailGenerator interface {
 }
 
 type CandidateComparator interface {
-	Compare(ctx context.Context, candidates []llm.CandidateCompareInput, jobRequirements, locale string) (llm.CompareResult, error)
+	Compare(ctx context.Context, candidates []llm.CandidateCompareInput, jobRequirements, locale string, teamID string) (llm.CompareResult, error)
 }
 
 type JobParser interface {
-	Parse(ctx context.Context, rawtext, locale string) (*llm.JobParseResult, error)
+	Parse(ctx context.Context, rawtext, locale string, teamID string) (*llm.JobParseResult, error)
 }
 
 type CandidateStore interface {
