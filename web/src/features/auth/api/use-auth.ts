@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import { RegisterRequest } from "../types";
+import { RegisterRequest, AcceptInviteRequest } from "../types";
 
 export function useRegister() {
     return useMutation({
@@ -21,6 +21,15 @@ export function useLogin() {
     return useMutation({
         mutationFn: async (data: LoginRequest) => {
             const response = await apiClient.post("/auth/login", data);
+            return response;
+        },
+    });
+}
+
+export function useAcceptInvite() {
+    return useMutation({
+        mutationFn: async (data: AcceptInviteRequest) => {
+            const response = await apiClient.post("/invites/accept", data);
             return response;
         },
     });

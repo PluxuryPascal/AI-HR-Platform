@@ -18,3 +18,10 @@ export interface AuthResponse {
         team_name: string;
     };
 }
+
+export interface AcceptInviteRequest {
+    token: string;
+    first_name: string;
+    last_name: string;
+    password: string;
+}

@@ -63,7 +63,8 @@ type SMTP struct {
 }
 
 type Invite struct {
-	TTL time.Duration `yaml:"ttl"`
+	TTL         time.Duration `yaml:"ttl"`
+	FrontendURL string        `yaml:"frontend_url"`
 }
 
 type InviteRecovery struct {

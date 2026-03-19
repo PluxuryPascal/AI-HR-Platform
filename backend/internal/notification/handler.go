@@ -3,6 +3,7 @@ package notification
 import (
 	"backend/internal/domain"
 	"backend/pkg/email"
+	"backend/pkg/config"
 	"backend/pkg/mq"
 	"context"
 	"encoding/json"
@@ -21,7 +22,7 @@ import (
 //
 // Ошибки парсинга → NackDiscard (повторные попытки бессмысленны).
 // Ошибки отправки → NackRequeue (временная ошибка, retry имеет смысл).
-func InviteCreatedHandler(emailClient *email.Client, log *zap.Logger) mq.HandlerFunc {
+func InviteCreatedHandler(emailClient *email.Client, log *zap.Logger, cfg config.Invite) mq.HandlerFunc {
 	return func(ctx context.Context, d rabbitmq.Delivery) rabbitmq.Action {
 		var event domain.InviteCreatedEvent
 		if err := json.Unmarshal(d.Body, &event); err != nil {
@@ -40,10 +41,11 @@ func InviteCreatedHandler(emailClient *email.Client, log *zap.Logger) mq.Handler
 		)
 
 		subject := "You've been invited to join AI-HR Platform"
+		inviteLink := fmt.Sprintf("%s/accept-invite?token=%s", cfg.FrontendURL, event.Token)
 		body := fmt.Sprintf(
-			"Hello!\n\nYou have been invited to join AI-HR Platform as %s.\n\nUse the following token to complete your registration: %s\n\nThis invitation will expire soon, so please act promptly.\n\nBest regards,\nAI-HR Team",
+			"Hello!\n\nYou have been invited to join AI-HR Platform as %s.\n\nPlease follow this link to complete your registration:\n%s\n\nThis invitation will expire soon, so please act promptly.\n\nBest regards,\nAI-HR Team",
 			event.Role,
-			event.Token,
+			inviteLink,
 		)
 
 		if err := emailClient.Send(ctx, event.Email, subject, body); err != nil {

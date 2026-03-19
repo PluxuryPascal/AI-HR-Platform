@@ -43,7 +43,7 @@ func run(ctx context.Context) error {
 	inviteConsumer := mq.NewMQConsumer(
 		zapLog.Log,
 		rabbitMQ.Conn,
-		notification.InviteCreatedHandler(emailClient, zapLog.Log),
+		notification.InviteCreatedHandler(emailClient, zapLog.Log, conf.Invite),
 		mq.WithQueueName("notification.invite.created"),
 		mq.WithConsumerExchange("hiring.events"),
 		mq.WithConsumerRoutingKey("invite.created"),
