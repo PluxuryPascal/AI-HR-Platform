@@ -1,5 +1,5 @@
 CREATE TABLE ai_engine.t_team_settings (
-    team_id       UUID PRIMARY KEY REFERENCES auth.t_teams (id) ON DELETE CASCADE,
+    team_id       UUID PRIMARY KEY,
     api_key       VARCHAR,
     parse_model   VARCHAR,
     score_model   VARCHAR,
