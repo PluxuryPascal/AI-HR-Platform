@@ -19,26 +19,25 @@ import {
 } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetCandidates } from "../../candidates/api/use-get-candidates";
-import { useMoveCandidate } from "../../candidates/api/use-move-candidate";
-import { initialColumns } from "../utils/mock-board";
-import { CandidateCard as CandidateCardType, ColumnId } from "../types";
+import { useJobsStore } from "@/store/use-jobs-store";
+import { CandidateCard as CandidateCardType } from "../types";
 import { fireOfferConfetti } from "@/lib/confetti";
 
 interface UseKanbanDndOptions {
+    jobId: string;
     isSelectionMode: boolean;
-    onColumnChange?: (candidateId: string, card: CandidateCardType, sourceColumn: ColumnId, targetColumn: ColumnId) => void;
+    onColumnChange?: (candidateId: string, card: CandidateCardType, sourceColumn: string, targetColumn: string) => void;
 }
 
-export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOptions) {
+export function useKanbanDnd({ jobId, isSelectionMode, onColumnChange }: UseKanbanDndOptions) {
     const queryClient = useQueryClient();
-    const { data: columns = initialColumns } = useGetCandidates();
-    const { mutate: moveCandidate } = useMoveCandidate();
+    const { data: columns = {} as Record<string, CandidateCardType[]> } = useGetCandidates(jobId);
+    const moveCandidateStore = useJobsStore((state) => state.moveCandidate);
 
-    // Track original state for rollback
-    const previousColumnsRef = useRef<Record<ColumnId, CandidateCardType[]> | null>(null);
+    const previousColumnsRef = useRef<Record<string, CandidateCardType[]> | null>(null);
 
     const [activeCard, setActiveCard] = useState<CandidateCardType | null>(null);
-    const [activeColumn, setActiveColumn] = useState<ColumnId | null>(null);
+    const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -51,13 +50,13 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
         })
     );
 
-    const findContainer = (id: string): ColumnId | undefined => {
+    const findContainer = (id: string): string | undefined => {
         if (id in columns) {
-            return id as ColumnId;
+            return id;
         }
 
-        return (Object.keys(columns) as ColumnId[]).find((key) =>
-            columns[key].find((c) => c.id === id)
+        return Object.keys(columns).find((key) =>
+            (columns[key] as CandidateCardType[]).find((c) => c.id === id)
         );
     };
 
@@ -68,14 +67,11 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
         const activeContainer = findContainer(id as string);
         if (activeContainer) {
             setActiveColumn(activeContainer);
-            const card = columns[activeContainer].find((c) => c.id === id);
+            const card = (columns[activeContainer] as CandidateCardType[]).find((c) => c.id === id);
             if (card) {
                 setActiveCard(card);
             }
-            // Snapshot current state for rollback
-            if (columns) {
-                previousColumnsRef.current = columns;
-            }
+            previousColumnsRef.current = columns;
         }
     };
 
@@ -98,10 +94,10 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
             return;
         }
 
-        queryClient.setQueryData<Record<ColumnId, CandidateCardType[]>>(["candidates"], (prev) => {
+        queryClient.setQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId], (prev) => {
             if (!prev) return prev;
-            const activeItems = prev[activeContainer];
-            const overItems = prev[overContainer];
+            const activeItems = prev[activeContainer] || [];
+            const overItems = prev[overContainer] || [];
             const activeIndex = activeItems.findIndex((item) => item.id === id);
             const overIndex = overItems.findIndex((item) => item.id === overId);
 
@@ -110,7 +106,6 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
             let newIndex;
 
             if (overId in prev) {
-                // We're over a container
                 newIndex = overItems.length + 1;
             } else {
                 const isBelowOverItem =
@@ -128,14 +123,14 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
             return {
                 ...prev,
                 [activeContainer]: [
-                    ...prev[activeContainer].filter((item) => item.id !== active.id),
+                    ...(prev[activeContainer] || []).filter((item: CandidateCardType) => item.id !== active.id),
                 ],
                 [overContainer]: [
-                    ...prev[overContainer].slice(0, newIndex),
+                    ...(prev[overContainer] || []).slice(0, newIndex),
                     activeItems[activeIndex],
-                    ...prev[overContainer].slice(
+                    ...(prev[overContainer] || []).slice(
                         newIndex,
-                        prev[overContainer].length
+                        (prev[overContainer] || []).length
                     ),
                 ],
             };
@@ -162,54 +157,48 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
             overContainer &&
             activeContainer === overContainer
         ) {
-            const activeIndex = columns[activeContainer].findIndex(
+            const activeItems = columns[activeContainer] || [];
+            const activeIndex = activeItems.findIndex(
                 (item) => item.id === id
             );
-            const overIndex = columns[overContainer].findIndex(
+            const overIndex = activeItems.findIndex(
                 (item) => item.id === overId
             );
 
-            if (activeIndex !== overIndex) {
-                queryClient.setQueryData<Record<ColumnId, CandidateCardType[]>>(["candidates"], (prev) => {
+            if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+                queryClient.setQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId], (prev) => {
                     if (!prev) return prev;
                     return {
                         ...prev,
                         [activeContainer]: arrayMove(
-                            prev[activeContainer],
+                            prev[activeContainer] || [],
                             activeIndex,
                             overIndex
                         ),
                     };
                 });
+
+                moveCandidateStore(jobId, id as string, activeContainer, overContainer, overIndex);
             }
         }
 
-        // Trigger mutation to persist changes
-        if (activeColumn && overContainer) {
-            // Get the latest state from cache to find the final index
-            const currentColumns = queryClient.getQueryData<Record<ColumnId, CandidateCardType[]>>(["candidates"]);
+        if (activeColumn && overContainer && activeColumn !== overContainer) {
+            const currentColumns = queryClient.getQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId]);
             if (currentColumns) {
-                const finalIndex = currentColumns[overContainer].findIndex((c) => c.id === id);
+                const overItems = currentColumns[overContainer] || [];
+                const finalIndex = overItems.findIndex((c) => c.id === id);
                 if (finalIndex !== -1) {
-                    moveCandidate({
-                        candidateId: id as string,
-                        sourceColumnId: activeColumn,
-                        targetColumnId: overContainer,
-                        newIndex: finalIndex,
-                        optimisticSnapshot: previousColumnsRef.current || undefined,
-                    });
+                    moveCandidateStore(jobId, id as string, activeColumn, overContainer, finalIndex);
 
-                    // Fire confetti if moved to "offer" column
-                    if (overContainer === "offer" && activeColumn !== "offer") {
+                    if (overContainer === "offer") {
                         fireOfferConfetti();
                     }
                 }
             }
         }
 
-        // Notify parent about column change for outreach
         if (activeColumn && overContainer && activeColumn !== overContainer) {
-            const card = columns[overContainer].find((c) => c.id === id);
+            const card = (queryClient.getQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId]) || {})[overContainer]?.find((c: CandidateCardType) => c.id === id);
             if (card) {
                 onColumnChange?.(id as string, card, activeColumn, overContainer);
             }
@@ -225,7 +214,6 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
                 return closestCorners(args);
             }
 
-            // First, attempt to detect collisions with pointers within the container
             const pointerIntersections = pointerWithin(args);
             const intersections =
                 pointerIntersections.length > 0
@@ -239,7 +227,7 @@ export function useKanbanDnd({ isSelectionMode, onColumnChange }: UseKanbanDndOp
                     const containerIntersections = rectIntersection({
                         ...args,
                         droppableContainers: args.droppableContainers.filter(
-                            (container) => container.id in columns
+                            (container) => (container.id as string) in columns
                         ),
                     });
 

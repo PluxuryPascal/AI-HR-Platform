@@ -48,6 +48,7 @@
         "nav": {
             "dashboard": "Tablero",
             "jobs": "Empleos",
+            "departments": "Departamentos",
             "candidates": "Candidatos",
             "screening": "Selección",
             "settings": "Configuración",
@@ -90,6 +91,7 @@
         "nav": {
             "dashboard": "Tablero",
             "jobs": "Empleos",
+            "departments": "Departamentos",
             "candidates": "Candidatos",
             "screening": "Selección",
             "settings": "Configuración",
@@ -197,6 +199,14 @@
     },
     "Screening": {
         "title": "Pipeline de Candidatos",
+        "jobSelectorPlaceholder": "Seleccionar empleo",
+        "noJobsSelected": "Por favor, seleccione un empleo para ver el tablero",
+        "editMode": "Gestionar Etapas",
+        "exitEditMode": "Listo",
+        "addStage": "Añadir Etapa",
+        "addStagePrompt": "Ingrese el nombre de la etapa:",
+        "renameStagePrompt": "Ingrese el nuevo nombre de la etapa:",
+        "deleteStageConfirm": "¿Está seguro de que desea eliminar esta etapa? Los candidatos se moverán a la primera columna.",
         "columns": {
             "new": "Nuevas Aplicaciones",
             "screening": "Selección IA",
@@ -376,6 +386,28 @@
             "title": "Revisar rechazos individuales de IA",
             "sendAll": "Confirmar y enviar todo",
             "description": "La IA ha redactado razones únicas para cada candidato para garantizar un toque personalizado."
+        }
+    },
+    "Departments": {
+        "pageTitle": "Departamentos | AI-HR",
+        "title": "Departamentos",
+        "description": "Gestiona los departamentos de tu empresa.",
+        "createBtn": "Crear departamento",
+        "createTitle": "Crear nuevo departamento",
+        "createSuccess": "¡Departamento creado con éxito!",
+        "nameLabel": "Nombre del departamento",
+        "namePlaceholder": "ej. Finanzas",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "empty": {
+            "title": "No se encontraron departamentos",
+            "desc": "Aún no has añadido ningún departamento.",
+            "button": "Crear departamento"
+        },
+        "table": {
+            "name": "Nombre del departamento",
+            "actions": "Acciones",
+            "delete": "Eliminar"
         }
     },
     "MatchScore": {

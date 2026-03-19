@@ -1,5 +1,3 @@
-export type ColumnId = 'new' | 'screening' | 'interview' | 'offer' | 'rejected';
-
 export interface ScoreFactor {
     id: string;
     type: "positive" | "negative" | "neutral";

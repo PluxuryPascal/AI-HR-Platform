@@ -94,6 +94,7 @@
         "nav": {
             "dashboard": "Dashboard",
             "jobs": "Jobs",
+            "departments": "Departments",
             "candidates": "Candidates",
             "screening": "Screening",
             "settings": "Settings",
@@ -203,6 +204,14 @@
     },
     "Screening": {
         "title": "Candidate Pipeline",
+        "jobSelectorPlaceholder": "Select Job",
+        "noJobsSelected": "Please select a job to view the board",
+        "editMode": "Manage Stages",
+        "exitEditMode": "Done",
+        "addStage": "Add Stage",
+        "addStagePrompt": "Enter stage name:",
+        "renameStagePrompt": "Enter new stage name:",
+        "deleteStageConfirm": "Are you sure you want to delete this stage? Candidates will be moved to the first column.",
         "columns": {
             "new": "New Applications",
             "screening": "AI Screening",
@@ -401,6 +410,28 @@
             "title": "Review Individual AI Rejections",
             "sendAll": "Confirm and Send All",
             "description": "AI has drafted unique reasons for each candidate to ensure a personalized touch."
+        }
+    },
+    "Departments": {
+        "pageTitle": "Departments | AI-HR",
+        "title": "Departments",
+        "description": "Manage your company departments.",
+        "createBtn": "Create Department",
+        "createTitle": "Create New Department",
+        "createSuccess": "Department created successfully!",
+        "nameLabel": "Department Name",
+        "namePlaceholder": "e.g. Finance",
+        "cancel": "Cancel",
+        "save": "Save",
+        "empty": {
+            "title": "No departments found",
+            "desc": "You haven't added any departments yet.",
+            "button": "Create Department"
+        },
+        "table": {
+            "name": "Department Name",
+            "actions": "Actions",
+            "delete": "Delete"
         }
     },
     "MatchScore": {

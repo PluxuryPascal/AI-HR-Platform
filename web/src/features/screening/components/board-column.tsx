@@ -4,19 +4,34 @@ import { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { ColumnId, CandidateCard as CandidateCardType } from "../types";
+import { CandidateCard as CandidateCardType } from "../types";
 import { CandidateCard } from "./candidate-card";
 import { useTranslations } from "next-intl";
+import { Edit2, Trash2 } from "lucide-react";
 
 interface BoardColumnProps {
-    id: ColumnId;
+    id: string;
+    title: string;
     candidates: CandidateCardType[];
     selectedCandidateIds: string[];
     onToggleSelection: (id: string) => void;
     isSelectionMode: boolean;
+    isEditMode?: boolean;
+    onRename?: (newTitle: string) => void;
+    onDelete?: () => void;
 }
 
-export function BoardColumn({ id, candidates, selectedCandidateIds, onToggleSelection, isSelectionMode }: BoardColumnProps) {
+export function BoardColumn({ 
+    id, 
+    title,
+    candidates, 
+    selectedCandidateIds, 
+    onToggleSelection, 
+    isSelectionMode,
+    isEditMode,
+    onRename,
+    onDelete
+}: BoardColumnProps) {
     const t = useTranslations('Screening');
     const { setNodeRef } = useDroppable({
         id: id,
@@ -31,16 +46,41 @@ export function BoardColumn({ id, candidates, selectedCandidateIds, onToggleSele
         overscan: 5,
     });
 
+    const handleRename = () => {
+        const newTitle = window.prompt(t("renameStagePrompt"), title);
+        if (newTitle && newTitle !== title) {
+            onRename?.(newTitle);
+        }
+    };
+
     return (
         <div
             ref={setNodeRef}
-            className="flex flex-col bg-muted/50 rounded-lg p-4 min-w-[300px] h-full"
+            className="flex flex-col bg-muted/50 rounded-lg p-4 min-w-[320px] h-full"
         >
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                    {t(`columns.${id}`)}
-                </h3>
-                <span className="text-xs bg-background px-2 py-1 rounded-full shadow-sm">
+            <div className="flex items-center justify-between mb-4 group/header">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider truncate">
+                        {title}
+                    </h3>
+                    {isEditMode && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                            <button 
+                                onClick={handleRename}
+                                className="p-1 hover:bg-accent rounded text-muted-foreground"
+                            >
+                                <Edit2 className="w-3 h-3" />
+                            </button>
+                            <button 
+                                onClick={onDelete}
+                                className="p-1 hover:bg-destructive/10 hover:text-destructive rounded text-muted-foreground"
+                            >
+                                <Trash2 className="w-3 h-3" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+                <span className="text-xs bg-background px-2 py-1 rounded-full shadow-sm shrink-0">
                     {candidates.length}
                 </span>
             </div>

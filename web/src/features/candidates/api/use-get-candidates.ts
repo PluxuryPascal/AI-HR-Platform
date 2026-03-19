@@ -1,19 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
-import { initialColumns } from "@/features/screening/utils/mock-board";
-import { CandidateCard, ColumnId } from "@/features/screening/types";
+import { useJobsStore } from "@/store/use-jobs-store";
+import { CandidateCard } from "@/features/screening/types";
 
-// Simulated API fetch
-const fetchCandidates = async (): Promise<Record<ColumnId, CandidateCard[]>> => {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return initialColumns;
-};
+export function useGetCandidates(jobId?: string) {
+    const boards = useJobsStore((state) => state.boards);
 
-export function useGetCandidates() {
-    return useQuery({
-        queryKey: ["candidates"],
-        queryFn: fetchCandidates,
-        // Keep data fresh for 5 minutes since it's mock data anyway
+    return useQuery<Record<string, CandidateCard[]>>({
+        queryKey: ["candidates", jobId],
+        queryFn: async (): Promise<Record<string, CandidateCard[]>> => {
+            if (!jobId) {
+                return {};
+            }
+            // Artificial delay for consistency
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            return boards[jobId] || {};
+        },
+        enabled: !!jobId,
         staleTime: 1000 * 60 * 5,
     });
 }

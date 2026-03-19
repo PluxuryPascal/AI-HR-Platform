@@ -4,6 +4,7 @@ import {
     Users,
     FileText,
     Settings,
+    Building2,
 } from "lucide-react";
 
 export const dashboardConfig = [
@@ -30,6 +31,12 @@ export const dashboardConfig = [
         href: "/dashboard/screening",
         icon: FileText,
         key: "screening",
+    },
+    {
+        title: "Departments",
+        href: "/dashboard/departments",
+        icon: Building2,
+        key: "departments",
     },
     {
         title: "Settings",

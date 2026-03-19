@@ -1,4 +1,4 @@
-import { JobFormValues, Department, JobType } from "../schemas/job-schema";
+import { JobFormValues, JobType } from "../schemas/job-schema";
 
 export const parseJobDescription = async (text: string): Promise<Partial<JobFormValues>> => {
     // Simulate AI latency
@@ -7,17 +7,17 @@ export const parseJobDescription = async (text: string): Promise<Partial<JobForm
     // Simple keyword matching for "AI" simulation
     const lowerText = text.toLowerCase();
 
-    let department: typeof Department[keyof typeof Department] = Department.Other;
+    let department: string = "Other";
     if (lowerText.includes("engineer") || lowerText.includes("developer") || lowerText.includes("code")) {
-        department = Department.Engineering;
+        department = "Engineering";
     } else if (lowerText.includes("design") || lowerText.includes("ui") || lowerText.includes("ux")) {
-        department = Department.Design;
+        department = "Design";
     } else if (lowerText.includes("product")) {
-        department = Department.Product;
+        department = "Product";
     } else if (lowerText.includes("market")) {
-        department = Department.Marketing;
+        department = "Marketing";
     } else if (lowerText.includes("sale")) {
-        department = Department.Sales;
+        department = "Sales";
     }
 
     let type: typeof JobType[keyof typeof JobType] = JobType.Onsite;

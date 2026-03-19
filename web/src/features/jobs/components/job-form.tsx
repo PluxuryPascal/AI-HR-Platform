@@ -28,14 +28,15 @@ import { Separator } from "@/components/ui/separator"
 import {
     jobSchema,
     JobFormValues,
-    Department,
     JobType,
 } from "@/features/jobs/schemas/job-schema"
+import { useDepartmentsStore } from "@/store/use-departments-store"
 import { SmartPasteCard } from "./smart-paste-card"
 
 export function JobForm() {
     const t = useTranslations("JobWizard")
     const router = useRouter()
+    const { departments } = useDepartmentsStore()
 
     const form = useForm<JobFormValues>({
         resolver: zodResolver(jobSchema),
@@ -96,9 +97,9 @@ export function JobForm() {
                                         <SelectValue placeholder={t("departmentPlaceholder")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {Object.values(Department).map((dept) => (
-                                            <SelectItem key={dept} value={dept}>
-                                                {t(`departments.${dept}`)}
+                                        {departments.map((dept) => (
+                                            <SelectItem key={dept.id} value={dept.name}>
+                                                {dept.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
