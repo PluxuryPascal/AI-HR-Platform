@@ -29,7 +29,7 @@ export function useLogin() {
 export function useAcceptInvite() {
     return useMutation({
         mutationFn: async (data: AcceptInviteRequest) => {
-            const response = await apiClient.post("/invites/accept", data);
+            const response = await apiClient.post("/invite/create-user", data);
             return response;
         },
     });

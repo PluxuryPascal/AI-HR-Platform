@@ -47,7 +47,7 @@ export function useGenerateInterview() {
 
     return useMutation({
         mutationFn: async ({ id, locale }: { id: string; locale: string }) => {
-            const response = await apiClient.post<InterviewGuide>(`/candidates/${id}/interview/questions`, { locale });
+            const response = await apiClient.post<InterviewGuide>(`/interview/${id}/questions`, { locale });
             return response;
         },
         onSuccess: (data, variables) => {
@@ -66,7 +66,7 @@ export function useGetInterviewGuide(candidateId: string) {
         queryFn: async () => {
             // This might be a GET or the result is cached from previous POST
             // For now, let's assume it's part of candidate details or separate GET
-            const response = await apiClient.get<InterviewGuide>(`/candidates/${candidateId}/interview/questions`);
+            const response = await apiClient.get<InterviewGuide>(`/interview/${candidateId}/questions`);
             return response;
         },
         enabled: !!candidateId,
