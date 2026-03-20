@@ -55,7 +55,7 @@ type HandlerFunc func(ctx context.Context, d rabbitmq.Delivery) rabbitmq.Action
 //     только после явного Ack/Nack от хэндлера. Сбой процесса → requeue.
 type MQConsumer struct {
 	log      *zap.Logger
-	conn     *rabbitmq.Conn
+	rabbitMQ *RabbitMQ
 	handler  HandlerFunc
 	cfg      consumerConfig
 	consumer *rabbitmq.Consumer
@@ -87,7 +87,7 @@ var _ svc.Service = (*MQConsumer)(nil)
 //	)
 func NewMQConsumer(
 	log *zap.Logger,
-	conn *rabbitmq.Conn,
+	rabbitMQ *RabbitMQ,
 	handler HandlerFunc,
 	opts ...ConsumerOption,
 ) *MQConsumer {
@@ -97,14 +97,19 @@ func NewMQConsumer(
 	}
 
 	return &MQConsumer{
-		log:     log,
-		conn:    conn,
-		handler: handler,
-		cfg:     cfg,
+		log:      log,
+		rabbitMQ: rabbitMQ,
+		handler:  handler,
+		cfg:      cfg,
 	}
 }
 
-func (m *MQConsumer) Name() string        { return "rabbitmq_consumer" }
+func (m *MQConsumer) Name() string {
+	if m.cfg.serviceName != "" {
+		return m.cfg.serviceName
+	}
+	return "rabbitmq_consumer"
+}
 func (m *MQConsumer) DependsOn() []string { return []string{"logger", "rabbitmq"} }
 
 // Init создаёт внутренний Consumer и объявляет очередь.
@@ -119,8 +124,12 @@ func (m *MQConsumer) DependsOn() []string { return []string{"logger", "rabbitmq"
 // объявляет нужную ему инфраструктуру. Нет «централизованного» места,
 // которое нужно синхронизировать с Consumer-ами.
 func (m *MQConsumer) Init(_ context.Context) error {
+	if m.rabbitMQ.Conn == nil {
+		return fmt.Errorf("rabbitmq connection is not initialized")
+	}
+
 	consumer, err := rabbitmq.NewConsumer(
-		m.conn,
+		m.rabbitMQ.Conn,
 		m.cfg.queueName,
 		m.buildOptions()...,
 	)
@@ -207,6 +216,19 @@ func (m *MQConsumer) buildOptions() []func(*rabbitmq.ConsumerOptions) {
 		rabbitmq.WithConsumerOptionsConsumerAutoAck(false),
 		// Привязка к Exchange.
 		rabbitmq.WithConsumerOptionsExchangeName(m.cfg.exchange),
+	}
+
+	if m.cfg.declareExchange {
+		opts = append(opts, rabbitmq.WithConsumerOptionsExchangeDeclare)
+		if m.cfg.exchangeType != "" {
+			opts = append(opts, rabbitmq.WithConsumerOptionsExchangeKind(m.cfg.exchangeType))
+		} else {
+			opts = append(opts, rabbitmq.WithConsumerOptionsExchangeKind("topic"))
+		}
+		opts = append(opts, rabbitmq.WithConsumerOptionsExchangeDurable)
+	}
+
+	opts = append(opts,
 		// Routing key для binding Queue ↔ Exchange.
 		rabbitmq.WithConsumerOptionsRoutingKey(m.cfg.routingKey),
 		// QueueArgs с DLX, TTL, delivery-limit.
@@ -217,7 +239,7 @@ func (m *MQConsumer) buildOptions() []func(*rabbitmq.ConsumerOptions) {
 		rabbitmq.WithConsumerOptionsQueueDurable,
 		// Логгер.
 		rabbitmq.WithConsumerOptionsLogger(newZapLogger(m.log)),
-	}
+	)
 
 	if m.cfg.quorum {
 		// Нативный метод библиотеки для x-queue-type: quorum.

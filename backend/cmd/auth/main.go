@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"go.uber.org/zap"
 )
@@ -93,9 +94,12 @@ func run(ctx context.Context) error {
 	})
 
 	auditor := audit.NewLogger(infra.log.Log, infra.pool)
-	if err := auditor.SeedActionTypes(ctx); err != nil {
-		infra.log.Log.Warn("failed to seed audit action types", zap.Error(err))
-	}
+	infra.pool.AddAfterRun(func(ctx context.Context, _ *pgxpool.Pool) error {
+		if err := auditor.SeedActionTypes(ctx); err != nil {
+			infra.log.Log.Warn("failed to seed audit action types", zap.Error(err))
+		}
+		return nil
+	})
 
 	usecases := initUseCases(infra, utils, repos, &hiringClient, auditor)
 	initGrpcHandlers(infra, repos)

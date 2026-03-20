@@ -1,0 +1,16 @@
+.git
+.vscode
+node_modules
+*.log
+bin
+obj
+tmp
+vendor
+dist
+.env
+.DS_Store
+auth
+notification
+hiring
+ai_engine
+ai_worker

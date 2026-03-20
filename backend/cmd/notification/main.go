@@ -42,7 +42,7 @@ func run(ctx context.Context) error {
 
 	inviteConsumer := mq.NewMQConsumer(
 		zapLog.Log,
-		rabbitMQ.Conn,
+		rabbitMQ,
 		notification.InviteCreatedHandler(emailClient, zapLog.Log, conf.Invite),
 		mq.WithQueueName("notification.invite.created"),
 		mq.WithConsumerExchange("hiring.events"),
@@ -50,6 +50,8 @@ func run(ctx context.Context) error {
 		mq.WithQuorumQueue(),
 		mq.WithPrefetchCount(10),
 		mq.WithConcurrency(5),
+		mq.WithExchangeDeclare(),
+		mq.WithExchangeType("topic"),
 	)
 
 	if err := svc.Run(ctx, zapLog.Log, []svc.Service{

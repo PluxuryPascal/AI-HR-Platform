@@ -44,6 +44,8 @@ func (c *PostgresClient) Init(ctx context.Context) error {
 		return fmt.Errorf("failed to create database pool: %w", err)
 	}
 
+	c.Pool = pool
+
 	for _, f := range c.afterRunFuncs {
 		if err := f(ctx, pool); err != nil {
 			return fmt.Errorf("failed to run after run function: %w", err)
@@ -51,7 +53,6 @@ func (c *PostgresClient) Init(ctx context.Context) error {
 	}
 
 	c.afterRunFuncs = nil
-	c.Pool = pool
 
 	c.log.Debug("database initialized")
 

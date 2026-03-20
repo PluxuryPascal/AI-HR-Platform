@@ -153,6 +153,15 @@ type consumerConfig struct {
 	// внутри одного инстанса Consumer-а. По умолчанию 1 (строго последовательно).
 	// В сочетании с prefetchCount позволяет балансировать throughput.
 	concurrency int
+
+	// serviceName — уникальное имя сервиса для svc.Run.
+	serviceName string
+
+	// declareExchange — если true, Exchange будет автоматически объявлен при Init().
+	declareExchange bool
+
+	// exchangeType — тип Exchange (direct, topic, fanout). По умолчанию topic.
+	exchangeType string
 }
 
 func defaultConsumerConfig() consumerConfig {
@@ -235,4 +244,19 @@ func WithMessageTTL(ms int) ConsumerOption {
 // Работает совместно с NackRequeue для ограничения числа retry.
 func WithMaxDeliveries(n int) ConsumerOption {
 	return func(c *consumerConfig) { c.maxDeliveries = n }
+}
+
+// WithServiceName задаёт уникальное имя сервиса для svc.Run.
+func WithServiceName(name string) ConsumerOption {
+	return func(c *consumerConfig) { c.serviceName = name }
+}
+
+// WithExchangeDeclare включает автоматическое объявление Exchange при Init().
+func WithExchangeDeclare() ConsumerOption {
+	return func(c *consumerConfig) { c.declareExchange = true }
+}
+
+// WithExchangeType задаёт тип Exchange (direct, topic, fanout).
+func WithExchangeType(t string) ConsumerOption {
+	return func(c *consumerConfig) { c.exchangeType = t }
 }

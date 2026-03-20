@@ -88,6 +88,21 @@ services:
       - ai_hr_network
     restart: always
 
+  temporal-setup:
+    container_name: temporal-setup
+    image: temporalio/admin-tools
+    depends_on:
+      - temporal
+    networks:
+      - ai_hr_network
+    command: >
+      bash -c "
+      until tctl cluster health; do echo 'Waiting for Temporal...'; sleep 1; done;
+      tctl --namespace ai-screener namespace register || true;
+      echo 'Namespace registered'
+      "
+    restart: "no"
+
   temporal-ui:
     container_name: temporal-ui
     depends_on:
@@ -100,6 +115,93 @@ services:
     networks:
       - ai_hr_network
     restart: always
+
+  auth:
+    build:
+      context: .
+      dockerfile: docker/auth/Dockerfile
+    container_name: auth_service
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    ports:
+      - "8081:8081"
+      - "50052:50052"
+    networks:
+      - ai_hr_network
+    restart: unless-stopped
+
+  hiring:
+    build:
+      context: .
+      dockerfile: docker/hiring/Dockerfile
+    container_name: hiring_service
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - temporal
+      - auth
+      - ai_engine
+    ports:
+      - "8082:8082"
+      - "50051:50051"
+    networks:
+      - ai_hr_network
+    restart: unless-stopped
+
+  ai_engine:
+    build:
+      context: .
+      dockerfile: docker/ai_engine/Dockerfile
+    container_name: ai_engine_service
+    depends_on:
+      - postgres
+      - redis
+      - temporal
+    ports:
+      - "50053:50053"
+    networks:
+      - ai_hr_network
+    restart: unless-stopped
+
+  ai_worker:
+    build:
+      context: .
+      dockerfile: docker/ai_worker/Dockerfile
+    container_name: ai_worker
+    depends_on:
+      - temporal
+      - ai_engine
+    networks:
+      - ai_hr_network
+    restart: unless-stopped
+
+  notification:
+    build:
+      context: .
+      dockerfile: docker/notification/Dockerfile
+    container_name: notification_service
+    depends_on:
+      - rabbitmq
+    networks:
+      - ai_hr_network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    container_name: web_frontend
+    depends_on:
+      - auth
+      - hiring
+    ports:
+      - "3000:3000"
+    networks:
+      - ai_hr_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:

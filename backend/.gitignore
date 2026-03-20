@@ -14,6 +14,7 @@ vendor/
 # User specific configurations and secrets
 tls/
 secret/
+config.docker.yaml
 config.yaml
 
 # OS and IDE specific

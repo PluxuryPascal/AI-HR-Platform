@@ -15,6 +15,7 @@ import (
 	"backend/pkg/pdf"
 	"backend/pkg/storage"
 	"backend/pkg/svc"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"context"
 	"fmt"
 	"log"
@@ -104,9 +105,12 @@ func initInfrastructure(ctx context.Context) (*infrastructureComponents, error) 
 	pdfExtractor := pdf.NewExtractor(pdf.Config{})
 
 	auditor := audit.NewLogger(zapLog.Log, pool)
-	if err := auditor.SeedActionTypes(ctx); err != nil {
-		zapLog.Log.Warn("failed to seed audit action types", zap.Error(err))
-	}
+	pool.AddAfterRun(func(ctx context.Context, _ *pgxpool.Pool) error {
+		if err := auditor.SeedActionTypes(ctx); err != nil {
+			zapLog.Log.Warn("failed to seed audit action types", zap.Error(err))
+		}
+		return nil
+	})
 
 	aiSettingsRepo := repo.NewAiSettingsRepo(pool)
 	chatRepo := repo.NewChatRepo(pool)
@@ -137,7 +141,7 @@ func initInfrastructure(ctx context.Context) (*infrastructureComponents, error) 
 	mqClient := mq.NewRabbitMQ(zapLog.Log, &conf.RabbitMQ)
 
 	candidateHandler := worker.NewCandidateConsumerHandler(zapLog.Log, temporalClient)
-	mqConsumer := mq.NewMQConsumer(zapLog.Log, mqClient.Conn, candidateHandler,
+	mqConsumer := mq.NewMQConsumer(zapLog.Log, mqClient, candidateHandler,
 		mq.WithQueueName("hiring.candidate.created"),
 		mq.WithConsumerExchange("hiring.events"),
 		mq.WithConsumerRoutingKey("candidate.created"),
@@ -146,13 +150,19 @@ func initInfrastructure(ctx context.Context) (*infrastructureComponents, error) 
 		mq.WithMessageTTL(300_000),
 		mq.WithMaxDeliveries(3),
 		mq.WithPrefetchCount(1),
+		mq.WithServiceName("candidate_consumer"),
+		mq.WithExchangeDeclare(),
+		mq.WithExchangeType("topic"),
 	)
 
 	dlqHandler := worker.NewDLQHandler(zapLog.Log, temporalClient)
-	dlqWorker := mq.NewMQConsumer(zapLog.Log, mqClient.Conn, dlqHandler,
+	dlqWorker := mq.NewMQConsumer(zapLog.Log, mqClient, dlqHandler,
 		mq.WithQueueName("hiring.candidate.dead"),
 		mq.WithConsumerExchange("hiring.dlx"),
 		mq.WithConsumerRoutingKey("hiring.candidate.dead"),
+		mq.WithServiceName("dlq_consumer"),
+		mq.WithExchangeDeclare(),
+		mq.WithExchangeType("direct"),
 	)
 
 	return &infrastructureComponents{
