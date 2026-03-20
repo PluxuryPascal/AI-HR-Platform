@@ -96,11 +96,7 @@ services:
     networks:
       - ai_hr_network
     command: >
-      bash -c "
-      until tctl cluster health; do echo 'Waiting for Temporal...'; sleep 1; done;
-      tctl --namespace ai-screener namespace register || true;
-      echo 'Namespace registered'
-      "
+      bash -c " until tctl cluster health; do echo 'Waiting for Temporal...'; sleep 1; done; tctl --namespace ai-screener namespace register || true; echo 'Namespace registered' "
     restart: "no"
 
   temporal-ui:
@@ -126,8 +122,8 @@ services:
       - redis
       - rabbitmq
     ports:
-      - "8081:8081"
-      - "50052:50052"
+      - "127.0.0.1:8081:8081"
+      - "127.0.0.1:50052:50052"
     networks:
       - ai_hr_network
     restart: unless-stopped
@@ -145,8 +141,8 @@ services:
       - auth
       - ai_engine
     ports:
-      - "8082:8082"
-      - "50051:50051"
+      - "127.0.0.1:8082:8082"
+      - "127.0.0.1:50051:50051"
     networks:
       - ai_hr_network
     restart: unless-stopped
@@ -161,7 +157,7 @@ services:
       - redis
       - temporal
     ports:
-      - "50053:50053"
+      - "127.0.0.1:50053:50053"
     networks:
       - ai_hr_network
     restart: unless-stopped
@@ -198,7 +194,7 @@ services:
       - auth
       - hiring
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks:
       - ai_hr_network
     restart: unless-stopped
