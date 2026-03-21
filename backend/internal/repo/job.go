@@ -124,7 +124,12 @@ func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit 
 				SELECT j.*, d.name as department_name
 				FROM hiring.t_jobs j
 				LEFT JOIN hiring.t_departments d ON j.department_id = d.id
+				LEFT JOIN hiring.t_job_access ja ON j.id = ja.job_id
 				WHERE j.team_id = @team_id
+				  AND (
+				    @ifAllowedUser = FALSE 
+				    OR ja.user_id = @allowed_user_id
+				  )
 			),
 			
 			filtered AS (
@@ -219,7 +224,16 @@ func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit 
 		"limit":   limit,
 	}
 
+	if filter.AllowedUserID != nil {
+		args["ifAllowedUser"] = true
+		args["allowed_user_id"] = *filter.AllowedUserID
+	} else {
+		args["ifAllowedUser"] = false
+		args["allowed_user_id"] = ""
+	}
+
 	if filter.Title != nil {
+
 		args["ifTitle"] = true
 		args["title"] = "%" + strings.ToLower(*filter.Title) + "%"
 	} else {

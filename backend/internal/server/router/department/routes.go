@@ -30,7 +30,7 @@ func NewRouter(h DepartmentRoutes, session, rbac echo.MiddlewareFunc) router.Rou
 func (r *departmentRouter) Routes() []router.Route {
 	return []router.Route{
 		router.NewRoute(http.MethodPost, "", r.handler.PostDepartment, r.session, r.rbac),
-		router.NewRoute(http.MethodGet, "", r.handler.GetDepartments, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "", r.handler.GetDepartments, r.session),
 		router.NewRoute(http.MethodDelete, "/:id", r.handler.DeleteDepartment, r.session, r.rbac),
 	}
 }

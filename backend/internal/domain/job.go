@@ -58,6 +58,7 @@ type JobFilter struct {
 	WorkFormat     *WorkFormatType `json:"work_format" validate:"omitempty,oneof=remote office hybrid"`
 	DateFilter     *DateFilter     `json:"date_filter" validate:"omitempty"`
 	Sort           *SortParams     `json:"sort" validate:"omitempty"`
+	AllowedUserID *string         `json:"-"`
 }
 
 type JobsDTO struct {

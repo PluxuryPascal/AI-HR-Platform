@@ -59,7 +59,8 @@
         "lastName": "Фамилия",
         "teamName": "Название организации",
         "signUpBtn": "Создать аккаунт",
-        "hasAccount": "Уже есть аккаунт?"
+        "hasAccount": "Уже есть аккаунт?",
+        "successMessage": "Успешно!"
     },
     "CandidateProfile": {
         "tabs": {

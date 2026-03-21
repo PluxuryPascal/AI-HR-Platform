@@ -14,6 +14,7 @@ type AccessRepository interface {
 	GrantAccess(ctx context.Context, userID, jobID string) error
 	RevokeAccess(ctx context.Context, userID, jobID string) error
 	GetAccessByJobID(ctx context.Context, jobID string) ([]domain.JobAccess, error)
+	HasAccess(ctx context.Context, userID, jobID string) (bool, error)
 }
 
 type accessRepository struct {
@@ -102,6 +103,24 @@ func (r *accessRepository) GetAccessByJobID(ctx context.Context, jobID string) (
 		list = append(list, a)
 	}
 	return list, nil
+}
+	
+func (r *accessRepository) HasAccess(ctx context.Context, userID, jobID string) (bool, error) {
+	const query = `
+		SELECT EXISTS (
+			SELECT 1 FROM hiring.t_job_access 
+			WHERE user_id = @user_id AND job_id = @job_id
+		)
+	`
+	var exists bool
+	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{
+		"user_id": userID,
+		"job_id":  jobID,
+	}).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("check job access: %w", err)
+	}
+	return exists, nil
 }
 
 func NewAccessRepository(dbClient *db.PostgresClient) AccessRepository {

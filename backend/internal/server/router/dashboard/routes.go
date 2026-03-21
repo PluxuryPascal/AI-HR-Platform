@@ -29,8 +29,8 @@ func NewRouter(h DashboardRoutes, session, rbac echo.MiddlewareFunc) router.Rout
 
 func (r *dashboardRouter) Routes() []router.Route {
 	return []router.Route{
-		router.NewRoute(http.MethodGet, "/stats", r.handler.GetStats, r.session, r.rbac),
-		router.NewRoute(http.MethodGet, "/applications-chart", r.handler.GetApplicationDynamics, r.session, r.rbac),
-		router.NewRoute(http.MethodGet, "/recent-activity", r.handler.GetRecentActivity, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/stats", r.handler.GetStats, r.session),
+		router.NewRoute(http.MethodGet, "/applications-chart", r.handler.GetApplicationDynamics, r.session),
+		router.NewRoute(http.MethodGet, "/recent-activity", r.handler.GetRecentActivity, r.session),
 	}
 }

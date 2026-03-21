@@ -102,7 +102,9 @@ func (h *JobHandler) PostJobList() echo.HandlerFunc {
 		teamID := c.Get("team_id").(string)
 		offset := (req.Pagination.Page - 1) * req.Pagination.PerPage
 
-		dto, err := h.usecase.GetJobsByTeam(c.Request().Context(), teamID, offset, req.Pagination.PerPage, req.Filter)
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
+		dto, err := h.usecase.GetJobsByTeam(c.Request().Context(), teamID, userID, role, offset, req.Pagination.PerPage, req.Filter)
 		if err != nil {
 			h.log.Error("get jobs error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
@@ -115,7 +117,9 @@ func (h *JobHandler) PostJobList() echo.HandlerFunc {
 func (h *JobHandler) GetJob() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
-		job, err := h.usecase.GetJobByID(c.Request().Context(), id)
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
+		job, err := h.usecase.GetJobByID(c.Request().Context(), id, userID, role)
 		if err != nil {
 			if errors.Is(err, usecase.ErrJobNotFound) {
 				return response.Error(c, http.StatusNotFound, "job not found")
@@ -131,6 +135,8 @@ func (h *JobHandler) GetJob() echo.HandlerFunc {
 func (h *JobHandler) PatchJob() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
 		var req updateJobRequest
 		if err := c.Bind(&req); err != nil {
 			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
@@ -140,7 +146,7 @@ func (h *JobHandler) PatchJob() echo.HandlerFunc {
 			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
 		}
 
-		job, err := h.usecase.GetJobByID(c.Request().Context(), id)
+		job, err := h.usecase.GetJobByID(c.Request().Context(), id, userID, role)
 		if err != nil {
 			if errors.Is(err, usecase.ErrJobNotFound) {
 				return response.Error(c, http.StatusNotFound, "job not found")
@@ -172,7 +178,7 @@ func (h *JobHandler) PatchJob() echo.HandlerFunc {
 		}
 
 		actorID := c.Get("id").(string)
-		if err := h.usecase.UpdateJob(c.Request().Context(), job, actorID); err != nil {
+		if err := h.usecase.UpdateJob(c.Request().Context(), job, actorID, role); err != nil {
 			h.log.Error("update job error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -196,8 +202,10 @@ func (h *JobHandler) PostJobArchive() echo.HandlerFunc {
 func (h *JobHandler) changeStatus(newStatus domain.JobStatus) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
 
-		job, err := h.usecase.GetJobByID(c.Request().Context(), id)
+		job, err := h.usecase.GetJobByID(c.Request().Context(), id, userID, role)
 		if err != nil {
 			if errors.Is(err, usecase.ErrJobNotFound) {
 				return response.Error(c, http.StatusNotFound, "job not found")
@@ -214,7 +222,7 @@ func (h *JobHandler) changeStatus(newStatus domain.JobStatus) echo.HandlerFunc {
 
 		job.Status = newStatus
 		actorID := c.Get("id").(string)
-		if err := h.usecase.UpdateJob(c.Request().Context(), job, actorID); err != nil {
+		if err := h.usecase.UpdateJob(c.Request().Context(), job, actorID, role); err != nil {
 			h.log.Error("update job status error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -241,7 +249,8 @@ func (h *JobHandler) DeleteJob() echo.HandlerFunc {
 
 		actorID := c.Get("id").(string)
 		teamID := c.Get("team_id").(string)
-		if err := h.usecase.DeleteJob(c.Request().Context(), id, actorID, teamID); err != nil {
+		role := c.Get("role").(string)
+		if err := h.usecase.DeleteJob(c.Request().Context(), id, actorID, teamID, role); err != nil {
 			h.log.Error("delete job error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}

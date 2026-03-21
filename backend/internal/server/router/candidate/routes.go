@@ -33,12 +33,12 @@ func NewRouter(h CandidateRoutes, session, rbac echo.MiddlewareFunc) router.Rout
 
 func (r *candidateRouter) Routes() []router.Route {
 	return []router.Route{
-		router.NewRoute(http.MethodGet, "/:id", r.handler.GetCandidate, r.session, r.rbac),
-		router.NewRoute(http.MethodPatch, "/:id", r.handler.PatchCandidate, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/:id", r.handler.GetCandidate, r.session),
+		router.NewRoute(http.MethodPatch, "/:id", r.handler.PatchCandidate, r.session),
 		router.NewRoute(http.MethodDelete, "/:id", r.handler.DeleteCandidate, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "/:id/move", r.handler.PostCandidateMove, r.session, r.rbac),
-		router.NewRoute(http.MethodGet, "/:id/history", r.handler.GetCandidateHistory, r.session, r.rbac),
-		router.NewRoute(http.MethodPost, "/:id/confirm-review", r.handler.PostConfirmReview, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/:id/history", r.handler.GetCandidateHistory, r.session),
+		router.NewRoute(http.MethodPost, "/:id/confirm-review", r.handler.PostConfirmReview, r.session),
 	}
 }
 

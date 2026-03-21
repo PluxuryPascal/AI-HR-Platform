@@ -129,7 +129,9 @@ func (h *CandidateHandler) PostCandidateList() echo.HandlerFunc {
 		}
 
 		offset := (req.Pagination.Page - 1) * req.Pagination.PerPage
-		dto, err := h.candidateUC.GetCandidatesByJob(c.Request().Context(), jobID, offset, req.Pagination.PerPage, req.Filter)
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
+		dto, err := h.candidateUC.GetCandidatesByJob(c.Request().Context(), jobID, userID, role, offset, req.Pagination.PerPage, req.Filter)
 		if err != nil {
 			h.log.Error("get candidates error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
@@ -142,7 +144,9 @@ func (h *CandidateHandler) PostCandidateList() echo.HandlerFunc {
 func (h *CandidateHandler) GetCandidate() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
-		candidate, profile, stageID, score, factors, err := h.candidateUC.GetCandidateByID(c.Request().Context(), id)
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
+		candidate, profile, stageID, score, factors, err := h.candidateUC.GetCandidateByID(c.Request().Context(), id, userID, role)
 		if err != nil {
 			if errors.Is(err, usecase.ErrCandidateNotFound) {
 				return response.Error(c, http.StatusNotFound, "candidate not found")
@@ -180,7 +184,8 @@ func (h *CandidateHandler) PostCandidateMove() echo.HandlerFunc {
 			ChangedBy:   userID,
 		}
 
-		if err := h.candidateUC.MoveCandidate(c.Request().Context(), params); err != nil {
+		role := c.Get("role").(string)
+		if err := h.candidateUC.MoveCandidate(c.Request().Context(), params, role); err != nil {
 			if errors.Is(err, usecase.ErrInvalidStageTransition) {
 				return response.Error(c, http.StatusConflict, err.Error())
 			}
@@ -197,7 +202,8 @@ func (h *CandidateHandler) DeleteCandidate() echo.HandlerFunc {
 		id := c.Param("id")
 		actorID := c.Get("id").(string)
 		teamID := c.Get("team_id").(string)
-		if err := h.candidateUC.DeleteCandidate(c.Request().Context(), id, actorID, teamID); err != nil {
+		role := c.Get("role").(string)
+		if err := h.candidateUC.DeleteCandidate(c.Request().Context(), id, actorID, teamID, role); err != nil {
 			h.log.Error("delete candidate error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -209,7 +215,9 @@ func (h *CandidateHandler) DeleteCandidate() echo.HandlerFunc {
 func (h *CandidateHandler) GetCandidateHistory() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("id")
-		entries, err := h.candidateUC.GetStageHistory(c.Request().Context(), id)
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
+		entries, err := h.candidateUC.GetStageHistory(c.Request().Context(), id, userID, role)
 		if err != nil {
 			h.log.Error("get candidate history error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
@@ -239,7 +247,9 @@ func (h *CandidateHandler) PatchCandidate() echo.HandlerFunc {
 			Skills:    req.Skills,
 		}
 
-		if err := h.candidateUC.UpdateByRecruiter(c.Request().Context(), candidate); err != nil {
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
+		if err := h.candidateUC.UpdateByRecruiter(c.Request().Context(), candidate, userID, role); err != nil {
 			h.log.Error("update candidate error", zap.Error(err))
 			return response.Error(c, http.StatusInternalServerError, "internal server error")
 		}
@@ -265,7 +275,9 @@ func (h *CandidateHandler) PostConfirmReview() echo.HandlerFunc {
 			Skills:    req.Skills,
 		}
 
-		if err := h.candidateUC.ConfirmManualReview(c.Request().Context(), candidate); err != nil {
+		userID := c.Get("id").(string)
+		role := c.Get("role").(string)
+		if err := h.candidateUC.ConfirmManualReview(c.Request().Context(), candidate, userID, role); err != nil {
 			if errors.Is(err, usecase.ErrCandidateNotNeedsReview) {
 				return response.Error(c, http.StatusConflict, err.Error())
 			}

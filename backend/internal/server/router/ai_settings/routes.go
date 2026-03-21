@@ -33,8 +33,8 @@ func NewRouter(h AiSettingsRoutes, session, rbac echo.MiddlewareFunc) router.Rou
 
 func (r *aiSettingsRouter) Routes() []router.Route {
 	return []router.Route{
-		router.NewRoute(http.MethodGet, "/models", r.handler.GetModels, r.session, r.rbac),
-		router.NewRoute(http.MethodGet, "/", r.handler.GetSettings, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/models", r.handler.GetModels, r.session),
+		router.NewRoute(http.MethodGet, "/", r.handler.GetSettings, r.session),
 		router.NewRoute(http.MethodPatch, "/api-key", r.handler.UpdateApiKey, r.session, r.rbac),
 		router.NewRoute(http.MethodPatch, "/parse-model", r.handler.UpdateParseModel, r.session, r.rbac),
 		router.NewRoute(http.MethodPatch, "/score-model", r.handler.UpdateScoreModel, r.session, r.rbac),

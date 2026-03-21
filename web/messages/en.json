@@ -59,7 +59,8 @@
         "lastName": "Last Name",
         "teamName": "Team Name",
         "signUpBtn": "create account",
-        "hasAccount": "Already has an account?"
+        "hasAccount": "Already has an account?",
+        "successMessage": "Success!"
     },
     "CandidateProfile": {
         "tabs": {
