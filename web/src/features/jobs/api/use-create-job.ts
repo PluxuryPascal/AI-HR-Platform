@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { Job } from "../types/job";
 import { toast } from "sonner";
+import { ApiResponse } from "@/types";
 
 export interface CreateJobPayload {
     title: string;
@@ -18,7 +19,8 @@ export function useCreateJob() {
 
     return useMutation({
         mutationFn: async (payload: CreateJobPayload) => {
-            return await apiClient.post<Job>("/jobs", payload);
+            const response = await apiClient.post<ApiResponse<Job>>("/jobs", payload);
+            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["jobs"] });

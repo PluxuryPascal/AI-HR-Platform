@@ -46,8 +46,8 @@ func NewRouter(h JobRoutes, session, rbac echo.MiddlewareFunc) router.Router {
 func (r *jobRouter) initRoutes() {
 	r.routes = []router.Route{
 		router.NewRoute(http.MethodPost, "", r.handler.PostJob, r.session, r.rbac),
-		router.NewRoute(http.MethodPost, "/list", r.handler.PostJobList, r.session),
-		router.NewRoute(http.MethodGet, "/:id", r.handler.GetJob, r.session),
+		router.NewRoute(http.MethodPost, "/list", r.handler.PostJobList, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/:id", r.handler.GetJob, r.session, r.rbac),
 		router.NewRoute(http.MethodPatch, "/:id", r.handler.PatchJob, r.session, r.rbac),
 		router.NewRoute(http.MethodDelete, "/:id", r.handler.DeleteJob, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "/:id/publish", r.handler.PostJobPublish, r.session, r.rbac),

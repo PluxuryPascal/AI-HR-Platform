@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { toast } from "sonner";
+import { ApiResponse } from "@/types";
 
 export interface ChatMessage {
     role: "user" | "assistant" | "system";
@@ -36,8 +37,8 @@ export interface InterviewGuide {
 export function useCandidateChat() {
     return useMutation({
         mutationFn: async (payload: ChatRequest) => {
-            const response = await apiClient.post<ChatResponse>("/chat", payload);
-            return response;
+            const response = await apiClient.post<ApiResponse<ChatResponse>>("/chat", payload);
+            return response.data;
         },
     });
 }
@@ -47,8 +48,8 @@ export function useGenerateInterview() {
 
     return useMutation({
         mutationFn: async ({ id, locale }: { id: string; locale: string }) => {
-            const response = await apiClient.post<InterviewGuide>(`/interview/${id}/questions`, { locale });
-            return response;
+            const response = await apiClient.post<ApiResponse<InterviewGuide>>(`/interview/${id}/questions`, { locale });
+            return response.data;
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["candidate", variables.id, "interview"] });
@@ -66,8 +67,8 @@ export function useGetInterviewGuide(candidateId: string) {
         queryFn: async () => {
             // This might be a GET or the result is cached from previous POST
             // For now, let's assume it's part of candidate details or separate GET
-            const response = await apiClient.get<InterviewGuide>(`/interview/${candidateId}/questions`);
-            return response;
+            const response = await apiClient.get<ApiResponse<InterviewGuide>>(`/interview/${candidateId}/questions`);
+            return response.data;
         },
         enabled: !!candidateId,
     });

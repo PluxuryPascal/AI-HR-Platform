@@ -2,12 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { TeamMember, TeamInvite } from "../types/team";
 import { toast } from "sonner";
+import { ApiResponse } from "@/types";
 
 export function useGetTeamMembers() {
     return useQuery<TeamMember[]>({
         queryKey: ["team-members"],
         queryFn: async () => {
-            return await apiClient.get<TeamMember[]>("/auth/members");
+            const response = await apiClient.get<ApiResponse<TeamMember[]>>("/auth/members");
+            return response.data;
         },
     });
 }
@@ -16,7 +18,8 @@ export function useGetTeamInvites() {
     return useQuery<TeamInvite[]>({
         queryKey: ["team-invites"],
         queryFn: async () => {
-            return await apiClient.get<TeamInvite[]>("/invite/list");
+            const response = await apiClient.get<ApiResponse<TeamInvite[]>>("/invite/list");
+            return response.data;
         },
     });
 }
@@ -32,7 +35,8 @@ export function useInviteUser() {
 
     return useMutation({
         mutationFn: async (data: InviteUserDTO) => {
-            return await apiClient.post("/invite/invite", data);
+            const response = await apiClient.post<ApiResponse<void>>("/invite/invite", data);
+            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["team-invites"] });

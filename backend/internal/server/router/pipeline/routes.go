@@ -30,7 +30,7 @@ func NewRouter(h PipelineRoutes, session, rbac echo.MiddlewareFunc) router.Route
 
 func (r *pipelineRouter) Routes() []router.Route {
 	return []router.Route{
-		router.NewRoute(http.MethodGet, "", r.handler.GetStages, r.session),
+		router.NewRoute(http.MethodGet, "", r.handler.GetStages, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "", r.handler.PostStage, r.session, r.rbac),
 		router.NewRoute(http.MethodPatch, "/:stage_id", r.handler.PatchStage, r.session, r.rbac),
 		router.NewRoute(http.MethodDelete, "/:stage_id", r.handler.DeleteStage, r.session, r.rbac),

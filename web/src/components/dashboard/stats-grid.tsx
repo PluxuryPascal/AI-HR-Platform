@@ -15,28 +15,28 @@ export function StatsGrid() {
     const stats = [
         {
             title: t("applicants"),
-            value: dashboardStats?.total_candidates.toLocaleString() || "0",
+            value: dashboardStats?.total_candidates?.toLocaleString() || "0",
             icon: Users,
             trend: dashboardStats?.total_candidates_delta ? `${dashboardStats.total_candidates_delta > 0 ? "+" : ""}${dashboardStats.total_candidates_delta}%` : "0%",
             trendUp: (dashboardStats?.total_candidates_delta || 0) >= 0,
         },
         {
             title: t("activeJobs"),
-            value: dashboardStats?.active_jobs.toString() || "0",
+            value: dashboardStats?.active_jobs?.toString() || "0",
             icon: Briefcase,
             trend: dashboardStats?.active_jobs_delta ? `${dashboardStats.active_jobs_delta > 0 ? "+" : ""}${dashboardStats.active_jobs_delta}` : "0",
             trendUp: (dashboardStats?.active_jobs_delta || 0) >= 0,
         },
         {
             title: t("interviews"),
-            value: dashboardStats?.upcoming_interviews.toString() || "0",
+            value: dashboardStats?.upcoming_interviews?.toString() || "0",
             icon: CalendarCheck,
             trend: dashboardStats?.interviews_delta ? `${dashboardStats.interviews_delta > 0 ? "+" : ""}${dashboardStats.interviews_delta}` : "0",
             trendUp: (dashboardStats?.interviews_delta || 0) >= 0,
         },
         {
             title: t("timeToHire"),
-            value: `${dashboardStats?.avg_time_to_hire_days.toFixed(1) || "0"} ${tStats("days")}`,
+            value: `${dashboardStats?.avg_time_to_hire_days?.toFixed(1) || "0"} ${tStats("days")}`,
             icon: Clock,
             trend: dashboardStats?.avg_time_to_hire_delta ? `${dashboardStats.avg_time_to_hire_delta > 0 ? "+" : ""}${dashboardStats.avg_time_to_hire_delta.toFixed(1)} ${tStats("days")}` : `0 ${tStats("days")}`,
             trendUp: (dashboardStats?.avg_time_to_hire_delta || 0) <= 0, // Lower is better for time to hire

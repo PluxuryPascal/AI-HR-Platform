@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import { ApiResponse } from "@/types";
 
 export interface DashboardStats {
     total_candidates: number;
@@ -35,8 +36,8 @@ export function useGetDashboardStats() {
     return useQuery<DashboardStats>({
         queryKey: ["dashboard", "stats"],
         queryFn: async () => {
-            const response = await apiClient.get<DashboardStats>("/dashboard/stats");
-            return response;
+            const response = await apiClient.get<ApiResponse<DashboardStats>>("/dashboard/stats");
+            return response.data;
         },
     });
 }
@@ -50,8 +51,8 @@ export function useGetDashboardDynamics(startDate: string, endDate: string, type
                 end_date: endDate,
                 type: type,
             });
-            const response = await apiClient.get<ChartDataPoint[]>(`/dashboard/dynamics?${params.toString()}`);
-            return response;
+            const response = await apiClient.get<ApiResponse<ChartDataPoint[]>>(`/dashboard/dynamics?${params.toString()}`);
+            return response.data;
         },
     });
 }
@@ -60,8 +61,8 @@ export function useGetRecentActivity(limit: number = 10) {
     return useQuery<ActivityLogEntry[]>({
         queryKey: ["dashboard", "activity", limit],
         queryFn: async () => {
-            const response = await apiClient.get<ActivityLogEntry[]>(`/dashboard/activity?limit=${limit}`);
-            return response;
+            const response = await apiClient.get<ApiResponse<ActivityLogEntry[]>>(`/dashboard/activity?limit=${limit}`);
+            return response.data;
         },
     });
 }

@@ -30,7 +30,7 @@ func NewRouter(h ChatRoutes, session, rbac echo.MiddlewareFunc) router.Router {
 func (r *chatRouter) Routes() []router.Route {
 	return []router.Route{
 		router.NewRoute(http.MethodPost, "", r.handler.PostChat, r.session, r.rbac),
-		router.NewRoute(http.MethodGet, "/sessions", r.handler.GetChatSessions, r.session),
-		router.NewRoute(http.MethodGet, "/sessions/:id/history", r.handler.GetChatHistory, r.session),
+		router.NewRoute(http.MethodGet, "/sessions", r.handler.GetChatSessions, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/sessions/:id/history", r.handler.GetChatHistory, r.session, r.rbac),
 	}
 }
