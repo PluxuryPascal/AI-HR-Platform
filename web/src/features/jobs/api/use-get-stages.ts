@@ -9,7 +9,7 @@ export function useGetStages(jobId?: string) {
         queryFn: async () => {
             if (!jobId) return [];
             const response = await apiClient.get<ApiResponse<Stage[]>>(`/jobs/${jobId}/stages`);
-            return response.data;
+            return response?.data;
         },
         enabled: !!jobId,
     });

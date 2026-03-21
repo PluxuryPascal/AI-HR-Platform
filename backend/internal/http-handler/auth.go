@@ -170,7 +170,7 @@ type updatePasswordRequest struct {
 
 func (i *AuthHandler) GetProfile() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Get("user_id").(string)
+		userID := c.Get("id").(string)
 
 		user, err := i.usecase.GetProfile(c.Request().Context(), userID)
 		if err != nil {
@@ -183,7 +183,7 @@ func (i *AuthHandler) GetProfile() echo.HandlerFunc {
 
 func (i *AuthHandler) PatchProfile() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Get("user_id").(string)
+		userID := c.Get("id").(string)
 
 		var req updateProfileRequest
 		if err := c.Bind(&req); err != nil {
@@ -204,7 +204,7 @@ func (i *AuthHandler) PatchProfile() echo.HandlerFunc {
 
 func (i *AuthHandler) PatchPassword() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Get("user_id").(string)
+		userID := c.Get("id").(string)
 
 		var req updatePasswordRequest
 		if err := c.Bind(&req); err != nil {

@@ -25,7 +25,7 @@ export function RecentActivity() {
         return `${diffInDays} дн. назад`;
     };
 
-    const activities = rawActivities.map(log => {
+    const activities = (rawActivities || []).map(log => {
         let icon = Clock;
         let color = "text-muted-foreground";
         let action = log.action_code;

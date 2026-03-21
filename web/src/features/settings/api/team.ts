@@ -36,7 +36,7 @@ export function useInviteUser() {
     return useMutation({
         mutationFn: async (data: InviteUserDTO) => {
             const response = await apiClient.post<ApiResponse<void>>("/invite/invite", data);
-            return response.data;
+            return response?.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["team-invites"] });

@@ -33,3 +33,13 @@ type EmbeddingChunk struct {
 	Text      string    `json:"text"`
 	Embedding []float32 `json:"embedding"`
 }
+
+type JobParseResult struct {
+	Title        string   `json:"title"`
+	Description  string   `json:"description"`
+	Requirements []string `json:"requirements"`
+	WorkFormat   string   `json:"work_format"`
+	SalaryMin    int    `json:"salary_min"`
+	SalaryMax    int    `json:"salary_max"`
+	Currency     string `json:"currency"`
+}

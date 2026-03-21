@@ -297,7 +297,8 @@
             "desc": "Обновите имя и email.",
             "nameLabel": "Полное имя",
             "emailLabel": "Email адрес",
-            "saveBtn": "Сохранить изменения"
+            "saveBtn": "Сохранить изменения",
+            "successMessage": "Профиль успешно обновлен"
         },
         "security": {
             "title": "Безопасность",
@@ -305,7 +306,8 @@
             "currentPass": "Текущий пароль",
             "newPass": "Новый пароль",
             "confirmPass": "Подтвердите пароль",
-            "updatePassBtn": "Обновить пароль"
+            "updatePassBtn": "Обновить пароль",
+            "successMessage": "Пароль успешно изменен"
         }
     },
     "Team": {

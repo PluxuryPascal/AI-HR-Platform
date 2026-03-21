@@ -253,6 +253,27 @@
             "experience": "Experiencia"
         }
     },
+    "Profile": {
+        "title": "Configuración del perfil",
+        "description": "Gestione la configuración y las preferencias de su cuenta.",
+        "personalInfo": {
+            "title": "Información personal",
+            "desc": "Actualice su nombre y correo electrónico.",
+            "nameLabel": "Nombre completo",
+            "emailLabel": "Dirección de correo electrónico",
+            "saveBtn": "Guardar cambios",
+            "successMessage": "Perfil actualizado con éxito"
+        },
+        "security": {
+            "title": "Seguridad",
+            "desc": "Cambia tu contraseña.",
+            "currentPass": "Contraseña actual",
+            "newPass": "Nueva contraseña",
+            "confirmPass": "Confirmar contraseña",
+            "updatePassBtn": "Actualizar contraseña",
+            "successMessage": "Contraseña actualizada con éxito"
+        }
+    },
     "Team": {
         "title": "Gestión del equipo",
         "description": "Invita a tus colegas y gestiona sus permisos.",

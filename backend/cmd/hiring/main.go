@@ -15,6 +15,7 @@ import (
 	"backend/internal/temporal"
 	"backend/internal/server/router/access"
 	"backend/internal/server/router/ai_settings"
+	"backend/internal/server/router/ai_engine"
 	"backend/internal/server/router/candidate"
 	"backend/internal/server/router/chat"
 	"backend/internal/server/router/dashboard"
@@ -61,6 +62,7 @@ type usecases struct {
 	dashboard  usecase.DashboardUseCase
 	chat       usecase.ChatUseCase
 	interview  usecase.InterviewUseCase
+	ai         usecase.AiUseCase
 }
 
 type handlers struct {
@@ -73,6 +75,7 @@ type handlers struct {
 	aiSettings *handler.AiSettingsHandler
 	chat       *handler.ChatHandler
 	interview  *handler.InterviewHandler
+	ai         *handler.AiHandler
 }
 
 type infrastructureComponents struct {
@@ -268,6 +271,7 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 		dashboard:  usecase.NewDashboardUseCase(infra.log.Log, r.dashboard, authSvcClient, aiSvcClient),
 		chat:       usecase.NewChatUseCase(infra.log.Log, r.chat, infra.temporalClient),
 		interview:  usecase.NewInterviewUseCase(infra.log.Log, infra.temporalClient.TemporalClient),
+		ai:         usecase.NewAiUseCase(aiSvcClient),
 	}
 }
 
@@ -288,6 +292,7 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 		dashboard:  handler.NewDashboardHandler(infra.log.Log, u.dashboard),
 		aiSettings: handler.NewAiSettingsHandler(infra.log.Log, r.aiSettings, infra.openRouter),
 		chat:       handler.NewChatHandler(infra.log.Log, u.chat),
+		ai:         handler.NewAiHandler(u.ai),
 	}
 
 	return h, mw
@@ -327,6 +332,9 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		),
 		server.WithRouterGroup(ctx, "/interview",
 			interview.NewRouter(h.interview, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/ai",
+			ai_engine.NewRouter(h.ai, mw.Session(t), mw.RBAC()),
 		),
 	)
 }

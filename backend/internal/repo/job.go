@@ -88,7 +88,7 @@ func (r *jobRepo) GetByID(ctx context.Context, id string) (*domain.Job, error) {
 }
 
 func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit int, filter domain.JobFilter) (*domain.JobsDTO, error) {
-	sortID := "j.created_at"
+	sortID := "f.created_at"
 	sortDesc := "DESC"
 
 	if filter.Sort != nil {
@@ -105,16 +105,16 @@ func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit 
 		}
 
 		allowedSortFields := map[string]string{
-			"title":           "j.title",
-			"created_at":      "j.created_at",
-			"status":          "j.status",
-			"department_name": "d.name",
+			"title":           "f.title",
+			"created_at":      "f.created_at",
+			"status":          "f.status",
+			"department_name": "f.department_name",
 		}
 
 		if dbField, ok := allowedSortFields[sortID]; ok {
 			sortID = dbField
 		} else {
-			sortID = "j.created_at"
+			sortID = "f.created_at"
 		}
 	}
 
@@ -229,7 +229,7 @@ func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit 
 		args["allowed_user_id"] = *filter.AllowedUserID
 	} else {
 		args["ifAllowedUser"] = false
-		args["allowed_user_id"] = ""
+		args["allowed_user_id"] = nil
 	}
 
 	if filter.Title != nil {
@@ -246,7 +246,7 @@ func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit 
 		args["status"] = string(*filter.Status)
 	} else {
 		args["ifStatus"] = false
-		args["status"] = ""
+		args["status"] = nil
 	}
 
 	if filter.WorkFormat != nil {
@@ -254,7 +254,7 @@ func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit 
 		args["work_format"] = string(*filter.WorkFormat)
 	} else {
 		args["ifWorkFormat"] = false
-		args["work_format"] = ""
+		args["work_format"] = nil
 	}
 
 	if filter.DepartmentName != nil {

@@ -28,7 +28,7 @@ export function useGetProfile() {
         queryKey: ["user-profile"],
         queryFn: async () => {
             const response = await apiClient.get<ApiResponse<UserProfile>>("/auth/profile");
-            return response.data;
+            return response?.data;
         },
     });
 }
@@ -39,7 +39,7 @@ export function useUpdateProfile() {
     return useMutation({
         mutationFn: async (data: UpdateProfileRequest) => {
             const response = await apiClient.patch<ApiResponse<void>>("/auth/profile", data);
-            return response.data;
+            return response?.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["user-profile"] });
@@ -51,7 +51,7 @@ export function useUpdatePassword() {
     return useMutation({
         mutationFn: async (data: UpdatePasswordRequest) => {
             const response = await apiClient.patch<ApiResponse<void>>("/auth/password", data);
-            return response.data;
+            return response?.data;
         },
     });
 }

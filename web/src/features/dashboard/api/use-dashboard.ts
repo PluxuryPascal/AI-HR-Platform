@@ -51,7 +51,7 @@ export function useGetDashboardDynamics(startDate: string, endDate: string, type
                 end_date: endDate,
                 type: type,
             });
-            const response = await apiClient.get<ApiResponse<ChartDataPoint[]>>(`/dashboard/dynamics?${params.toString()}`);
+            const response = await apiClient.get<ApiResponse<ChartDataPoint[]>>(`/dashboard/applications-chart?${params.toString()}`);
             return response.data;
         },
     });
@@ -61,7 +61,7 @@ export function useGetRecentActivity(limit: number = 10) {
     return useQuery<ActivityLogEntry[]>({
         queryKey: ["dashboard", "activity", limit],
         queryFn: async () => {
-            const response = await apiClient.get<ApiResponse<ActivityLogEntry[]>>(`/dashboard/activity?limit=${limit}`);
+            const response = await apiClient.get<ApiResponse<ActivityLogEntry[]>>(`/dashboard/recent-activity?limit=${limit}`);
             return response.data;
         },
     });

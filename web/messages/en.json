@@ -287,7 +287,8 @@
             "desc": "Update your name and email.",
             "nameLabel": "Full Name",
             "emailLabel": "Email Address",
-            "saveBtn": "Save Changes"
+            "saveBtn": "Save Changes",
+            "successMessage": "Profile updated successfully"
         },
         "security": {
             "title": "Security",
@@ -295,7 +296,8 @@
             "currentPass": "Current Password",
             "newPass": "New Password",
             "confirmPass": "Confirm Password",
-            "updatePassBtn": "Update Password"
+            "updatePassBtn": "Update Password",
+            "successMessage": "Password updated successfully"
         }
     },
     "Team": {

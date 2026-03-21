@@ -33,7 +33,7 @@ export function OverviewChart() {
 
     const chartData = useMemo(() => {
         const monthFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'short' });
-        return rawData.map(d => ({
+        return (rawData || []).map(d => ({
             name: monthFormatter.format(new Date(d.date)).replace('.', ''),
             total: d.count
         }));
