@@ -20,9 +20,10 @@ import { UploadProgress } from "./upload-progress";
 
 interface UploadResumeDialogProps {
     children?: React.ReactNode;
+    jobId: string;
 }
 
-export function UploadResumeDialog({ children }: UploadResumeDialogProps) {
+export function UploadResumeDialog({ children, jobId }: UploadResumeDialogProps) {
     const t = useTranslations("Candidates");
     const [isOpen, setIsOpen] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
@@ -73,7 +74,7 @@ export function UploadResumeDialog({ children }: UploadResumeDialogProps) {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                         >
-                            <UploadProgress files={files} onComplete={handleUploadComplete} />
+                            <UploadProgress files={files} jobId={jobId} onComplete={handleUploadComplete} />
                         </motion.div>
                     ) : (
                         <motion.div

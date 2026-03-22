@@ -64,11 +64,13 @@ func (r *jobRepo) Create(ctx context.Context, job *domain.Job) error {
 
 func (r *jobRepo) GetByID(ctx context.Context, id string) (*domain.Job, error) {
 	const query = `
-		SELECT id, team_id, title, department_id, work_format, description, 
-		       extracted_requirements, status, salary_min, salary_max, currency, 
-		       created_by, created_at, updated_at
-		FROM hiring.t_jobs
-		WHERE id = @id
+		SELECT j.id, j.team_id, j.title, j.department_id, d.name as department_name, 
+		       j.work_format, j.description, j.extracted_requirements, j.status, 
+		       j.salary_min, j.salary_max, j.currency, j.created_by, 
+		       j.created_at, j.updated_at
+		FROM hiring.t_jobs j
+		LEFT JOIN hiring.t_departments d ON j.department_id = d.id
+		WHERE j.id = @id
 	`
 
 	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{"id": id})
@@ -204,8 +206,8 @@ func (r *jobRepo) GetByTeamID(ctx context.Context, teamID string, offset, limit 
 					'salary_max',            l.salary_max,
 					'currency',              l.currency,
 					'created_by',            l.created_by,
-					'created_at',            l.created_at,
-					'updated_at',            l.updated_at
+					'created_at',            l.created_at::TIMESTAMPTZ,
+					'updated_at',            l.updated_at::TIMESTAMPTZ
 				)) AS build
 				FROM limited l
 			)

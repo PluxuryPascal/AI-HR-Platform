@@ -24,10 +24,10 @@ import { useBulkActions } from "../hooks/use-bulk-actions";
 
 import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
 
-export function CandidatesTable() {
+export function CandidatesTable({ jobId }: { jobId: string }) {
     const t = useTranslations("Candidates.table");
     const tEmpty = useTranslations("Candidates.empty");
-    const { data: candidates, isLoading } = useCandidates();
+    const { data: candidates, isLoading } = useCandidates(jobId);
 
     const {
         selectedIds,
@@ -66,7 +66,7 @@ export function CandidatesTable() {
                 title={tEmpty("title")}
                 description={tEmpty("desc")}
                 action={
-                    <UploadResumeDialog>
+                    <UploadResumeDialog jobId={jobId}>
                         <Button>
                             {tEmpty("button")}
                         </Button>

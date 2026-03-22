@@ -44,7 +44,7 @@ import { useGetJobs } from "@/features/jobs/api/use-get-jobs";
 
 export const inviteSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
-    role: z.enum(["owner", "recruiter", "manager"]),
+    role: z.enum(["owner", "recruiter", "hiring_manager"]),
     jobs: z.array(z.string()).optional(),
 });
 
@@ -92,7 +92,7 @@ export function InviteForm({ form, onSubmit, isPending }: InviteFormProps) {
                                 <SelectContent>
                                     <SelectItem value="owner">{t("roles.owner")}</SelectItem>
                                     <SelectItem value="recruiter">{t("roles.recruiter")}</SelectItem>
-                                    <SelectItem value="manager">{t("roles.manager")}</SelectItem>
+                                    <SelectItem value="hiring_manager">{t("roles.hiring_manager")}</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage />
@@ -100,7 +100,7 @@ export function InviteForm({ form, onSubmit, isPending }: InviteFormProps) {
                     )}
                 />
 
-                {watchRole === "manager" && jobs && (
+                {watchRole === "hiring_manager" && jobs && (
                     <FormField
                         control={form.control}
                         name="jobs"

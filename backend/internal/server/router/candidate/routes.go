@@ -15,6 +15,7 @@ type CandidateRoutes interface {
 	GetCandidateHistory() echo.HandlerFunc
 	PatchCandidate() echo.HandlerFunc
 	PostConfirmReview() echo.HandlerFunc
+	PostUploadResume() echo.HandlerFunc
 }
 
 type candidateRouter struct {
@@ -59,6 +60,7 @@ func NewJobScopedRouter(h CandidateRoutes, session, rbac echo.MiddlewareFunc) ro
 func (r *candidateJobRouter) Routes() []router.Route {
 	return []router.Route{
 		router.NewRoute(http.MethodPost, "", r.handler.PostCandidateList, r.session, r.rbac),
+		router.NewRoute(http.MethodPost, "/upload", r.handler.PostUploadResume, r.session, r.rbac),
 	}
 }
 

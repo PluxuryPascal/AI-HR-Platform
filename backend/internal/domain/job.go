@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -29,9 +30,9 @@ type Job struct {
 	DepartmentID          *string        `json:"department_id,omitempty" db:"department_id"`
 	DepartmentName        *string        `json:"department_name,omitempty" db:"department_name"`
 	WorkFormat            WorkFormatType `json:"work_format" db:"work_format"`
-	Description           *string        `json:"description,omitempty" db:"description"`
-	ExtractedRequirements []byte         `json:"extracted_requirements,omitempty" db:"extracted_requirements"`
-	Status                JobStatus      `json:"status" db:"status"`
+	Description           *string         `json:"description,omitempty" db:"description"`
+	ExtractedRequirements json.RawMessage `json:"extracted_requirements,omitempty" db:"extracted_requirements"`
+	Status                JobStatus       `json:"status" db:"status"`
 	SalaryMin             *int           `json:"salary_min,omitempty" db:"salary_min"`
 	SalaryMax             *int           `json:"salary_max,omitempty" db:"salary_max"`
 	Currency              string         `json:"currency" db:"currency"`

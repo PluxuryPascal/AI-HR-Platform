@@ -18,13 +18,21 @@ async function request<T>(
     options: RequestOptions = {},
 ): Promise<T> {
     const { body, headers, ...rest } = options;
+    const isFormData = body instanceof FormData;
+    const finalHeaders: Record<string, string> = { ...headers as Record<string, string> };
+
+    if (!isFormData && !finalHeaders["Content-Type"]) {
+        finalHeaders["Content-Type"] = "application/json";
+    }
+
+    // If Content-Type is explicitly set to empty, remove it (let browser set boundary for FormData)
+    if (finalHeaders["Content-Type"] === "") {
+        delete finalHeaders["Content-Type"];
+    }
 
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-        headers: {
-            "Content-Type": "application/json",
-            ...headers,
-        },
-        body: body ? JSON.stringify(body) : undefined,
+        headers: finalHeaders,
+        body: isFormData ? (body as any) : (body ? JSON.stringify(body) : undefined),
         ...rest,
     });
 

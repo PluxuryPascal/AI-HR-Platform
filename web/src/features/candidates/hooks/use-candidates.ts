@@ -5,8 +5,8 @@ import { Candidate as BackendCandidate } from "../types/candidate";
 
 export type Candidate = CandidateCard;
 
-export function useCandidates() {
-    const { data: columns, isLoading } = useGetCandidates();
+export function useCandidates(jobId?: string) {
+    const { data: columns, isLoading } = useGetCandidates(jobId);
 
     const candidates = useMemo(() => {
         if (!columns) return [];

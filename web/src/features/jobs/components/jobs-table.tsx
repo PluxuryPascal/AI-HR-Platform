@@ -25,8 +25,13 @@ import { useRouter } from "@/i18n/routing";
 
 
 import { useGetJobs } from "../api/use-get-jobs";
-import { JobStatus } from "../types/job";
-import { Loader2 } from "lucide-react";
+import { usePublishJob, useCloseJob, useArchiveJob } from "../api/use-job-actions";
+import { JobStatus, JobFilter } from "../types/job";
+import { Loader2, Zap, XCircle, ArchiveRestore } from "lucide-react";
+
+interface JobsTableProps {
+    filter?: JobFilter;
+}
 
 interface StatusBadgeProps {
     status: JobStatus;
@@ -65,10 +70,13 @@ const StatusBadge = ({ status }: StatusBadgeProps) => {
     }
 };
 
-export function JobsTable() {
+export function JobsTable({ filter }: JobsTableProps) {
     const t = useTranslations("Jobs");
     const router = useRouter();
-    const { data: jobsResponse, isLoading, error } = useGetJobs();
+    const { data: jobsResponse, isLoading, error } = useGetJobs({ filter });
+    const publishJob = usePublishJob();
+    const closeJob = useCloseJob();
+    const archiveJob = useArchiveJob();
 
     if (isLoading) {
         return (
@@ -105,8 +113,10 @@ export function JobsTable() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[40%]">{t("table.title")}</TableHead>
+                        <TableHead className="w-[30%]">{t("table.title")}</TableHead>
                         <TableHead>{t("table.department")}</TableHead>
+                        <TableHead>{t("table.type")}</TableHead>
+                        <TableHead>{t("table.salary")}</TableHead>
                         <TableHead>{t("table.created")}</TableHead>
                         <TableHead>{t("table.status")}</TableHead>
                         <TableHead className="text-right">{t("table.actions")}</TableHead>
@@ -117,6 +127,19 @@ export function JobsTable() {
                         <TableRow key={job.id} className="hover:bg-muted/50 transition-colors">
                             <TableCell className="font-medium">{job.title}</TableCell>
                             <TableCell>{job.department_name || "-"}</TableCell>
+                            <TableCell className="capitalize">{job.work_format}</TableCell>
+                            <TableCell>
+                                {job.salary_min || job.salary_max ? (
+                                    <>
+                                        {job.salary_min && `${job.salary_min.toLocaleString()}`}
+                                        {job.salary_min && job.salary_max && " - "}
+                                        {job.salary_max && `${job.salary_max.toLocaleString()}`}
+                                        {` ${job.currency}`}
+                                    </>
+                                ) : (
+                                    "-"
+                                )}
+                            </TableCell>
                             <TableCell>{new Date(job.created_at).toLocaleDateString()}</TableCell>
                             <TableCell>
                                 <StatusBadge status={job.status} />
@@ -135,15 +158,32 @@ export function JobsTable() {
                                             <Eye className="mr-2 h-4 w-4" />
                                             {t("table.viewCandidates")}
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => router.push(`/dashboard/jobs/${job.id}/edit`)}>
                                             <FileText className="mr-2 h-4 w-4" />
                                             {t("table.editJob")}
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-red-600">
-                                            <Archive className="mr-2 h-4 w-4" />
-                                            {t("table.archive")}
-                                        </DropdownMenuItem>
+                                        
+                                        {job.status === "status_draft" && (
+                                            <DropdownMenuItem onClick={() => publishJob.mutate(job.id)} disabled={publishJob.isPending}>
+                                                <Zap className="mr-2 h-4 w-4 text-amber-500" />
+                                                Опубликовать
+                                            </DropdownMenuItem>
+                                        )}
+                                        
+                                        {job.status === "status_published" && (
+                                            <DropdownMenuItem onClick={() => closeJob.mutate(job.id)} disabled={closeJob.isPending}>
+                                                <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                                                Закрыть
+                                            </DropdownMenuItem>
+                                        )}
+                                        
+                                        {job.status === "status_closed" && (
+                                            <DropdownMenuItem onClick={() => archiveJob.mutate(job.id)} disabled={archiveJob.isPending}>
+                                                <ArchiveRestore className="mr-2 h-4 w-4 text-slate-500" />
+                                                {t("table.archive")}
+                                            </DropdownMenuItem>
+                                        )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>

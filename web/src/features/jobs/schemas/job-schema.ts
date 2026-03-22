@@ -16,7 +16,9 @@ export const jobSchema = z.object({
     description: z.string().min(10, {
         message: "Description must be at least 10 characters.",
     }),
-    requirements: z.array(z.string()).min(1, {
+    requirements: z.array(z.object({
+        value: z.string().min(1, "Requirement cannot be empty")
+    })).min(1, {
         message: "Add at least one requirement.",
     }),
     type: z.nativeEnum(JobType),

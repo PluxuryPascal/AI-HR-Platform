@@ -53,14 +53,20 @@ export function useInviteMember() {
     });
 
     const onSubmit = useCallback(async (values: InviteFormValues) => {
-        await inviteMutation.mutateAsync({
-            email: values.email,
-            role: values.role,
-            job_ids: values.jobs && values.jobs.length > 0 ? values.jobs : undefined,
-        });
-        
-        setIsInviteOpen(false);
-        form.reset();
+        try {
+            await inviteMutation.mutateAsync({
+                email: values.email,
+                role: values.role,
+                job_ids: values.jobs && values.jobs.length > 0 ? values.jobs : undefined,
+            });
+            
+            setIsInviteOpen(false);
+            form.reset();
+        } catch (error: any) {
+            // Error is already shown in mutation onError but we catch it here 
+            // to prevent bubbling up and causing runtime error overlay
+            console.error("Invite member error:", error);
+        }
     }, [inviteMutation, form]);
 
     return {

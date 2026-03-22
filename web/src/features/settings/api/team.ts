@@ -42,8 +42,9 @@ export function useInviteUser() {
             queryClient.invalidateQueries({ queryKey: ["team-invites"] });
             toast.success("Приглашение отправлено");
         },
-        onError: () => {
-            toast.error("Не удалось отправить приглашение");
+        onError: (error: any) => {
+            console.error("Invite user error:", error);
+            toast.error(error.message || "Не удалось отправить приглашение");
         },
     });
 }

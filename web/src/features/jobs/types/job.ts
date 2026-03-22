@@ -10,6 +10,7 @@ export interface Job {
     department_name?: string;
     work_format: WorkFormat;
     description?: string;
+    requirements?: string[];
     status: JobStatus;
     salary_min?: number;
     salary_max?: number;
@@ -30,7 +31,10 @@ export interface CreateJobRequest {
     department_id?: string;
     work_format: WorkFormat;
     description?: string;
+    requirements?: string[];
     salary_min?: number;
     salary_max?: number;
     currency?: string;
 }
+
+export interface UpdateJobRequest extends Partial<CreateJobRequest> {}

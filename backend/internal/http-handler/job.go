@@ -4,6 +4,7 @@ import (
 	"backend/internal/domain"
 	"backend/internal/response"
 	"backend/internal/usecase"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -29,6 +30,7 @@ type createJobRequest struct {
 	DepartmentID *string               `json:"department_id,omitempty" validate:"omitempty,uuid4"`
 	WorkFormat   domain.WorkFormatType `json:"work_format" validate:"required,oneof=remote office hybrid"`
 	Description  *string               `json:"description,omitempty"`
+	Requirements []string              `json:"requirements,omitempty"`
 	SalaryMin    *int                  `json:"salary_min,omitempty" validate:"omitempty,min=0"`
 	SalaryMax    *int                  `json:"salary_max,omitempty" validate:"omitempty,min=0"`
 	Currency     string                `json:"currency,omitempty" validate:"omitempty,len=3"`
@@ -44,6 +46,7 @@ type updateJobRequest struct {
 	DepartmentID *string                `json:"department_id,omitempty" validate:"omitempty,uuid4"`
 	WorkFormat   *domain.WorkFormatType `json:"work_format,omitempty" validate:"omitempty,oneof=remote office hybrid"`
 	Description  *string                `json:"description,omitempty"`
+	Requirements *[]string              `json:"requirements,omitempty"`
 	SalaryMin    *int                   `json:"salary_min,omitempty" validate:"omitempty,min=0"`
 	SalaryMax    *int                   `json:"salary_max,omitempty" validate:"omitempty,min=0"`
 	Currency     *string                `json:"currency,omitempty" validate:"omitempty,len=3"`
@@ -65,17 +68,23 @@ func (h *JobHandler) PostJob() echo.HandlerFunc {
 			currency = "RUB"
 		}
 
+		var requirementsJSON []byte
+		if req.Requirements != nil {
+			requirementsJSON, _ = json.Marshal(req.Requirements)
+		}
+
 		job := &domain.Job{
-			Title:        req.Title,
-			DepartmentID: req.DepartmentID,
-			WorkFormat:   req.WorkFormat,
-			Description:  req.Description,
-			SalaryMin:    req.SalaryMin,
-			SalaryMax:    req.SalaryMax,
-			Currency:     currency,
-			Status:       domain.JobStatusDraft,
-			CreatedBy:    c.Get("id").(string),
-			TeamID:       c.Get("team_id").(string),
+			Title:                 req.Title,
+			DepartmentID:          req.DepartmentID,
+			WorkFormat:            req.WorkFormat,
+			Description:           req.Description,
+			ExtractedRequirements: requirementsJSON,
+			SalaryMin:             req.SalaryMin,
+			SalaryMax:             req.SalaryMax,
+			Currency:              currency,
+			Status:                domain.JobStatusDraft,
+			CreatedBy:             c.Get("id").(string),
+			TeamID:                c.Get("team_id").(string),
 		}
 
 		if err := h.usecase.CreateJob(c.Request().Context(), job); err != nil {
@@ -175,6 +184,10 @@ func (h *JobHandler) PatchJob() echo.HandlerFunc {
 		}
 		if req.Currency != nil {
 			job.Currency = *req.Currency
+		}
+		if req.Requirements != nil {
+			requirementsJSON, _ := json.Marshal(req.Requirements)
+			job.ExtractedRequirements = requirementsJSON
 		}
 
 		actorID := c.Get("id").(string)

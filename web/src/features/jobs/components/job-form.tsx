@@ -2,10 +2,10 @@
 
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "@/i18n/routing"
 import { useTranslations } from "next-intl"
-import { toast } from "sonner"
+import { useState, useEffect } from "react"
 import { Loader2, Briefcase, Plus, Trash2, Banknote } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
@@ -32,13 +32,23 @@ import {
 } from "@/features/jobs/schemas/job-schema"
 import { useGetDepartments } from "@/features/departments/api/use-departments"
 import { useCreateJob, CreateJobPayload } from "@/features/jobs/api/use-create-job"
+import { useUpdateJob } from "@/features/jobs/api/use-update-job"
+import { Job } from "../types/job"
 import { SmartPasteCard } from "./smart-paste-card"
 
-export function JobForm() {
+interface JobFormProps {
+    id?: string;
+    initialData?: Job;
+}
+
+export function JobForm({ id, initialData }: JobFormProps) {
     const t = useTranslations("JobWizard")
     const router = useRouter()
     const { data: departments = [], isLoading: isLoadingDepts } = useGetDepartments()
     const createJobMutation = useCreateJob()
+    const updateJobMutation = useUpdateJob(id || "")
+
+    const isEdit = !!id
 
     const form = useForm<JobFormValues>({
         resolver: zodResolver(jobSchema),
@@ -46,7 +56,7 @@ export function JobForm() {
             title: "",
             department: "",
             description: "",
-            requirements: [""],
+            requirements: [{ value: "" }],
             type: JobType.Onsite,
             salary_min: 0,
             salary_max: 0,
@@ -54,7 +64,24 @@ export function JobForm() {
         },
     })
 
-    const { fields, append, remove } = useFieldArray({
+    useEffect(() => {
+        if (initialData) {
+            form.reset({
+                title: initialData.title,
+                department: initialData.department_id || "",
+                description: initialData.description || "",
+                requirements: initialData.requirements?.length 
+                    ? initialData.requirements.map(r => ({ value: r })) 
+                    : [{ value: "" }],
+                type: initialData.work_format === "remote" ? JobType.Remote : initialData.work_format === "office" ? JobType.Onsite : JobType.Hybrid,
+                salary_min: initialData.salary_min || 0,
+                salary_max: initialData.salary_max || 0,
+                currency: initialData.currency || "RUB",
+            })
+        }
+    }, [initialData, form])
+
+    const { fields, append, remove } = useFieldArray<JobFormValues>({
         control: form.control,
         name: "requirements",
     })
@@ -64,7 +91,9 @@ export function JobForm() {
             title: data.title,
             department_id: data.department,
             description: data.description,
-            requirements: data.requirements.filter(r => r.trim() !== ""),
+            requirements: data.requirements
+                .map(r => r.value)
+                .filter(v => v.trim() !== ""),
             work_format: (data.type === JobType.Remote ? "remote" : data.type === JobType.Onsite ? "office" : "hybrid") as "remote" | "office" | "hybrid",
             salary_min: data.salary_min,
             salary_max: data.salary_max,
@@ -72,7 +101,11 @@ export function JobForm() {
         }
 
         try {
-            await createJobMutation.mutateAsync(payload)
+            if (isEdit) {
+                await updateJobMutation.mutateAsync(payload)
+            } else {
+                await createJobMutation.mutateAsync(payload)
+            }
             router.push("/dashboard/jobs")
         } catch (error) {
             // Error is handled in the mutation
@@ -109,7 +142,7 @@ export function JobForm() {
                                         id="title"
                                         placeholder={t("titlePlaceholder")}
                                         className="pl-9"
-                                        disabled={createJobMutation.isPending}
+                                        disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                         {...form.register("title")}
                                     />
                                 </div>
@@ -122,9 +155,8 @@ export function JobForm() {
                                 <Label htmlFor="department" className="mb-2 block">{t("fields.department")}</Label>
                                 <Select
                                     onValueChange={(val) => form.setValue("department", val)}
-                                    defaultValue={form.getValues("department")}
+                                    disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                     value={form.watch("department")}
-                                    disabled={createJobMutation.isPending}
                                 >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder={t("departmentPlaceholder")} />
@@ -153,14 +185,14 @@ export function JobForm() {
                                         className={cn(
                                             "flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-all hover:bg-accent",
                                             form.watch("type") === type ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-input",
-                                            createJobMutation.isPending && "opacity-50 cursor-not-allowed"
+                                            (createJobMutation.isPending || updateJobMutation.isPending) && "opacity-50 cursor-not-allowed"
                                         )}
                                     >
                                         <input
                                             type="radio"
                                             value={type}
                                             className="sr-only"
-                                            disabled={createJobMutation.isPending}
+                                            disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                             {...form.register("type")}
                                         />
                                         <div className={cn(
@@ -185,7 +217,7 @@ export function JobForm() {
                                         id="salary_min"
                                         type="number"
                                         className="pl-9"
-                                        disabled={createJobMutation.isPending}
+                                        disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                         {...form.register("salary_min", { valueAsNumber: true })}
                                     />
                                 </div>
@@ -198,7 +230,7 @@ export function JobForm() {
                                         id="salary_max"
                                         type="number"
                                         className="pl-9"
-                                        disabled={createJobMutation.isPending}
+                                        disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                         {...form.register("salary_max", { valueAsNumber: true })}
                                     />
                                 </div>
@@ -208,7 +240,7 @@ export function JobForm() {
                                 <Input
                                     id="currency"
                                     placeholder="RUB, USD, EUR..."
-                                    disabled={createJobMutation.isPending}
+                                    disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                     {...form.register("currency")}
                                 />
                             </div>
@@ -221,7 +253,7 @@ export function JobForm() {
                                 id="description"
                                 placeholder={t("descriptionPlaceholder")}
                                 className="min-h-[200px]"
-                                disabled={createJobMutation.isPending}
+                                disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                 {...form.register("description")}
                             />
                             {form.formState.errors.description && (
@@ -237,8 +269,8 @@ export function JobForm() {
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => append("")}
-                                    disabled={createJobMutation.isPending}
+                                    onClick={() => append({ value: "" })}
+                                    disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Добавить
@@ -248,16 +280,16 @@ export function JobForm() {
                                 {fields.map((field, index) => (
                                     <div key={field.id} className="flex gap-2">
                                         <Input
-                                            {...form.register(`requirements.${index}`)}
+                                            {...form.register(`requirements.${index}.value`)}
                                             placeholder={`Требование #${index + 1}`}
-                                            disabled={createJobMutation.isPending}
+                                            disabled={createJobMutation.isPending || updateJobMutation.isPending}
                                         />
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => remove(index)}
-                                            disabled={createJobMutation.isPending || fields.length === 1}
+                                            disabled={createJobMutation.isPending || updateJobMutation.isPending || fields.length === 1}
                                             className="text-red-500 hover:text-red-600 hover:bg-red-50"
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -274,12 +306,12 @@ export function JobForm() {
                 </Card>
 
                 <div className="flex justify-end gap-4">
-                    <Button type="button" variant="outline" onClick={() => router.back()} disabled={createJobMutation.isPending}>
+                    <Button type="button" variant="outline" onClick={() => router.back()} disabled={createJobMutation.isPending || updateJobMutation.isPending}>
                         {t("cancel")}
                     </Button>
-                    <Button type="submit" disabled={createJobMutation.isPending} className="min-w-[140px]">
-                        {createJobMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {t("submitBtn")}
+                    <Button type="submit" disabled={createJobMutation.isPending || updateJobMutation.isPending} className="min-w-[140px]">
+                        {(createJobMutation.isPending || updateJobMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isEdit ? (t("save") || "Сохранить") : t("submitBtn")}
                     </Button>
                 </div>
             </form>

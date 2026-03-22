@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-export type Role = "owner" | "recruiter" | "manager";
+export type Role = "owner" | "recruiter" | "manager" | "hiring_manager";
 export type Status = "active" | "pending";
 
 export interface Member {
@@ -51,6 +51,7 @@ const getRoleBadgeColor = (role: Role) => {
         case "recruiter":
             return "secondary";
         case "manager":
+        case "hiring_manager":
             return "outline";
         default:
             return "default";
@@ -96,7 +97,7 @@ export function TeamTable({ members }: TeamTableProps) {
                             </Badge>
                         </TableCell>
                         <TableCell>
-                            {member.role === "manager" ? (
+                            {(member.role === "manager" || member.role === "hiring_manager") ? (
                                 <div className="flex flex-wrap gap-1">
                                     {member.assignedJobs?.length ? (
                                         member.assignedJobs.map(jobId => {

@@ -73,6 +73,17 @@ func (i *InviteHandler) PostInvite() echo.HandlerFunc {
 			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("incorrect data: %v", err))
 		}
 
+		// Validate role
+		allowedRoles := map[string]bool{
+			"admin":          true,
+			"recruiter":      true,
+			"hiring_manager": true,
+			"owner":          true,
+		}
+		if !allowedRoles[req.Role] {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("invalid role: %s. Allowed: admin, recruiter, hiring_manager, owner", req.Role))
+		}
+
 		cookie, err := c.Cookie("access_token")
 		if err != nil {
 			return response.Error(c, http.StatusBadRequest, "cookie not found")

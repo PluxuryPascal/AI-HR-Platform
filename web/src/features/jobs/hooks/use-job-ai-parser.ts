@@ -33,7 +33,9 @@ export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
             // Auto-fill fields
             if (result.title) form.setValue("title", result.title);
             if (result.description) form.setValue("description", result.description);
-            if (result.requirements) form.setValue("requirements", result.requirements);
+            if (result.requirements) {
+                form.setValue("requirements", result.requirements.map((r: string) => ({ value: r })));
+            }
             if (result.salary_min !== undefined) form.setValue("salary_min", result.salary_min);
             if (result.salary_max !== undefined) form.setValue("salary_max", result.salary_max);
             if (result.currency) form.setValue("currency", result.currency);

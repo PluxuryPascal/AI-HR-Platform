@@ -139,7 +139,9 @@
             "actions": "Actions",
             "viewCandidates": "View Candidates",
             "editJob": "Edit Job",
-            "archive": "Archive"
+            "archive": "Archive",
+            "type": "Format",
+            "salary": "Salary"
         }
     },
     "Settings": {
@@ -183,6 +185,8 @@
             "currency": "Currency"
         },
         "submitBtn": "Create Job",
+        "save": "Save Changes",
+        "titleEdit": "Edit Job",
         "successMessage": "Job created successfully!",
         "backToJobs": "Back to Jobs",
         "subtitle": "Create a new job posting manually or use our AI assistant to draft it for you.",
@@ -316,7 +320,7 @@
         "roles": {
             "owner": "Owner",
             "recruiter": "Recruiter",
-            "manager": "Manager"
+            "hiring_manager": "Hiring Manager"
         },
         "status": {
             "active": "Active",
