@@ -27,6 +27,26 @@ const nextConfig: NextConfig = {
         source: '/api/v1/departments/:path*',
         destination: 'http://localhost:8082/api/v1/departments/:path*',
       },
+      {
+        source: '/api/v1/chat/:path*',
+        destination: 'http://localhost:8082/api/v1/chat/:path*',
+      },
+      {
+        source: '/api/v1/interview/:path*',
+        destination: 'http://localhost:8082/api/v1/interview/:path*',
+      },
+      {
+        source: '/api/v1/dashboard/:path*',
+        destination: 'http://localhost:8082/api/v1/dashboard/:path*',
+      },
+      {
+        source: '/api/v1/ai-settings/:path*',
+        destination: 'http://localhost:8082/api/v1/ai-settings/:path*',
+      },
+      {
+        source: '/api/v1/ai/:path*',
+        destination: 'http://localhost:8082/api/v1/ai/:path*',
+      },
     ];
   },
 };

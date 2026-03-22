@@ -23,9 +23,11 @@ import (
 	"backend/internal/server/router/interview"
 	"backend/internal/server/router/job"
 	"backend/internal/server/router/pipeline"
+	"backend/internal/server/router/outreach"
 	"backend/internal/openrouter"
 	"backend/internal/usecase"
 	"backend/pkg/config"
+	"backend/pkg/email"
 	"backend/pkg/grpc"
 	"backend/pkg/logger"
 	"backend/pkg/mq"
@@ -51,6 +53,7 @@ type repos struct {
 	dashboard  repo.DashboardRepository
 	aiSettings repo.AiSettingsRepository
 	chat       repo.ChatRepository
+	comm       repo.CommunicationRepository
 }
 
 type usecases struct {
@@ -63,6 +66,7 @@ type usecases struct {
 	chat       usecase.ChatUseCase
 	interview  usecase.InterviewUseCase
 	ai         usecase.AiUseCase
+	outreach   usecase.OutreachUseCase
 }
 
 type handlers struct {
@@ -76,6 +80,7 @@ type handlers struct {
 	chat       *handler.ChatHandler
 	interview  *handler.InterviewHandler
 	ai         *handler.AiHandler
+	outreach   *handler.OutreachHandler
 }
 
 type infrastructureComponents struct {
@@ -92,6 +97,7 @@ type infrastructureComponents struct {
 	mqPublisher  *mq.MQPublisher
 	openRouter   *openrouter.Client
 	temporalClient *temporal.Client
+	emailClient  *email.Client
 }
 
 type utilityComponents struct {
@@ -204,6 +210,7 @@ func initInfrastructure() (*infrastructureComponents, error) {
 	aiGrpcClient := grpc.NewClient("ai_engine", zapLog.Log, &aiClientCfg)
 
 	openRouter := openrouter.NewClient(zapLog.Log, conf.OpenRouter.BaseURL)
+	emailClient := email.NewClient(zapLog.Log, &conf.SMTP)
 
 	return &infrastructureComponents{
 		cfg:          conf,
@@ -219,6 +226,7 @@ func initInfrastructure() (*infrastructureComponents, error) {
 		mqPublisher:  mqPublisher,
 		openRouter:   openRouter,
 		temporalClient: temporal.NewClient(zapLog.Log, nil, &conf.Temporal),
+		emailClient:  emailClient,
 	}, nil
 }
 
@@ -251,6 +259,7 @@ func initRepositories(infra *infrastructureComponents) repos {
 		dashboard:  repo.NewDashboardRepo(infra.pool),
 		aiSettings: repo.NewAiSettingsRepo(infra.pool),
 		chat:       repo.NewChatRepo(infra.pool),
+		comm:       repo.NewCommunicationRepo(infra.pool),
 	}
 }
 
@@ -273,8 +282,9 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 		pipeline:   usecase.NewPipelineUseCase(r.pipeline, auditor),
 		dashboard:  usecase.NewDashboardUseCase(infra.log.Log, r.dashboard, &authSvcClient, &aiSvcClient),
 		chat:       usecase.NewChatUseCase(infra.log.Log, r.chat, infra.temporalClient),
-		interview:  usecase.NewInterviewUseCase(infra.log.Log, infra.temporalClient.TemporalClient),
+		interview:  usecase.NewInterviewUseCase(infra.log.Log, infra.temporalClient, r.candidate),
 		ai:         usecase.NewAiUseCase(&aiSvcClient),
+		outreach:   usecase.NewOutreachUseCase(infra.log.Log, r.candidate, r.comm, usecase.NewAiUseCase(&aiSvcClient), infra.emailClient),
 	}
 }
 
@@ -295,7 +305,9 @@ func initHandlers(infra *infrastructureComponents, utils *utilityComponents, u u
 		dashboard:  handler.NewDashboardHandler(infra.log.Log, u.dashboard),
 		aiSettings: handler.NewAiSettingsHandler(infra.log.Log, r.aiSettings, infra.openRouter),
 		chat:       handler.NewChatHandler(infra.log.Log, u.chat),
+		interview:  handler.NewInterviewHandler(infra.log.Log, u.interview),
 		ai:         handler.NewAiHandler(u.ai),
+		outreach:   handler.NewOutreachHandler(u.outreach),
 	}
 
 	return h, mw
@@ -338,6 +350,9 @@ func createApiServer(ctx context.Context, cfg *config.Config, log *logger.Log, h
 		),
 		server.WithRouterGroup(ctx, "/ai",
 			ai_engine.NewRouter(h.ai, mw.Session(t), mw.RBAC()),
+		),
+		server.WithRouterGroup(ctx, "/outreach",
+			outreach.NewRouter(h.outreach, mw.Session(t), mw.RBAC()),
 		),
 	)
 }

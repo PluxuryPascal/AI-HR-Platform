@@ -35,7 +35,7 @@ export const parseJobDescription = async (text: string): Promise<Partial<JobForm
         title: potentialTitle,
         department: department,
         description: text,
-        requirements: ["Extracted requirement 1", "Extracted requirement 2", "Extracted requirement 3"], // Mock data
+        requirements: [{ value: "Extracted requirement 1" }, { value: "Extracted requirement 2" }, { value: "Extracted requirement 3" }], // Mock data
         type: type,
     };
 };

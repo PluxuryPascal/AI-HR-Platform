@@ -9,6 +9,7 @@ import (
 
 type InterviewRoutes interface {
 	GenerateQuestions() echo.HandlerFunc
+	GetQuestions() echo.HandlerFunc
 }
 
 type interviewRouter struct {
@@ -39,5 +40,6 @@ func NewRouter(h InterviewRoutes, session, rbac echo.MiddlewareFunc) router.Rout
 func (r *interviewRouter) initRoutes() {
 	r.routes = []router.Route{
 		router.NewRoute(http.MethodPost, "/:id/questions", r.handler.GenerateQuestions, r.session, r.rbac),
+		router.NewRoute(http.MethodGet, "/:id/questions", r.handler.GetQuestions, r.session, r.rbac),
 	}
 }

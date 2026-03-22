@@ -69,7 +69,7 @@ func (u *chatUseCase) Chat(ctx context.Context, teamID string, userID string, re
 	// 4. Run Workflow
 	workflowOptions := client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("chat-%s", session.ID),
-		TaskQueue: "ai-tasks",
+		TaskQueue: u.temporalClient.TaskQueue(),
 	}
 
 	input := activity.ChatInput{

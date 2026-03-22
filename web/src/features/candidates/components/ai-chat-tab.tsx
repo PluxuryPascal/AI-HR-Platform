@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCandidateChat } from "../api/use-candidate-ai";
+import { useCandidateChat, useGetChatSessions, useGetChatHistory, ChatMessage, ChatSession } from "../api/use-candidate-ai";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -21,16 +21,33 @@ export const AIChatTab = () => {
     const params = useParams();
     const candidateId = params.candidateId as string;
 
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: "1",
-            text: "Привет! Я проанализировал профиль этого кандидата. Спрашивайте меня о чем угодно касательно его опыта или навыков.",
-            sender: "ai",
-            timestamp: new Date(),
-        },
-    ]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const { mutate: sendMessage, isPending: isTyping } = useCandidateChat();
+    const { data: sessions } = useGetChatSessions();
+
+    const candidateSession = sessions?.find((s: ChatSession) => s.target_candidate_id === candidateId);
+    const { data: history, isLoading: isLoadingHistory } = useGetChatHistory(candidateSession?.id || "");
+
+    useEffect(() => {
+        if (history && history.length > 0) {
+            setMessages(history.map((m: ChatMessage) => ({
+                id: m.id || Math.random().toString(),
+                text: m.content,
+                sender: m.role === "user" ? "user" : "ai",
+                timestamp: m.created_at ? new Date(m.created_at) : new Date(),
+            })));
+        } else if (!isLoadingHistory) {
+            setMessages([
+                {
+                    id: "welcome",
+                    text: "Привет! Я проанализировал профиль этого кандидата. Спрашивайте меня о чем угодно касательно его опыта или навыков.",
+                    sender: "ai",
+                    timestamp: new Date(),
+                },
+            ]);
+        }
+    }, [history, isLoadingHistory]);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

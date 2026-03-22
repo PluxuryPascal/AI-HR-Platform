@@ -1,9 +1,12 @@
 package usecase
 
 import (
+	"backend/internal/temporal"
+	"backend/internal/repo"
 	"backend/internal/temporal/activity"
 	"backend/internal/temporal/workflow"
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,17 +16,20 @@ import (
 
 type InterviewUseCase interface {
 	GenerateQuestions(ctx context.Context, candidateID, teamID, locale string) (activity.InterviewOutput, error)
+	GetQuestions(ctx context.Context, candidateID string) (activity.InterviewOutput, error)
 }
 
 type interviewUseCase struct {
 	log            *zap.Logger
-	temporalClient client.Client
+	temporalClient *temporal.Client
+	candidateRepo  repo.CandidateRepository
 }
 
-func NewInterviewUseCase(log *zap.Logger, temporalClient client.Client) InterviewUseCase {
+func NewInterviewUseCase(log *zap.Logger, temporalClient *temporal.Client, candidateRepo repo.CandidateRepository) InterviewUseCase {
 	return &interviewUseCase{
 		log:            log,
 		temporalClient: temporalClient,
+		candidateRepo:  candidateRepo,
 	}
 }
 
@@ -38,10 +44,10 @@ func (u *interviewUseCase) GenerateQuestions(ctx context.Context, candidateID, t
 
 	workflowOptions := client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("interview-questions-%s-%d", candidateID, time.Now().Unix()),
-		TaskQueue: "interview-tasks",
+		TaskQueue: u.temporalClient.TaskQueue(),
 	}
 
-	run, err := u.temporalClient.ExecuteWorkflow(ctx, workflowOptions, workflow.InterviewQuestionsWorkflow, input)
+	run, err := u.temporalClient.TemporalClient.ExecuteWorkflow(ctx, workflowOptions, workflow.InterviewQuestionsWorkflow, input)
 	if err != nil {
 		return activity.InterviewOutput{}, fmt.Errorf("failed to execute interview workflow: %w", err)
 	}
@@ -51,5 +57,29 @@ func (u *interviewUseCase) GenerateQuestions(ctx context.Context, candidateID, t
 		return activity.InterviewOutput{}, fmt.Errorf("interview workflow failed: %w", err)
 	}
 
+	// Save to DB
+	jsonData, _ := json.Marshal(result.Questions)
+	if err := u.candidateRepo.SaveInterviewGuide(ctx, candidateID, jsonData); err != nil {
+		u.log.Error("failed to save interview guide", zap.Error(err))
+	}
+
 	return result, nil
+}
+
+func (u *interviewUseCase) GetQuestions(ctx context.Context, candidateID string) (activity.InterviewOutput, error) {
+	_, profile, _, err := u.candidateRepo.GetByID(ctx, candidateID)
+	if err != nil {
+		return activity.InterviewOutput{}, err
+	}
+
+	if profile.InterviewGuide == nil {
+		return activity.InterviewOutput{}, fmt.Errorf("interview guide not found")
+	}
+
+	var questions []activity.InterviewPair
+	if err := json.Unmarshal(profile.InterviewGuide, &questions); err != nil {
+		return activity.InterviewOutput{}, fmt.Errorf("failed to unmarshal interview guide: %w", err)
+	}
+
+	return activity.InterviewOutput{Questions: questions}, nil
 }

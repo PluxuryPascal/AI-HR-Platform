@@ -9,6 +9,7 @@ import (
 
 type AiUseCase interface {
 	ParseJobDescription(ctx context.Context, rawText, locale string, teamID string) (*domain.JobParseResult, error)
+	GenerateCandidateEmail(ctx context.Context, input *pbAI.GenerateCandidateEmailRequest) (*pbAI.GenerateCandidateEmailResponse, error)
 }
 
 type aiUseCase struct {
@@ -44,4 +45,12 @@ func (u *aiUseCase) ParseJobDescription(ctx context.Context, rawText, locale str
 		SalaryMax:    int(resp.GetSalaryMax()),
 		Currency:     resp.GetCurrency(),
 	}, nil
+}
+
+func (u *aiUseCase) GenerateCandidateEmail(ctx context.Context, input *pbAI.GenerateCandidateEmailRequest) (*pbAI.GenerateCandidateEmailResponse, error) {
+	if u.aiClient == nil || *u.aiClient == nil {
+		return nil, fmt.Errorf("ai client not initialized")
+	}
+
+	return (*u.aiClient).GenerateCandidateEmail(ctx, input)
 }

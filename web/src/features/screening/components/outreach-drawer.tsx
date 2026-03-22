@@ -14,6 +14,7 @@ import { OutreachEditor } from "./outreach-editor";
 import { OutreachFooter } from "./outreach-footer";
 import { useResizablePanel } from "../hooks/use-resizable-panel";
 import { useOutreachGenerator } from "../hooks/use-outreach-generator";
+import { useSendEmail } from "@/features/candidates/api/use-outreach";
 
 interface OutreachDrawerProps {
     isOpen: boolean;
@@ -37,11 +38,36 @@ export function OutreachDrawer({
         setTone,
         content,
         setContent,
+        communicationId,
         isGenerating,
         isBulk,
         candidates,
         handleGenerate,
     } = useOutreachGenerator({ isOpen, candidate, type });
+
+    const sendEmail = useSendEmail();
+
+    const handleSend = async () => {
+        if (!communicationId || !content) return;
+        
+        // Subject is usually the first line or we could parse it more robustly.
+        // For now, let's assume content starts with subject if non-bulk.
+        const lines = content.split("\n");
+        const subject = lines[0];
+        const body = lines.slice(1).join("\n").trim();
+
+        try {
+            await sendEmail.mutateAsync({
+                communicationId,
+                subject,
+                body,
+            });
+            if (onSend) onSend(content);
+            onClose();
+        } catch (error) {
+            // Error handled by hook toast
+        }
+    };
 
     if (candidates.length === 0) return null;
 
@@ -98,10 +124,7 @@ export function OutreachDrawer({
                         isGenerating={isGenerating}
                         isBulk={isBulk}
                         onRegenerate={handleGenerate}
-                        onSend={() => {
-                            if (onSend) onSend(content);
-                            onClose();
-                        }}
+                        onSend={handleSend}
                     />
                 </div>
             </SheetContent>

@@ -13,10 +13,12 @@ type Candidate struct {
 	LastName      *string                `json:"last_name,omitempty" db:"last_name"`
 	Email         *string                `json:"email,omitempty" db:"email"`
 	ResumeFileKey *string                `json:"resume_file_key,omitempty" db:"resume_file_key"`
+	ResumeURL     *string                `json:"resume_url,omitempty" db:"-"`
 	ParsedText    *string                `json:"parsed_text,omitempty" db:"parsed_text"`
 	Location      *string                `json:"location,omitempty" db:"location"`
 	Skills        []string               `json:"skills,omitempty" db:"skills"`
 	ParsingStatus CandidateParsingStatus `json:"parsing_status" db:"parsing_status"`
+	StageID       *string                `json:"stage_id,omitempty" db:"-"`
 	CreatedAt     time.Time              `json:"created_at" db:"created_at"`
 	UpdatedAt     *time.Time             `json:"updated_at,omitempty" db:"updated_at"`
 }
@@ -38,6 +40,7 @@ type CandidateProfile struct {
 	AIParsedAt     *time.Time `json:"ai_parsed_at,omitempty" db:"ai_parsed_at"`
 	UpdatedAt      *time.Time `json:"updated_at,omitempty" db:"updated_at"`
 	MissingFields  []string   `json:"missing_fields,omitempty" db:"missing_fields"`
+	InterviewGuide []byte     `json:"interview_guide,omitempty" db:"interview_guide"`
 }
 
 // FactorType represents the factor_type ENUM

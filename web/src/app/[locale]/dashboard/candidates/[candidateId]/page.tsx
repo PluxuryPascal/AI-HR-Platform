@@ -8,13 +8,27 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Share2, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "@/i18n/routing"; // Fixed Link import
 import { useTranslations } from "next-intl";
 import { useGetCandidate } from "@/features/candidates/api/use-get-candidate";
-import { useState } from "react";
+import { use, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PDFViewer } from "@/features/candidates/components/pdf-viewer";
+import dynamic from "next/dynamic";
+
+const PDFViewer = dynamic(
+    () => import("@/features/candidates/components/pdf-viewer").then((mod) => mod.PDFViewer),
+    { 
+        ssr: false,
+        loading: () => (
+            <div className="flex-1 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            </div>
+        )
+    }
+);
 import { AIAnalysisTab } from "@/features/candidates/components/ai-analysis-tab";
 import { AIChatTab } from "@/features/candidates/components/ai-chat-tab";
 import { useParams } from "next/navigation";
@@ -26,11 +40,12 @@ import { MatchScoreBadge } from "@/features/candidates/components/match-score-ba
 import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
 
 
-export default function CandidatePage({ params }: { params: { candidateId: string; locale: string } }) {
+export default function CandidatePage({ params }: { params: Promise<{ candidateId: string; locale: string }> }) {
+    const { candidateId } = use(params);
     const t = useTranslations("CandidateProfile");
     const [isOutreachOpen, setIsOutreachOpen] = useState(false);
 
-    const { data: detail, isLoading, error } = useGetCandidate(params.candidateId);
+    const { data: detail, isLoading, error } = useGetCandidate(candidateId);
 
     if (isLoading) {
         return (
@@ -79,7 +94,7 @@ export default function CandidatePage({ params }: { params: { candidateId: strin
             weaknesses: factors?.filter(f => f.type === 'negative').map(f => f.description) || [],
             skills: candidate.skills || [],
         },
-        pdfUrl: candidate.resume_file_key ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/files/${candidate.resume_file_key}` : "",
+        pdfUrl: candidate.resume_url || "",
     };
 
     return (
@@ -110,13 +125,6 @@ export default function CandidatePage({ params }: { params: { candidateId: strin
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                        <Share2 className="w-4 h-4 mr-2" />
-                        Share
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="w-4 h-4" />
-                    </Button>
                 </div>
             </div>
 
@@ -182,7 +190,7 @@ export default function CandidatePage({ params }: { params: { candidateId: strin
                                     <TabsContent value="interview" className="h-full m-0 p-0 border-none select-text data-[state=active]:flex data-[state=active]:flex-col overflow-y-auto">
                                         <InterviewGuide
                                             matchScore={uiProfile.aiAnalysis.score}
-                                            candidateId={params.candidateId as string}
+                                            candidateId={candidateId}
                                         />
                                     </TabsContent>
                                 </div>

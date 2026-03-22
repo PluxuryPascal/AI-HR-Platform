@@ -24,8 +24,10 @@ JSON schema:
 {
   "interviews": [
     {
+      "id":       "string (unique within this list)",
       "question": "string",
-      "answer":   "string"
+      "answer":   "string",
+      "category": "string (e.g. 'Expert', 'Foundational', 'Technical', 'Behavioral')"
     }
   ]
 }
@@ -33,6 +35,7 @@ JSON schema:
 Rules:
 - Be specific to the candidate's experience.
 - The "answer" should be a concise summary of what a "good" response looks like.
+- The "category" should indicate the type or difficulty of the question.
 - Ensure the language matches the requested locale.`
 
 // ─── JSON response struct ─────────────────────────────────────────────────────
@@ -42,8 +45,10 @@ type interviewResponseJSON struct {
 }
 
 type interviewPairJSON struct {
+	ID       string `json:"id"`
 	Question string `json:"question"`
 	Answer   string `json:"answer"`
+	Category string `json:"category"`
 }
 
 type InterviewGenerator struct {
@@ -57,8 +62,10 @@ func NewInterviewGenerator(provider Provider) *InterviewGenerator {
 }
 
 type InterviewQuestion struct {
+	ID       string `json:"id"`
 	Question string `json:"question"`
 	Answer   string `json:"answer"`
+	Category string `json:"category"`
 }
 
 func (g *InterviewGenerator) Generate(ctx context.Context, teamID string, resumeText string, locale string) ([]InterviewQuestion, error) {
@@ -117,8 +124,10 @@ func (g *InterviewGenerator) Generate(ctx context.Context, teamID string, resume
 	result := make([]InterviewQuestion, 0, len(parsed.Interviews))
 	for _, p := range parsed.Interviews {
 		result = append(result, InterviewQuestion{
+			ID:       p.ID,
 			Question: p.Question,
 			Answer:   p.Answer,
+			Category: p.Category,
 		})
 	}
 

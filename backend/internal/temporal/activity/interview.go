@@ -36,8 +36,10 @@ func (a *Activities) InterviewGenerateQuestions(ctx context.Context, input Inter
 	questions := make([]InterviewPair, 0, len(res))
 	for _, q := range res {
 		questions = append(questions, InterviewPair{
+			ID:       q.ID,
 			Question: q.Question,
 			Answer:   q.Answer,
+			Category: q.Category,
 		})
 	}
 

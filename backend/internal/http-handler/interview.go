@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"backend/internal/response"
 	"backend/internal/usecase"
 	"net/http"
 
@@ -24,19 +25,19 @@ func (h *InterviewHandler) GenerateQuestions() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		candidateID := c.Param("id")
 		if candidateID == "" {
-			return c.JSON(http.StatusBadRequest, echo.Map{"error": "id is required"})
+			return response.Error(c, http.StatusBadRequest, "id is required")
 		}
 
 		var req struct {
 			Locale string `json:"locale" validate:"required"`
 		}
 		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid request"})
+			return response.Error(c, http.StatusBadRequest, "invalid request")
 		}
 
 		teamID, ok := c.Get("team_id").(string)
 		if !ok {
-			return c.JSON(http.StatusUnauthorized, echo.Map{"error": "team_id not found in context"})
+			return response.Error(c, http.StatusUnauthorized, "team_id not found in context")
 		}
 
 		h.log.Info("GenerateQuestions handler called", zap.String("candidate_id", candidateID))
@@ -44,9 +45,26 @@ func (h *InterviewHandler) GenerateQuestions() echo.HandlerFunc {
 		result, err := h.uc.GenerateQuestions(c.Request().Context(), candidateID, teamID, req.Locale)
 		if err != nil {
 			h.log.Error("failed to generate questions", zap.Error(err))
-			return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
+			return response.Error(c, http.StatusInternalServerError, err.Error())
 		}
 
-		return c.JSON(http.StatusOK, result)
+		return response.OK(c, result)
+	}
+}
+
+func (h *InterviewHandler) GetQuestions() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		candidateID := c.Param("id")
+		if candidateID == "" {
+			return response.Error(c, http.StatusBadRequest, "id is required")
+		}
+
+		result, err := h.uc.GetQuestions(c.Request().Context(), candidateID)
+		if err != nil {
+			h.log.Debug("interview guide not found for candidate", zap.String("id", candidateID))
+			return response.Error(c, http.StatusNotFound, "interview guide not found")
+		}
+
+		return response.OK(c, result)
 	}
 }

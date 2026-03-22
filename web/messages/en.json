@@ -343,6 +343,9 @@
         "loading": "Drafting Question Set...",
         "loadingDesc": "Analyzing resume gaps and generating technical challenges...",
         "regenerate": "Regenerate Questions",
+        "emptyTitle": "Interview Guide Not Created",
+        "emptyDesc": "Generate a list of questions based on the candidate's experience and your job requirements.",
+        "generate": "Generate Guide",
         "card": {
             "context": "Context",
             "expected": "What to look for in the answer"

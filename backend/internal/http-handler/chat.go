@@ -3,6 +3,7 @@ package handler
 import (
 	"backend/internal/domain"
 	"backend/internal/middleware"
+	"backend/internal/response"
 	"backend/internal/usecase"
 	"net/http"
 
@@ -40,10 +41,10 @@ func (h *ChatHandler) PostChat() echo.HandlerFunc {
 		answer, sessionID, err := h.useCase.Chat(ctx, teamID, userID, req)
 		if err != nil {
 			h.log.Error("chat error", zap.Error(err), zap.String("team_id", teamID))
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to generate chat response")
+			return response.Error(c, http.StatusInternalServerError, "failed to generate chat response")
 		}
 
-		return c.JSON(http.StatusOK, map[string]string{
+		return response.OK(c, map[string]string{
 			"answer":     answer,
 			"session_id": sessionID,
 		})
@@ -59,10 +60,10 @@ func (h *ChatHandler) GetChatSessions() echo.HandlerFunc {
 		sessions, err := h.useCase.ListSessions(ctx, teamID, userID)
 		if err != nil {
 			h.log.Error("list chat sessions error", zap.Error(err), zap.String("team_id", teamID))
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to list chat sessions")
+			return response.Error(c, http.StatusInternalServerError, "failed to list chat sessions")
 		}
 
-		return c.JSON(http.StatusOK, sessions)
+		return response.OK(c, sessions)
 	}
 }
 
@@ -74,9 +75,9 @@ func (h *ChatHandler) GetChatHistory() echo.HandlerFunc {
 		history, err := h.useCase.GetHistory(ctx, sessionID)
 		if err != nil {
 			h.log.Error("get chat history error", zap.Error(err), zap.String("session_id", sessionID))
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get chat history")
+			return response.Error(c, http.StatusInternalServerError, "failed to get chat history")
 		}
 
-		return c.JSON(http.StatusOK, history)
+		return response.OK(c, history)
 	}
 }

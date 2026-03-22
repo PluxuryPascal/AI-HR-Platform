@@ -36,12 +36,12 @@ export function InterviewGuide({ matchScore, candidateId }: InterviewGuideProps)
         generate({ id: candidateId, locale: "ru" });
     };
 
-    const questions: Question[] = guide?.questions.map(q => ({
-        id: q.id,
+    const questions: Question[] = guide?.questions?.map((q, index) => ({
+        id: q.id || `q-${index}`,
         title: q.question,
-        context: q.category,
+        context: q.category || "General",
         expected: q.answer,
-        type: q.category.toLowerCase().includes("expert") ? "expert" : "foundational"
+        type: (q.category || "").toLowerCase().includes("expert") ? "expert" : "foundational"
     })) || [];
 
     const toggleExpand = (id: string) => {
@@ -63,6 +63,26 @@ export function InterviewGuide({ matchScore, candidateId }: InterviewGuideProps)
                     <h3 className="text-lg font-medium animate-pulse">{t("loading")}</h3>
                     <p className="text-sm text-muted-foreground">{t("loadingDesc")}</p>
                 </div>
+            </div>
+        );
+    }
+
+    if (!guide || questions.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 space-y-6 text-center h-full">
+                <div className="bg-primary/5 p-4 rounded-full">
+                    <Sparkles className="w-10 h-10 text-primary" />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-xl font-semibold">{t("emptyTitle") || "Гайд для интервью не создан"}</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm">
+                        {t("emptyDesc") || "Сгенерируйте список вопросов, основанный на опыте кандидата и требованиях вашей вакансии."}
+                    </p>
+                </div>
+                <Button onClick={handleGenerate} size="lg" className="w-full max-w-xs shadow-lg shadow-primary/20">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    {t("generate") || "Сгенерировать гайд"}
+                </Button>
             </div>
         );
     }

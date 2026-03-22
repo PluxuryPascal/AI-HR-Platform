@@ -60,24 +60,20 @@ func ResumePipelineWorkflow(ctx workflow.Context, input activity.ResumePipelineI
 	callBackInput.ParsedText = parsedText
 	callBackInput.Status = domainStatusToProto(parseResult.ParsingStatus())
 
-	sel := workflow.NewSelector(ctx)
-
 	var scoreErr, embedErr error
-
-	sel.AddFuture(workflow.ExecuteActivity(
+	futureScore := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, llmActivityOptions()),
 		a.LLMScore,
 		activity.LLMScoreInput{
 			CandidateID:     input.CandidateID,
+			TeamID:          input.TeamID,
 			ParsedText:      parsedText,
 			JobRequirements: parseResult.JobRequirements,
 			Locale:          input.Locale,
 		},
-	), func(f workflow.Future) {
-		scoreErr = f.Get(ctx, nil)
-	})
+	)
 
-	sel.AddFuture(workflow.ExecuteActivity(
+	futureEmbed := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, embedActivityOptions()),
 		a.LLMEmbed,
 		activity.LLMEmbedInput{
@@ -85,11 +81,10 @@ func ResumePipelineWorkflow(ctx workflow.Context, input activity.ResumePipelineI
 			TeamID:      input.TeamID,
 			ParsedText:  parsedText,
 		},
-	), func(f workflow.Future) {
-		embedErr = f.Get(ctx, nil)
-	})
+	)
 
-	sel.Select(ctx)
+	scoreErr = futureScore.Get(ctx, nil)
+	embedErr = futureEmbed.Get(ctx, nil)
 
 	if scoreErr != nil {
 		return fmt.Errorf("failed to score: %w", scoreErr)

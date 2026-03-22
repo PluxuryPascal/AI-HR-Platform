@@ -30,6 +30,8 @@ type CandidateRepository interface {
 	GetScoresByCandidateIDs(ctx context.Context, candidateIDs []string) (map[string]*domain.CandidateScore, error)
 	SaveResumeEmbedding(ctx context.Context, embedding *domain.ResumeEmbedding) error
 	SearchEmbeddings(ctx context.Context, teamID string, candidateID *string, queryVector []float32, limit int) ([]domain.ResumeEmbedding, error)
+
+	SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error
 }
 
 type candidateRepo struct {
@@ -137,19 +139,6 @@ func (r *candidateRepo) UpdateFromAIParsing(ctx context.Context, result *domain.
 		if err != nil {
 			return fmt.Errorf("insert candidate stage: %w", err)
 		}
-
-		const historyQuery = `
-			INSERT INTO hiring.t_candidate_stage_history (candidate_id, from_stage_id, to_stage_id, changed_by, changed_at)
-			VALUES (@candidate_id, NULL, @stage_id, 'system', NOW())
-		`
-
-		_, err = tx.Exec(ctx, historyQuery, pgx.NamedArgs{
-			"candidate_id": result.CandidateID,
-			"stage_id":     *result.InitialStageID,
-		})
-		if err != nil {
-			return fmt.Errorf("insert candidate stage history: %w", err)
-		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -186,8 +175,8 @@ func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candida
 	const query = `
 		SELECT 
 			c.id, c.job_id, c.first_name, c.last_name, c.email, c.resume_file_key, c.parsed_text, c.location, c.skills, c.parsing_status, c.created_at, c.updated_at,
-			cp.structured_data, cp.missing_fields, cp.ai_parsed_at, cp.updated_at as profile_updated_at,
-			cs.stage_id
+			cp.structured_data, cp.missing_fields, cp.ai_parsed_at, cp.updated_at, cp.interview_guide,
+		cs.stage_id
 		FROM hiring.t_candidates c
 		LEFT JOIN hiring.t_candidate_profiles cp ON c.id = cp.candidate_id
 		LEFT JOIN hiring.t_candidate_stages cs ON c.id = cs.candidate_id
@@ -200,7 +189,7 @@ func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candida
 
 	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{"id": id}).Scan(
 		&cand.ID, &cand.JobID, &cand.FirstName, &cand.LastName, &cand.Email, &cand.ResumeFileKey, &cand.ParsedText, &cand.Location, &cand.Skills, &cand.ParsingStatus, &cand.CreatedAt, &cand.UpdatedAt,
-		&profile.StructuredData, &profile.MissingFields, &profile.AIParsedAt, &profile.UpdatedAt,
+		&profile.StructuredData, &profile.MissingFields, &profile.AIParsedAt, &profile.UpdatedAt, &profile.InterviewGuide,
 		&stageID,
 	)
 	if err != nil {
@@ -246,7 +235,7 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 				SELECT c.*, cs.stage_id
 				FROM hiring.t_candidates c
 				LEFT JOIN hiring.t_candidate_stages cs ON c.id = cs.candidate_id
-				WHERE c.job_id = @job_id
+				WHERE c.job_id = @job_id::uuid
 			),
 			
 			filtered AS (
@@ -310,8 +299,8 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 					'skills',          l.skills,
 					'parsing_status',  l.parsing_status,
 					'stage_id',        l.stage_id,
-					'created_at',      l.created_at,
-					'updated_at',      l.updated_at
+					'created_at',      TO_CHAR(l.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+					'updated_at',      CASE WHEN l.updated_at IS NOT NULL THEN TO_CHAR(l.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END
 				)) AS build
 				FROM limited l
 			)
@@ -398,7 +387,11 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 
 	finalQuery := strings.Replace(rawQuery, "{{DATE_FILTER}}", dateFilterClause, 1)
 
-	rows, err := r.dbClient.Pool.Query(ctx, finalQuery, args)
+	rows, err := r.dbClient.Pool.Query(ctx, finalQuery, pgx.NamedArgs{
+		"job_id": jobID,
+		"offset": offset,
+		"limit":  limit,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("query candidates: %w", err)
 	}
@@ -708,3 +701,22 @@ func (r *candidateRepo) GetStageHistory(ctx context.Context, candidateID string)
 	return entries, nil
 }
 
+func (r *candidateRepo) SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error {
+	const query = `
+		INSERT INTO hiring.t_candidate_profiles (candidate_id, interview_guide, updated_at)
+		VALUES (@candidate_id, @guide, NOW())
+		ON CONFLICT (candidate_id) DO UPDATE SET
+			interview_guide = EXCLUDED.interview_guide,
+			updated_at = NOW()
+	`
+
+	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{
+		"candidate_id": candidateID,
+		"guide":        guide,
+	})
+	if err != nil {
+		return fmt.Errorf("upsert interview guide: %w", err)
+	}
+
+	return nil
+}

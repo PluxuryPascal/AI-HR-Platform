@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { CandidateCard } from "../types";
-import { generateOutreachEmail } from "../utils/outreach-generator";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { toast } from "sonner";
+import { useGenerateEmail } from "@/features/candidates/api/use-outreach";
 
 interface UseOutreachGeneratorOptions {
     isOpen: boolean;
@@ -13,30 +16,49 @@ export function useOutreachGenerator({ isOpen, candidate, type }: UseOutreachGen
     const locale = useLocale();
     const [tone, setTone] = useState("professional");
     const [content, setContent] = useState("");
+    const [communicationId, setCommunicationId] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
     const candidates = Array.isArray(candidate) ? candidate : (candidate ? [candidate] : []);
     const isBulk = candidates.length > 1;
 
-    const handleGenerate = () => {
+    const generateEmail = useGenerateEmail();
+
+    const handleGenerate = async () => {
         if (candidates.length === 0) return;
         setIsGenerating(true);
 
-        // Simulate AI delay
-        setTimeout(() => {
+        try {
             if (isBulk) {
-                const drafts = candidates.map(c => {
-                    return `--- Role: ${c.role} ---\n${generateOutreachEmail(c, type, tone, locale)}`;
-                }).join("\n\n");
-
-                // Note: We can't call t() in a hook, so we use a simpler prefix
-                setContent(`Bulk outreach drafts:\n\n${drafts}`);
+                // In bulk mode, we generate one by one or we could add a bulk endpoint.
+                // For now, let's just do it sequentially for simplicity or use the first one as template.
+                const drafts: string[] = [];
+                for (const c of candidates) {
+                    const result = await generateEmail.mutateAsync({
+                        candidateId: c.id,
+                        type: type === "invitation" ? "interview_invite" : "rejection",
+                        tone: tone as any,
+                        locale,
+                    });
+                    drafts.push(`--- Candidate: ${c.name} ---\n${result.subject}\n\n${result.body}`);
+                }
+                setContent(drafts.join("\n\n" + "=".repeat(20) + "\n\n"));
+                setCommunicationId(null); // Bulk doesn't have a single ID yet
             } else {
-                const newContent = generateOutreachEmail(candidates[0], type, tone, locale);
-                setContent(newContent);
+                const result = await generateEmail.mutateAsync({
+                    candidateId: candidates[0].id,
+                    type: type === "invitation" ? "interview_invite" : "rejection",
+                    tone: tone as any,
+                    locale,
+                });
+                setContent(`${result.subject}\n\n${result.body}`);
+                setCommunicationId(result.id);
             }
+        } catch (error) {
+            // Error handled by hook toast
+        } finally {
             setIsGenerating(false);
-        }, 600);
+        }
     };
 
     const candidateIds = isBulk ? (candidate as CandidateCard[]).map(c => c.id).join(",") : (candidate as CandidateCard)?.id || "";
@@ -52,6 +74,7 @@ export function useOutreachGenerator({ isOpen, candidate, type }: UseOutreachGen
         setTone,
         content,
         setContent,
+        communicationId,
         isGenerating,
         isBulk,
         candidates,

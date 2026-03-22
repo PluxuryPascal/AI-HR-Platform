@@ -4,6 +4,7 @@ import (
 	"backend/internal/db"
 	"backend/internal/domain"
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -11,6 +12,7 @@ import (
 
 type CommunicationRepository interface {
 	Create(ctx context.Context, c *domain.Communication) error
+	GetByID(ctx context.Context, id string) (*domain.Communication, error)
 	GetByCandidateID(ctx context.Context, candidateID string) ([]domain.Communication, error)
 	MarkSent(ctx context.Context, communicationID string) error
 }
@@ -42,6 +44,30 @@ func (r *communicationRepo) Create(ctx context.Context, c *domain.Communication)
 	}
 
 	return nil
+}
+
+func (r *communicationRepo) GetByID(ctx context.Context, id string) (*domain.Communication, error) {
+	const query = `
+		SELECT id, candidate_id, generated_by_user_id, type, subject, body, sent_at, created_at
+		FROM ai_engine.t_communications
+		WHERE id = @id
+	`
+
+	var c domain.Communication
+	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{
+		"id": id,
+	}).Scan(
+		&c.ID, &c.CandidateID, &c.GeneratedByUserID, &c.Type,
+		&c.Subject, &c.Body, &c.SentAt, &c.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("communication not found")
+		}
+		return nil, fmt.Errorf("scan communication: %w", err)
+	}
+
+	return &c, nil
 }
 
 func (r *communicationRepo) GetByCandidateID(ctx context.Context, candidateID string) ([]domain.Communication, error) {

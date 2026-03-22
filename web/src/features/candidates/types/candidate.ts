@@ -7,6 +7,7 @@ export interface Candidate {
     last_name?: string;
     email?: string;
     resume_file_key?: string;
+    resume_url?: string;
     parsed_text?: string;
     location?: string;
     skills?: string[];

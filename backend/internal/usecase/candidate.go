@@ -179,7 +179,16 @@ func (u *candidateUseCase) GetCandidateByID(ctx context.Context, id, userID, rol
 	if err != nil {
 		// If score is not found, it's not a fatal error for basic details
 		u.log.Debug("candidate score not found", zap.String("candidate_id", id), zap.Error(err))
-		return cand, profile, stageID, nil, nil, nil
+	}
+
+	// Populate Signed URL for Resume if exists
+	if cand.ResumeFileKey != nil && *cand.ResumeFileKey != "" {
+		url, err := u.storage.GetFileURL(ctx, *cand.ResumeFileKey)
+		if err != nil {
+			u.log.Warn("failed to generate signed resume url", zap.String("candidate_id", id), zap.Error(err))
+		} else {
+			cand.ResumeURL = &url
+		}
 	}
 
 	return cand, profile, stageID, score, factors, nil

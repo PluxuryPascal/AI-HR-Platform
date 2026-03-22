@@ -4,8 +4,11 @@ import { toast } from "sonner";
 import { ApiResponse } from "@/types";
 
 export interface ChatMessage {
+    id?: string;
+    session_id?: string;
     role: "user" | "assistant" | "system";
     content: string;
+    created_at?: string;
 }
 
 export interface ChatRequest {
@@ -34,12 +37,46 @@ export interface InterviewGuide {
     created_at: string;
 }
 
+export interface ChatSession {
+    id: string;
+    team_id: string;
+    user_id: string;
+    type: string;
+    target_candidate_id?: string;
+    title: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// ChatMessage is defined at top of file
+
 export function useCandidateChat() {
     return useMutation({
         mutationFn: async (payload: ChatRequest) => {
             const response = await apiClient.post<ApiResponse<ChatResponse>>("/chat", payload);
             return response.data;
         },
+    });
+}
+
+export function useGetChatSessions() {
+    return useQuery<ChatSession[]>({
+        queryKey: ["chat", "sessions"],
+        queryFn: async () => {
+            const response = await apiClient.get<ApiResponse<ChatSession[]>>("/chat/sessions");
+            return response.data;
+        },
+    });
+}
+
+export function useGetChatHistory(sessionId: string) {
+    return useQuery<ChatMessage[]>({
+        queryKey: ["chat", "history", sessionId],
+        queryFn: async () => {
+            const response = await apiClient.get<ApiResponse<ChatMessage[]>>(`/chat/sessions/${sessionId}/history`);
+            return response.data;
+        },
+        enabled: !!sessionId,
     });
 }
 
@@ -62,14 +99,18 @@ export function useGenerateInterview() {
 }
 
 export function useGetInterviewGuide(candidateId: string) {
-    return useQuery<InterviewGuide>({
+    return useQuery<InterviewGuide | null>({
         queryKey: ["candidate", candidateId, "interview"],
         queryFn: async () => {
-            // This might be a GET or the result is cached from previous POST
-            // For now, let's assume it's part of candidate details or separate GET
-            const response = await apiClient.get<ApiResponse<InterviewGuide>>(`/interview/${candidateId}/questions`);
-            return response.data;
+            try {
+                const response = await apiClient.get<ApiResponse<InterviewGuide>>(`/interview/${candidateId}/questions`);
+                return response.data;
+            } catch (err) {
+                console.warn("Interview guide not found or error:", err);
+                return null;
+            }
         },
         enabled: !!candidateId,
+        retry: false,
     });
 }
