@@ -804,6 +804,7 @@ type CompareCandidatesRequest struct {
 	Candidates      []*CandidateForComparison `protobuf:"bytes,1,rep,name=candidates,proto3" json:"candidates,omitempty"`
 	JobRequirements string                    `protobuf:"bytes,2,opt,name=job_requirements,json=jobRequirements,proto3" json:"job_requirements,omitempty"`
 	Locale          string                    `protobuf:"bytes,3,opt,name=locale,proto3" json:"locale,omitempty"`
+	TeamId          string                    `protobuf:"bytes,4,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -855,6 +856,13 @@ func (x *CompareCandidatesRequest) GetJobRequirements() string {
 func (x *CompareCandidatesRequest) GetLocale() string {
 	if x != nil {
 		return x.Locale
+	}
+	return ""
+}
+
+func (x *CompareCandidatesRequest) GetTeamId() string {
+	if x != nil {
+		return x.TeamId
 	}
 	return ""
 }
@@ -984,6 +992,7 @@ type ParseJobDescriptionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RawText       string                 `protobuf:"bytes,1,opt,name=raw_text,json=rawText,proto3" json:"raw_text,omitempty"`
 	Locale        string                 `protobuf:"bytes,2,opt,name=locale,proto3" json:"locale,omitempty"`
+	TeamId        string                 `protobuf:"bytes,3,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1028,6 +1037,13 @@ func (x *ParseJobDescriptionRequest) GetRawText() string {
 func (x *ParseJobDescriptionRequest) GetLocale() string {
 	if x != nil {
 		return x.Locale
+	}
+	return ""
+}
+
+func (x *ParseJobDescriptionRequest) GetTeamId() string {
+	if x != nil {
+		return x.TeamId
 	}
 	return ""
 }
@@ -1181,13 +1197,14 @@ const file_proto_ai_engine_v1_ai_engine_proto_rawDesc = "" +
 	"matchScore\x12\x16\n" +
 	"\x06skills\x18\x06 \x03(\tR\x06skills\x12\x1f\n" +
 	"\vparsed_text\x18\a \x01(\tR\n" +
-	"parsedText\"\xa3\x01\n" +
+	"parsedText\"\xbc\x01\n" +
 	"\x18CompareCandidatesRequest\x12D\n" +
 	"\n" +
 	"candidates\x18\x01 \x03(\v2$.ai_engine.v1.CandidateForComparisonR\n" +
 	"candidates\x12)\n" +
 	"\x10job_requirements\x18\x02 \x01(\tR\x0fjobRequirements\x12\x16\n" +
-	"\x06locale\x18\x03 \x01(\tR\x06locale\"\xa5\x01\n" +
+	"\x06locale\x18\x03 \x01(\tR\x06locale\x12\x17\n" +
+	"\ateam_id\x18\x04 \x01(\tR\x06teamId\"\xa5\x01\n" +
 	"\x18CandidateComparisonEntry\x12\x1e\n" +
 	"\n" +
 	"experience\x18\x01 \x01(\tR\n" +
@@ -1200,10 +1217,11 @@ const file_proto_ai_engine_v1_ai_engine_proto_rawDesc = "" +
 	"\aresults\x18\x01 \x03(\v24.ai_engine.v1.CompareCandidatesResponse.ResultsEntryR\aresults\x1ab\n" +
 	"\fResultsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12<\n" +
-	"\x05value\x18\x02 \x01(\v2&.ai_engine.v1.CandidateComparisonEntryR\x05value:\x028\x01\"O\n" +
+	"\x05value\x18\x02 \x01(\v2&.ai_engine.v1.CandidateComparisonEntryR\x05value:\x028\x01\"h\n" +
 	"\x1aParseJobDescriptionRequest\x12\x19\n" +
 	"\braw_text\x18\x01 \x01(\tR\arawText\x12\x16\n" +
-	"\x06locale\x18\x02 \x01(\tR\x06locale\"\xf4\x01\n" +
+	"\x06locale\x18\x02 \x01(\tR\x06locale\x12\x17\n" +
+	"\ateam_id\x18\x03 \x01(\tR\x06teamId\"\xf4\x01\n" +
 	"\x1bParseJobDescriptionResponse\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\"\n" +

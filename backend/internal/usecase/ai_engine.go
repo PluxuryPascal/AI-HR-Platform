@@ -8,7 +8,7 @@ import (
 )
 
 type AiUseCase interface {
-	ParseJobDescription(ctx context.Context, rawText, locale string) (*domain.JobParseResult, error)
+	ParseJobDescription(ctx context.Context, rawText, locale string, teamID string) (*domain.JobParseResult, error)
 }
 
 type aiUseCase struct {
@@ -21,7 +21,7 @@ func NewAiUseCase(aiClient *pbAI.AIEngineServiceClient) AiUseCase {
 	}
 }
 
-func (u *aiUseCase) ParseJobDescription(ctx context.Context, rawText, locale string) (*domain.JobParseResult, error) {
+func (u *aiUseCase) ParseJobDescription(ctx context.Context, rawText, locale string, teamID string) (*domain.JobParseResult, error) {
 	if u.aiClient == nil || *u.aiClient == nil {
 		return nil, fmt.Errorf("ai client not initialized")
 	}
@@ -29,6 +29,7 @@ func (u *aiUseCase) ParseJobDescription(ctx context.Context, rawText, locale str
 	resp, err := (*u.aiClient).ParseJobDescription(ctx, &pbAI.ParseJobDescriptionRequest{
 		RawText: rawText,
 		Locale:  locale,
+		TeamId:  teamID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ai engine parse job: %w", err)

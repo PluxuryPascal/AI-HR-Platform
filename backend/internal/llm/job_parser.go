@@ -40,6 +40,7 @@ JSON schema:
 Extraction rules:
 - "title": extract the exact job title. If multiple titles are mentioned, use the most senior/specific one.
 - "description": the full job description body — responsibilities, company context, benefits. Keep it clean but complete. Do not include requirements here.
+  IMPORTANT: The description should be detailed and contain at least 10 sentences.
   IMPORTANT: write the description in the language specified by the "output_language" field in the user message, regardless of the input text language.
 - "requirements": extract EACH requirement as a separate, atomic string. Be specific:
     GOOD: ["5+ years of Go experience", "Familiarity with Kubernetes", "Upper-Intermediate English"]
@@ -47,7 +48,7 @@ Extraction rules:
   Include hard requirements (must-have) and soft requirements (nice-to-have) as separate items.
   Aim for 5-15 items. Never return placeholder text.
 - "work_format": look for keywords like "remote", "hybrid", "office", "on-site", "в офисе", "удалённо", "гибридный". Default to "Onsite".
-- "salary_min" / "salary_max": extract numeric values only. 0 if not mentioned. Handle "от 150 000" → min=150000, max=0.
+- "salary_min" / "salary_max": extract numeric values only. If not explicitly mentioned in the text, you MUST estimate a reasonable market salary range based on the job title and requirements.
 - "currency": "USD", "RUB", "EUR", etc. Empty string if not mentioned.`
 
 type JobParser struct {

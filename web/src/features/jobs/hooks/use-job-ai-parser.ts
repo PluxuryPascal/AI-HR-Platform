@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { JobFormValues } from "@/features/jobs/schemas/job-schema";
 import { apiClient } from "@/lib/api-client";
-import { toast } from "sonner";
 import { ApiResponse } from "@/types";
 
 export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
@@ -21,6 +20,9 @@ export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
                 description: string;
                 requirements: string[];
                 work_format: string;
+                salary_min: number;
+                salary_max: number;
+                currency: string;
             }>>("/ai/parse-job", {
                 raw_text: rawDescription,
                 locale: "ru" // TODO: get from next-intl if needed
@@ -32,6 +34,9 @@ export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
             if (result.title) form.setValue("title", result.title);
             if (result.description) form.setValue("description", result.description);
             if (result.requirements) form.setValue("requirements", result.requirements);
+            if (result.salary_min !== undefined) form.setValue("salary_min", result.salary_min);
+            if (result.salary_max !== undefined) form.setValue("salary_max", result.salary_max);
+            if (result.currency) form.setValue("currency", result.currency);
             
             // Map work format from backend string to frontend enum
             if (result.work_format) {
@@ -48,10 +53,8 @@ export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
 
             return { success: true as const };
         } catch (error) {
-            console.error("AI Parse Error:", error);
             const message = error instanceof Error ? error.message : "Failed to parse job description";
-            toast.error(message);
-            return { success: false, reason: "error" as const };
+            return { success: false, reason: "error" as const, message };
         } finally {
             setIsAnalyzing(false);
         }

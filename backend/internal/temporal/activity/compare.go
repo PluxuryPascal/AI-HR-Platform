@@ -6,13 +6,12 @@ import (
 	"fmt"
 
 	"go.temporal.io/sdk/activity"
-	"go.uber.org/zap"
 )
 
 func (a *Activities) CompareCandidates(ctx context.Context, input CandidateCompareInput) (*CandidateCompareOutput, error) {
 	logger := activity.GetLogger(ctx)
 
-	logger.Info("Comparing candidates started", zap.Int("candidates count", len(input.Candidates)), zap.String("job requirements", input.JobRequirements))
+	logger.Info("Comparing candidates started", "candidates_count", len(input.Candidates), "job_requirements", input.JobRequirements)
 
 	candidates := make([]llm.CandidateCompareInput, len(input.Candidates))
 	for i, candidate := range input.Candidates {
@@ -29,7 +28,7 @@ func (a *Activities) CompareCandidates(ctx context.Context, input CandidateCompa
 
 	result, err := a.comparator.Compare(ctx, candidates, input.JobRequirements, input.Locale, input.TeamID)
 	if err != nil {
-		logger.Error("Failed to compare candidates", zap.Error(err))
+		logger.Error("Failed to compare candidates", "error", err)
 		return nil, fmt.Errorf("failed to compare candidates: %w", err)
 	}
 
@@ -44,7 +43,7 @@ func (a *Activities) CompareCandidates(ctx context.Context, input CandidateCompa
 		}
 	}
 
-	logger.Info("Comparing candidates completed", zap.Int("candidates count", len(input.Candidates)))
+	logger.Info("Comparing candidates completed", "candidates_count", len(input.Candidates))
 
 	return &output, nil
 }

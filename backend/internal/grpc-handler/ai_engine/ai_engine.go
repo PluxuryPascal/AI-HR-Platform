@@ -162,6 +162,7 @@ func (h *Handler) CompareCandidates(ctx context.Context, req *pb.CompareCandidat
 	}
 
 	input := activity.CandidateCompareInput{
+		TeamID:          req.GetTeamId(),
 		Candidates:      candidates,
 		JobRequirements: req.GetJobRequirements(),
 		Locale:          req.GetLocale(),
@@ -201,6 +202,7 @@ func (h *Handler) CompareCandidates(ctx context.Context, req *pb.CompareCandidat
 
 func (h *Handler) ParseJobDescription(ctx context.Context, req *pb.ParseJobDescriptionRequest) (*pb.ParseJobDescriptionResponse, error) {
 	input := activity.JobParseInput{
+		TeamID:  req.GetTeamId(),
 		RawText: req.GetRawText(),
 		Locale:  req.GetLocale(),
 	}

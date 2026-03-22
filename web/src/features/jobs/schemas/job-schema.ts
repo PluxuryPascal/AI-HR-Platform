@@ -20,6 +20,9 @@ export const jobSchema = z.object({
         message: "Add at least one requirement.",
     }),
     type: z.nativeEnum(JobType),
+    salary_min: z.number().min(0, "Min salary must be 0 or more"),
+    salary_max: z.number().min(0, "Max salary must be 0 or more"),
+    currency: z.string().min(1, "Currency is required"),
 });
 
 export type JobFormValues = z.infer<typeof jobSchema>;

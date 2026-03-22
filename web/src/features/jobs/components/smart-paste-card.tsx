@@ -31,7 +31,7 @@ export function SmartPasteCard({ form }: SmartPasteCardProps) {
             toast.error(t("smartPastePlaceholder"))
         } else if (!result.success && result.reason === "error") {
             toast.error(t("aiError"), {
-                description: t("aiErrorDesc"),
+                description: result.message || t("aiErrorDesc"),
             })
         } else if (result.success) {
             toast.success(t("aiSuccess"), {

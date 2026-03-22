@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"backend/internal/middleware"
 	"backend/internal/response"
 	"backend/internal/usecase"
 	"net/http"
@@ -34,7 +35,9 @@ func (h *AiHandler) ParseJob() echo.HandlerFunc {
 			return response.Error(c, http.StatusBadRequest, "validation failed")
 		}
 
-		result, err := h.usecase.ParseJobDescription(c.Request().Context(), req.RawText, req.Locale)
+		teamID := middleware.GetTeamID(c)
+
+		result, err := h.usecase.ParseJobDescription(c.Request().Context(), req.RawText, req.Locale, teamID)
 		if err != nil {
 			return response.Error(c, http.StatusInternalServerError, err.Error())
 		}

@@ -1,10 +1,10 @@
 "use client"
 
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { Loader2, Briefcase } from "lucide-react"
+import { Loader2, Briefcase, Plus, Trash2, Banknote } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
@@ -44,11 +44,19 @@ export function JobForm() {
         resolver: zodResolver(jobSchema),
         defaultValues: {
             title: "",
-            department: undefined,
+            department: "",
             description: "",
-            requirements: [],
+            requirements: [""],
             type: JobType.Onsite,
+            salary_min: 0,
+            salary_max: 0,
+            currency: "RUB",
         },
+    })
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "requirements",
     })
 
     const onSubmit = async (data: JobFormValues) => {
@@ -56,7 +64,11 @@ export function JobForm() {
             title: data.title,
             department_id: data.department,
             description: data.description,
-            work_format: data.type === JobType.Remote ? "remote" : data.type === JobType.Onsite ? "office" : "hybrid",
+            requirements: data.requirements.filter(r => r.trim() !== ""),
+            work_format: (data.type === JobType.Remote ? "remote" : data.type === JobType.Onsite ? "office" : "hybrid") as "remote" | "office" | "hybrid",
+            salary_min: data.salary_min,
+            salary_max: data.salary_max,
+            currency: data.currency,
         }
 
         try {
@@ -163,6 +175,45 @@ export function JobForm() {
                             </div>
                         </div>
 
+                        {/* Salary & Currency */}
+                        <div className="grid gap-6 md:grid-cols-3">
+                            <div className="space-y-3">
+                                <Label htmlFor="salary_min" className="mb-2 block">{t("fields.salaryMin")}</Label>
+                                <div className="relative">
+                                    <Banknote className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="salary_min"
+                                        type="number"
+                                        className="pl-9"
+                                        disabled={createJobMutation.isPending}
+                                        {...form.register("salary_min", { valueAsNumber: true })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <Label htmlFor="salary_max" className="mb-2 block">{t("fields.salaryMax")}</Label>
+                                <div className="relative">
+                                    <Banknote className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="salary_max"
+                                        type="number"
+                                        className="pl-9"
+                                        disabled={createJobMutation.isPending}
+                                        {...form.register("salary_max", { valueAsNumber: true })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <Label htmlFor="currency" className="mb-2 block">{t("fields.currency")}</Label>
+                                <Input
+                                    id="currency"
+                                    placeholder="RUB, USD, EUR..."
+                                    disabled={createJobMutation.isPending}
+                                    {...form.register("currency")}
+                                />
+                            </div>
+                        </div>
+
                         {/* Description */}
                         <div className="space-y-3">
                             <Label htmlFor="description" className="mb-2 block">{t("fields.description")}</Label>
@@ -175,6 +226,47 @@ export function JobForm() {
                             />
                             {form.formState.errors.description && (
                                 <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
+                            )}
+                        </div>
+
+                        {/* Requirements */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <Label className="block">{t("fields.requirements")}</Label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => append("")}
+                                    disabled={createJobMutation.isPending}
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Добавить
+                                </Button>
+                            </div>
+                            <div className="space-y-3">
+                                {fields.map((field, index) => (
+                                    <div key={field.id} className="flex gap-2">
+                                        <Input
+                                            {...form.register(`requirements.${index}`)}
+                                            placeholder={`Требование #${index + 1}`}
+                                            disabled={createJobMutation.isPending}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => remove(index)}
+                                            disabled={createJobMutation.isPending || fields.length === 1}
+                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                            {form.formState.errors.requirements && (
+                                <p className="text-sm text-red-500">{form.formState.errors.requirements.message}</p>
                             )}
                         </div>
 

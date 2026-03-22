@@ -105,6 +105,7 @@ message CompareCandidatesRequest {
   repeated CandidateForComparison candidates = 1;
   string job_requirements = 2;
   string locale = 3;
+  string team_id = 4;
 }
 
 message CandidateComparisonEntry {
@@ -123,6 +124,7 @@ message CompareCandidatesResponse {
 message ParseJobDescriptionRequest {
   string raw_text = 1;
   string locale   = 2;
+  string team_id  = 3;
 }
 
 message ParseJobDescriptionResponse {

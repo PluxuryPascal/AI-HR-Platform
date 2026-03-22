@@ -177,7 +177,10 @@
             "description": "Description",
             "requirements": "Requirements",
             "type": "Job Type",
-            "location": "Location"
+            "location": "Location",
+            "salaryMin": "Min Salary",
+            "salaryMax": "Max Salary",
+            "currency": "Currency"
         },
         "submitBtn": "Create Job",
         "successMessage": "Job created successfully!",

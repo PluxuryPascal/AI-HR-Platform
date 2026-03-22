@@ -9,6 +9,7 @@ export interface CreateJobPayload {
     department_id?: string;
     work_format: "remote" | "office" | "hybrid";
     description?: string;
+    requirements?: string[];
     salary_min?: number;
     salary_max?: number;
     currency?: string;

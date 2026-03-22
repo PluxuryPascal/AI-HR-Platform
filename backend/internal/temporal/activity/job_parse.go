@@ -5,21 +5,24 @@ import (
 	"fmt"
 
 	"go.temporal.io/sdk/activity"
-	"go.uber.org/zap"
 )
 
 func (a *Activities) ParseJob(ctx context.Context, input JobParseInput) (*JobParseOutput, error) {
 	logger := activity.GetLogger(ctx)
 
-	logger.Info("Parsing job started", zap.String("locale", input.Locale))
+	logger.Info("Parsing job started", "locale", input.Locale)
 
 	result, err := a.jobParser.Parse(ctx, input.RawText, input.Locale, input.TeamID)
 	if err != nil {
-		logger.Error("Failed to parse job", zap.Error(err))
+		logger.Error("Failed to parse job", "error", err)
 		return nil, fmt.Errorf("failed to parse job: %w", err)
 	}
 
-	logger.Info("Parsing job completed", zap.String("title", result.Title), zap.Int("requirements count", len(result.Requirements)), zap.String("work format", result.WorkFormat))
+	logger.Info("Parsing job completed", 
+		"title", result.Title, 
+		"requirements_count", len(result.Requirements), 
+		"work_format", result.WorkFormat,
+	)
 
 	return &JobParseOutput{
 		Title:        result.Title,
