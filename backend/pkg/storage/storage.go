@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/cloudinary/cloudinary-go/v2/api"
+	"github.com/cloudinary/cloudinary-go/v2/api/admin"
+	"github.com/cloudinary/cloudinary-go/v2/api/admin/search"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
@@ -22,13 +27,18 @@ var _ FileStorage = (*CloudinaryStorage)(nil)
 
 // UploadFile загружает файл в хранилище и возвращает публичный ID (ключ).
 func (c *CloudinaryStorage) UploadFile(ctx context.Context, file io.Reader, filename string) (string, error) {
-	// Генерируем уникальное имя, чтобы избежать коллизий
-	fileID := fmt.Sprintf("%s_%s_%d", c.cfg.UploadFolder, filename, time.Now().Unix())
+	// Strip extension from filename for cleaner PublicID
+	ext := filepath.Ext(filename)
+	base := strings.TrimSuffix(filename, ext)
+
+	// Generate a unique public ID without the folder prefix (Folder param handles it)
+	fileID := fmt.Sprintf("%s_%d", base, time.Now().Unix())
 
 	uploadParams := uploader.UploadParams{
 		PublicID:     fileID,
 		Folder:       c.cfg.UploadFolder,
 		ResourceType: "auto",
+		Type:         "authenticated", // Use authenticated for better security
 	}
 
 	resp, err := c.client.Upload.Upload(ctx, file, uploadParams)
@@ -41,15 +51,57 @@ func (c *CloudinaryStorage) UploadFile(ctx context.Context, file io.Reader, file
 
 // GetFileURL возвращает URL для скачивания файла по его ID.
 func (c *CloudinaryStorage) GetFileURL(ctx context.Context, fileID string) (string, error) {
-	resp, err := c.client.Upload.Explicit(ctx, uploader.ExplicitParams{
-		PublicID:     fileID,
-		ResourceType: "auto",
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to get asset details via explicit: %w", err)
+	// 1. Fetch asset metadata to determine exact ResourceType and Format
+	var resourceType, format string
+
+	fetchMetadata := func(resType string) bool {
+		respAdmin, errAdmin := c.client.Admin.Asset(ctx, admin.AssetParams{
+			PublicID:     fileID,
+			AssetType:    api.AssetType(resType),
+			DeliveryType: api.DeliveryType("authenticated"),
+		})
+		if errAdmin == nil && respAdmin != nil && respAdmin.Format != "" {
+			resourceType = respAdmin.ResourceType
+			format = respAdmin.Format
+			return true
+		}
+		return false
 	}
 
-	return resp.SecureURL, nil
+	found := fetchMetadata("image")
+	if !found {
+		found = fetchMetadata("raw")
+	}
+
+	// 2. Fallback to Search API if Admin API fails
+	if !found {
+		searchQuery := search.Query{
+			Expression: fmt.Sprintf("public_id:%s", fileID),
+		}
+		respSearch, errSearch := c.client.Admin.Search(ctx, searchQuery)
+		if errSearch == nil && respSearch != nil && len(respSearch.Assets) > 0 {
+			resourceType = respSearch.Assets[0].ResourceType
+			format = respSearch.Assets[0].Format
+			found = true
+		}
+	}
+
+	if !found {
+		return "", fmt.Errorf("cloudinary could not find metadata for fileID: %s", fileID)
+	}
+
+	// 3. Generate a Private Download URL allowing backend download of authenticated assets
+	downloadURL, err := c.client.Upload.PrivateDownloadURL(uploader.PrivateDownloadURLParams{
+		PublicID:     fileID,
+		Format:       format,
+		DeliveryType: "authenticated",
+		ResourceType: api.AssetType(resourceType),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to generate private download url: %w", err)
+	}
+
+	return downloadURL, nil
 }
 
 // DownloadFile скачивает файл из хранилища в память (возвращает байты).

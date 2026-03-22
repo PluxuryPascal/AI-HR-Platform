@@ -3,8 +3,8 @@ import { CandidateCard as CandidateCardType, ColumnId } from "../types";
 import { useGetCandidates } from "../../candidates/api/use-get-candidates";
 import { initialColumns } from "../utils/mock-board";
 
-export function useKanbanSelection() {
-    const { data: columns = initialColumns } = useGetCandidates();
+export function useKanbanSelection(jobId?: string) {
+    const { data: columns = initialColumns } = useGetCandidates(jobId);
     const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
     const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
     const [isSelectionMode, setIsSelectionMode] = useState(false);

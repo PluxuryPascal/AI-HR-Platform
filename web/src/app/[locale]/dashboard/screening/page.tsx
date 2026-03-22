@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useGetJobs } from "@/features/jobs/api/use-get-jobs";
 import { KanbanBoard } from "@/features/screening/components/kanban-board";
-import { useJobsStore } from "@/store/use-jobs-store";
 import { 
     Select as UISelect, 
     SelectContent as UISelectContent, 
@@ -14,8 +14,16 @@ import {
 
 export default function ScreeningPage() {
     const t = useTranslations("Screening");
-    const jobs = useJobsStore((state) => state.jobs);
-    const [selectedJobId, setSelectedJobId] = useState<string>(jobs[0]?.id || "");
+    const { data: jobsResponse } = useGetJobs();
+    const jobs = jobsResponse?.data || [];
+    const [selectedJobId, setSelectedJobId] = useState<string>("");
+
+    // Set initial selected job once jobs are loaded
+    useEffect(() => {
+        if (!selectedJobId && jobs.length > 0) {
+            setSelectedJobId(jobs[0].id);
+        }
+    }, [jobs, selectedJobId]);
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">

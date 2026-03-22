@@ -4,26 +4,21 @@ import { Candidate } from "../types/candidate";
 import { PaginatedResponse } from "@/types";
 
 export function useGetCandidates(jobId?: string) {
-    return useQuery<Record<string, Candidate[]>>({
+    return useQuery({
         queryKey: ["candidates", jobId],
-        queryFn: async (): Promise<Record<string, Candidate[]>> => {
+        queryFn: async () => {
             if (!jobId) {
-                return {};
+                return { data: [] };
             }
 
-            const response = await apiClient.post<PaginatedResponse<Candidate>>(
+            return await apiClient.post<PaginatedResponse<Candidate>>(
                 `/jobs/${jobId}/candidates/list`,
                 {
                     pagination: { page: 1, per_page: 100 },
                 }
             );
-
-            // Group candidates by their stage
-            // Note: Currently backend doesn't return stage_id in Candidate 
-            // but we can assume they are grouped somehow or we need to fetch stages first.
-            // Looking at CandidateHandler.GetCandidate, it returns stage_id.
-            // Let's assume for now we might need to adjust this once we see the list response.
-            
+        },
+        select: (response) => {
             const grouped: Record<string, Candidate[]> = {};
             
             response.data.forEach((c) => {

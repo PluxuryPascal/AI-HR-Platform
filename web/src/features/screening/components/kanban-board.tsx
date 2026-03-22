@@ -43,14 +43,14 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
         handleClearSelection,
         toggleSelectionMode,
         getSelectedCandidates,
-    } = useKanbanSelection();
+    } = useKanbanSelection(jobId);
 
     // Map backend candidates to CandidateCard UI format
     const boardColumns = useMemo(() => {
         const mapped: Record<string, CandidateCard[]> = {};
         stages.forEach(stage => {
             const candidates = groupedCandidates[stage.id] || [];
-            mapped[stage.id] = (candidates as any[]).map(c => ({
+            mapped[stage.id] = candidates.map(c => ({
                 id: c.id,
                 name: `${c.first_name || ""} ${c.last_name || ""}`.trim() || t("unknownCandidate") || "Unknown",
                 role: t("candidateRole") || "Candidate",

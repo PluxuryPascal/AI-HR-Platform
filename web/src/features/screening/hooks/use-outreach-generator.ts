@@ -39,11 +39,13 @@ export function useOutreachGenerator({ isOpen, candidate, type }: UseOutreachGen
         }, 600);
     };
 
+    const candidateIds = isBulk ? (candidate as CandidateCard[]).map(c => c.id).join(",") : (candidate as CandidateCard)?.id || "";
+
     useEffect(() => {
         if (isOpen && candidates.length > 0) {
             handleGenerate();
         }
-    }, [isOpen, candidate, type, tone]);
+    }, [isOpen, candidateIds, type, tone]);
 
     return {
         tone,

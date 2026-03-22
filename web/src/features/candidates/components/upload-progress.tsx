@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, FileText, Loader2, AlertCircle } from "lucide-react";
@@ -26,20 +26,29 @@ export function useUploadProgress({ files, jobId, onComplete }: UploadProgressPr
     const [fileProgress, setFileProgress] = useState<Record<string, FileProgress>>({});
     const uploadMutation = useUploadResume();
     const t = useTranslations("UploadStages");
+    const startedUploads = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         const initialProgress: Record<string, FileProgress> = {};
         files.forEach(file => {
-            initialProgress[file.name] = {
-                name: file.name,
-                progress: 0,
-                status: t("stage1"),
-                isComplete: false
-            };
+            if (!fileProgress[file.name]) {
+                initialProgress[file.name] = {
+                    name: file.name,
+                    progress: 0,
+                    status: t("stage1"),
+                    isComplete: false
+                };
+            }
         });
-        setFileProgress(initialProgress);
+
+        if (Object.keys(initialProgress).length > 0) {
+            setFileProgress(prev => ({ ...prev, ...initialProgress }));
+        }
 
         files.forEach(async (file) => {
+            // Prevent double upload of the same file in this lifecycle
+            if (startedUploads.current.has(file.name)) return;
+            startedUploads.current.add(file.name);
             // Simulate initial progress
             let progress = 0;
             const progressInterval = setInterval(() => {

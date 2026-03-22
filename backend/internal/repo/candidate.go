@@ -108,10 +108,15 @@ func (r *candidateRepo) UpdateFromAIParsing(ctx context.Context, result *domain.
 			updated_at = NOW()
 	`
 
+	missingFields := result.MissingFields
+	if missingFields == nil {
+		missingFields = []string{}
+	}
+
 	_, err = tx.Exec(ctx, profileQuery, pgx.NamedArgs{
 		"candidate_id":    result.CandidateID,
 		"structured_data": result.StructuredData,
-		"missing_fields":  result.MissingFields,
+		"missing_fields":  missingFields,
 		"ai_parsed_at":    now,
 	})
 	if err != nil {
@@ -158,7 +163,7 @@ func (r *candidateRepo) Create(ctx context.Context, jobID, fileKey string) (*dom
 	const query = `
 		INSERT INTO hiring.t_candidates (job_id, resume_file_key, parsing_status)
 		VALUES (@job_id, @resume_file_key, @parsing_status)
-		RETURNING id, job_id, resume_file_key, parsing_status, created_at
+		RETURNING id, job_id, resume_file_key, parsing_status, created_at, first_name, last_name, email, parsed_text, location, skills, updated_at
 	`
 	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
 		"job_id":          jobID,
