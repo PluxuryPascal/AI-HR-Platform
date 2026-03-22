@@ -207,7 +207,7 @@ func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candida
 }
 
 func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error) {
-	sortID := "c.created_at"
+	sortID := "created_at"
 	sortDesc := "DESC"
 
 	if filter.Sort != nil {
@@ -223,15 +223,15 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 		}
 
 		allowedSortFields := map[string]string{
-			"first_name": "c.first_name",
-			"last_name":  "c.last_name",
-			"created_at": "c.created_at",
+			"first_name": "first_name",
+			"last_name":  "last_name",
+			"created_at": "created_at",
 		}
 
 		if dbField, ok := allowedSortFields[sortID]; ok {
 			sortID = dbField
 		} else {
-			sortID = "c.created_at"
+			sortID = "created_at"
 		}
 	}
 

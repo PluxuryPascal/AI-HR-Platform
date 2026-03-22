@@ -59,7 +59,7 @@ func NewJobScopedRouter(h CandidateRoutes, session, rbac echo.MiddlewareFunc) ro
 
 func (r *candidateJobRouter) Routes() []router.Route {
 	return []router.Route{
-		router.NewRoute(http.MethodPost, "", r.handler.PostCandidateList, r.session, r.rbac),
+		router.NewRoute(http.MethodPost, "/list", r.handler.PostCandidateList, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "/upload", r.handler.PostUploadResume, r.session, r.rbac),
 	}
 }

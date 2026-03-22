@@ -14,4 +14,5 @@ type InviteCreatedEvent struct {
 	Token    string `json:"token"`
 	TeamID   string `json:"team_id"`
 	Role     string `json:"role"`
+	Locale   string `json:"locale"`
 }

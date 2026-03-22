@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-export type Role = "owner" | "recruiter" | "manager" | "hiring_manager";
+export type Role = "owner" | "recruiter" | "hiring_manager";
 export type Status = "active" | "pending";
 
 export interface Member {
@@ -50,7 +50,6 @@ const getRoleBadgeColor = (role: Role) => {
             return "default";
         case "recruiter":
             return "secondary";
-        case "manager":
         case "hiring_manager":
             return "outline";
         default:
@@ -93,11 +92,11 @@ export function TeamTable({ members }: TeamTableProps) {
                         </TableCell>
                         <TableCell>
                             <Badge variant={getRoleBadgeColor(member.role)}>
-                                {t(`roles.${member.role}`)}
+                                {t(`roles.${member.role}`) || member.role}
                             </Badge>
                         </TableCell>
                         <TableCell>
-                            {(member.role === "manager" || member.role === "hiring_manager") ? (
+                            {(member.role === "hiring_manager" || member.role === "recruiter") ? (
                                 <div className="flex flex-wrap gap-1">
                                     {member.assignedJobs?.length ? (
                                         member.assignedJobs.map(jobId => {
@@ -118,7 +117,7 @@ export function TeamTable({ members }: TeamTableProps) {
                         </TableCell>
                         <TableCell>
                             <Badge variant={member.status === "active" ? "default" : "secondary"} className={member.status === "active" ? "bg-green-500 hover:bg-green-600" : "bg-yellow-500 hover:bg-yellow-600"}>
-                                {t(`status.${member.status}`)}
+                                {t(`status.${member.status}`) || member.status}
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right">

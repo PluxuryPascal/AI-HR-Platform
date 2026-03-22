@@ -28,6 +28,7 @@ export interface InviteUserDTO {
     email: string;
     role: string;
     job_ids?: string[];
+    locale?: string;
 }
 
 export function useInviteUser() {

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/jackc/pgx/v5"
@@ -83,8 +84,20 @@ func (c *CasbinClient) HealthCheck(_ context.Context) error {
 	return nil
 }
 
-func (c *CasbinClient) Run(_ context.Context) error {
-	return nil
+func (c *CasbinClient) Run(ctx context.Context) error {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			if err := c.enforcer.LoadPolicy(); err != nil {
+				c.log.Error("failed to reload casbin policy", zap.Error(err))
+			}
+		}
+	}
 }
 
 func (c *CasbinClient) Stop(_ context.Context) error {

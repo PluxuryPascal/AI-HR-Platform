@@ -4,14 +4,14 @@ p, admin, *, /*, *
 # Recruiter: GET на всё, доступ к спискам через POST, полный доступ к вакансиям и кандидатам
 p, recruiter, *, /*, GET
 p, recruiter, *, /api/v1/jobs/list, POST
-p, recruiter, *, /api/v1/jobs/:job_id/candidates, POST
+p, recruiter, *, /api/v1/jobs/:job_id/candidates/list, POST
 p, recruiter, *, /api/v1/jobs/*, *
 p, recruiter, *, /api/v1/candidates/*, *
 
-# Manager: GET на всё и доступ к спискам через POST
-p, manager, *, /*, GET
-p, manager, *, /api/v1/jobs/list, POST
-p, manager, *, /api/v1/jobs/:job_id/candidates, POST
-p, manager, *, /api/v1/dashboard/applications-chart, GET
-p, manager, *, /api/v1/dashboard/stats, GET
-p, manager, *, /api/v1/dashboard/recent-activity, GET
+# Hiring Manager: GET на всё и доступ к спискам через POST
+p, hiring_manager, *, /*, GET
+p, hiring_manager, *, /api/v1/jobs/list, POST
+p, hiring_manager, *, /api/v1/jobs/:job_id/candidates/list, POST
+p, hiring_manager, *, /api/v1/dashboard/applications-chart, GET
+p, hiring_manager, *, /api/v1/dashboard/stats, GET
+p, hiring_manager, *, /api/v1/dashboard/recent-activity, GET

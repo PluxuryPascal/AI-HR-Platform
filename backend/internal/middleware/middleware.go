@@ -109,7 +109,8 @@ func (m *middleware) RBAC() echo.MiddlewareFunc {
 			}
 
 			if !ok {
-				m.log.Warn("rbac denied", zap.String("user_id", userID), zap.String("team_id", teamID), zap.String("obj", obj), zap.String("act", act))
+				role := GetRole(c)
+				m.log.Warn("rbac denied", zap.String("user_id", userID), zap.String("team_id", teamID), zap.String("role", role), zap.String("obj", obj), zap.String("act", act))
 				return echo.NewHTTPError(http.StatusForbidden, "access denied")
 			}
 

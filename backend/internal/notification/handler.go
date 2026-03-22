@@ -41,7 +41,11 @@ func InviteCreatedHandler(emailClient *email.Client, log *zap.Logger, cfg config
 		)
 
 		subject := "You've been invited to join AI-HR Platform"
-		inviteLink := fmt.Sprintf("%s/accept-invite?token=%s", cfg.FrontendURL, event.Token)
+		invitePath := "/accept-invite"
+		if event.Locale != "" {
+			invitePath = "/" + event.Locale + "/accept-invite"
+		}
+		inviteLink := fmt.Sprintf("%s%s?token=%s", cfg.FrontendURL, invitePath, event.Token)
 		body := fmt.Sprintf(
 			"Hello!\n\nYou have been invited to join AI-HR Platform as %s.\n\nPlease follow this link to complete your registration:\n%s\n\nThis invitation will expire soon, so please act promptly.\n\nBest regards,\nAI-HR Team",
 			event.Role,

@@ -19,9 +19,10 @@ type Invite struct {
 
 // CreateInviteParams is the input DTO for the InviteUser use-case method.
 type CreateInviteParams struct {
-	Email  string
-	Role   string
-	JobIDs *[]string
+	Email  string    `json:"email"`
+	Role   string    `json:"role"`
+	JobIDs *[]string `json:"job_ids"`
+	Locale string    `json:"locale"`
 }
 
 // InviteRegisterDTO is the public-facing payload returned by ValidateInvite.

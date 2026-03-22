@@ -16,7 +16,7 @@ services:
       - ai_hr_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-ai_hr_user} -d $${POSTGRES_DB:-ai_hr_db}"]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-ai_hr_user} -d $${POSTGRES_DB:-ai_hr_db}" ]
       interval: 5s
       timeout: 5s
       retries: 10

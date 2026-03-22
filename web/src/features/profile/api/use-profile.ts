@@ -23,13 +23,14 @@ export interface UpdatePasswordRequest {
     new_password: string;
 }
 
-export function useGetProfile() {
+export function useGetProfile(options?: { enabled?: boolean }) {
     return useQuery({
         queryKey: ["user-profile"],
         queryFn: async () => {
             const response = await apiClient.get<ApiResponse<UserProfile>>("/auth/profile");
             return response?.data;
         },
+        ...options,
     });
 }
 

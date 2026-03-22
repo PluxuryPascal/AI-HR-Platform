@@ -123,6 +123,7 @@ func (i *inviteUseCase) InviteUser(ctx context.Context, tokenStr string, req dom
 		Token:    inviteToken,
 		TeamID:   invite.TeamID,
 		Role:     invite.Role,
+		Locale:   req.Locale,
 	})
 	if err != nil {
 		return fmt.Errorf("marshal invite created event: %w", err)

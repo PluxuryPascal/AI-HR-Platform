@@ -32,6 +32,7 @@ type postInviteRequest struct {
 	Email  string    `json:"email"   validate:"required,email"`
 	Role   string    `json:"role"    validate:"required"`
 	JobIDs *[]string `json:"job_ids" validate:"omitempty,dive,uuid"`
+	Locale string    `json:"locale"`
 }
 
 type acceptInviteRequest struct {
@@ -93,6 +94,7 @@ func (i *InviteHandler) PostInvite() echo.HandlerFunc {
 			Email:  req.Email,
 			Role:   req.Role,
 			JobIDs: req.JobIDs,
+			Locale: req.Locale,
 		}); err != nil {
 			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("invite error: %v", err))
 		}

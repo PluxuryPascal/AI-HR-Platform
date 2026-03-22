@@ -100,7 +100,7 @@ export function InviteForm({ form, onSubmit, isPending }: InviteFormProps) {
                     )}
                 />
 
-                {watchRole === "hiring_manager" && jobs && (
+                {(watchRole === "hiring_manager" || watchRole === "recruiter") && jobs && (
                     <FormField
                         control={form.control}
                         name="jobs"
