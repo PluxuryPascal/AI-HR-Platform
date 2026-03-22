@@ -384,6 +384,7 @@ type GenerateCandidateEmailRequest struct {
 	Locale            string                 `protobuf:"bytes,5,opt,name=locale,proto3" json:"locale,omitempty"`
 	RecruiterName     string                 `protobuf:"bytes,6,opt,name=recruiter_name,json=recruiterName,proto3" json:"recruiter_name,omitempty"`
 	CompanyName       string                 `protobuf:"bytes,7,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
+	TeamId            string                 `protobuf:"bytes,8,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -463,6 +464,13 @@ func (x *GenerateCandidateEmailRequest) GetRecruiterName() string {
 func (x *GenerateCandidateEmailRequest) GetCompanyName() string {
 	if x != nil {
 		return x.CompanyName
+	}
+	return ""
+}
+
+func (x *GenerateCandidateEmailRequest) GetTeamId() string {
+	if x != nil {
+		return x.TeamId
 	}
 	return ""
 }
@@ -1162,7 +1170,7 @@ const file_proto_ai_engine_v1_ai_engine_proto_rawDesc = "" +
 	"\x06scores\x18\x01 \x03(\v24.ai_engine.v1.GetCandidateScoresResponse.ScoresEntryR\x06scores\x1ab\n" +
 	"\vScoresEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12=\n" +
-	"\x05value\x18\x02 \x01(\v2'.ai_engine.v1.GetCandidateScoreResponseR\x05value:\x028\x01\"\xaf\x02\n" +
+	"\x05value\x18\x02 \x01(\v2'.ai_engine.v1.GetCandidateScoreResponseR\x05value:\x028\x01\"\xc8\x02\n" +
 	"\x1dGenerateCandidateEmailRequest\x12!\n" +
 	"\fcandidate_id\x18\x01 \x01(\tR\vcandidateId\x12/\n" +
 	"\x14generated_by_user_id\x18\x02 \x01(\tR\x11generatedByUserId\x12+\n" +
@@ -1170,7 +1178,8 @@ const file_proto_ai_engine_v1_ai_engine_proto_rawDesc = "" +
 	"\x04tone\x18\x04 \x01(\x0e2\x17.ai_engine.v1.EmailToneR\x04tone\x12\x16\n" +
 	"\x06locale\x18\x05 \x01(\tR\x06locale\x12%\n" +
 	"\x0erecruiter_name\x18\x06 \x01(\tR\rrecruiterName\x12!\n" +
-	"\fcompany_name\x18\a \x01(\tR\vcompanyName\"y\n" +
+	"\fcompany_name\x18\a \x01(\tR\vcompanyName\x12\x17\n" +
+	"\ateam_id\x18\b \x01(\tR\x06teamId\"y\n" +
 	"\x1eGenerateCandidateEmailResponse\x12)\n" +
 	"\x10communication_id\x18\x01 \x01(\tR\x0fcommunicationId\x12\x18\n" +
 	"\asubject\x18\x02 \x01(\tR\asubject\x12\x12\n" +

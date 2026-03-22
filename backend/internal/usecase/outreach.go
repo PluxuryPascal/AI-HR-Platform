@@ -11,7 +11,7 @@ import (
 )
 
 type OutreachUseCase interface {
-	GenerateEmail(ctx context.Context, candidateID, userID, role string, emailType domain.EmailType, tone string, locale string) (*domain.Communication, error)
+	GenerateEmail(ctx context.Context, candidateID, userID, teamID, role string, emailType domain.EmailType, tone string, locale string) (*domain.Communication, error)
 	SendEmail(ctx context.Context, communicationID, subject, body string) error
 }
 
@@ -39,7 +39,7 @@ func NewOutreachUseCase(
 	}
 }
 
-func (u *outreachUseCase) GenerateEmail(ctx context.Context, candidateID, userID, role string, emailType domain.EmailType, tone string, locale string) (*domain.Communication, error) {
+func (u *outreachUseCase) GenerateEmail(ctx context.Context, candidateID, userID, teamID, role string, emailType domain.EmailType, tone string, locale string) (*domain.Communication, error) {
 	pbType := pbAI.EmailType_EMAIL_TYPE_REJECTION
 	if emailType == domain.EmailInterviewInvite {
 		pbType = pbAI.EmailType_EMAIL_TYPE_INTERVIEW_INVITE
@@ -59,6 +59,7 @@ func (u *outreachUseCase) GenerateEmail(ctx context.Context, candidateID, userID
 		Type:               pbType,
 		Tone:               pbTone,
 		Locale:             locale,
+		TeamId:             teamID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ai generate email: %w", err)

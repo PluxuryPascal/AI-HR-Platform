@@ -47,6 +47,10 @@ const nextConfig: NextConfig = {
         source: '/api/v1/ai/:path*',
         destination: 'http://localhost:8082/api/v1/ai/:path*',
       },
+      {
+        source: '/api/v1/outreach/:path*',
+        destination: 'http://localhost:8082/api/v1/outreach/:path*',
+      },
     ];
   },
 };

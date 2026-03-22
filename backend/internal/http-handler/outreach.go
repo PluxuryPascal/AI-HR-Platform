@@ -35,6 +35,7 @@ func (h *OutreachHandler) PostGenerateEmail() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		candidateID := c.Param("candidate_id")
 		userID := c.Get("id").(string)
+		teamID := c.Get("team_id").(string)
 
 		var req generateEmailRequest
 		if err := c.Bind(&req); err != nil {
@@ -46,7 +47,7 @@ func (h *OutreachHandler) PostGenerateEmail() echo.HandlerFunc {
 
 		// Role is not strictly needed for generation if ai_engine fetches candidate, 
 		// but usecase signature has it. I'll pass empty or just ignore in usecase.
-		comm, err := h.outreachUC.GenerateEmail(c.Request().Context(), candidateID, userID, "", req.Type, req.Tone, req.Locale)
+		comm, err := h.outreachUC.GenerateEmail(c.Request().Context(), candidateID, userID, teamID, "", req.Type, req.Tone, req.Locale)
 		if err != nil {
 			return response.Error(c, http.StatusInternalServerError, err.Error())
 		}

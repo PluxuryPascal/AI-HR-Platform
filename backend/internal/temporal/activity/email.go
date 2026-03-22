@@ -16,6 +16,7 @@ func (a *Activities) GenerateEmail(ctx context.Context, input EmailGenerateInput
 	logger.Info("Generating email started", zap.String("candidate id", input.CandidateID), zap.String("locale", input.Locale))
 
 	result, err := a.emailGen.Generate(ctx, llm.EmailGenerateInput{
+		TeamID:             input.TeamID,
 		CandidateFirstName: input.CandidateFirstName,
 		CandidateLastName:  input.CandidateLastName,
 		CandidateEmail:     input.CandidateEmail,

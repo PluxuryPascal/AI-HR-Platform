@@ -65,6 +65,7 @@ message GenerateCandidateEmailRequest {
   string locale              = 5;
   string recruiter_name      = 6;
   string company_name        = 7;
+  string team_id             = 8;
 }
 
 message GenerateCandidateEmailResponse {

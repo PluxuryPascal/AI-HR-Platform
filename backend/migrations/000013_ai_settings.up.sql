@@ -1,4 +1,4 @@
-CREATE TABLE ai_engine.t_team_settings (
+CREATE TABLE IF NOT EXISTS ai_engine.t_team_settings (
     team_id       UUID PRIMARY KEY,
     api_key       VARCHAR,
     parse_model   VARCHAR,
