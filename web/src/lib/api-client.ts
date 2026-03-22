@@ -29,6 +29,17 @@ async function request<T>(
     });
 
     if (!res.ok) {
+        if (res.status === 401) {
+            if (typeof window !== "undefined") {
+                const pathname = window.location.pathname;
+                if (!pathname.includes("/auth")) {
+                    const match = pathname.match(/^\/(en|ru|es)(\/|$)/);
+                    const localePrefix = match ? `/${match[1]}` : "";
+                    window.location.href = `${localePrefix}/auth`;
+                }
+            }
+        }
+
         const error = await res.json().catch(() => ({}));
         throw new Error(
             (error as { message?: string }).message ??

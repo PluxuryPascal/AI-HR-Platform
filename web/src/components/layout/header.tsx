@@ -26,6 +26,7 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import { dashboardConfig } from "@/config/nav";
 import { useAuth } from "@/store/use-auth";
+import { useGetProfile } from "@/features/profile/api/use-profile";
 
 export function Header() {
     const pathname = usePathname();
@@ -33,6 +34,10 @@ export function Header() {
     const t = useTranslations("Dashboard.header");
     const tNav = useTranslations("Dashboard.nav");
     const { user, logout } = useAuth();
+    const { data: profile } = useGetProfile();
+
+    const displayName = profile?.first_name ? `${profile.first_name} ${profile.last_name}` : user?.name;
+    const displayEmail = profile?.email || user?.email;
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -89,17 +94,17 @@ export function Header() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                                     <Avatar className="h-8 w-8">
-                                        <AvatarImage src={user?.avatar} alt={user?.name || "User"} />
-                                        <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                                        <AvatarImage src={user?.avatar} alt={displayName || "User"} />
+                                        <AvatarFallback>{displayName?.charAt(0) || "U"}</AvatarFallback>
                                     </Avatar>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" align="end" forceMount>
                                 <DropdownMenuLabel className="font-normal">
                                     <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
+                                        <p className="text-sm font-medium leading-none">{displayName || "User"}</p>
                                         <p className="text-xs leading-none text-muted-foreground">
-                                            {user?.email || "user@example.com"}
+                                            {displayEmail || "user@example.com"}
                                         </p>
                                     </div>
                                 </DropdownMenuLabel>

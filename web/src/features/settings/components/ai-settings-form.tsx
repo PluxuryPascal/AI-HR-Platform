@@ -174,6 +174,9 @@ export function AISettingsForm() {
         );
     }
 
+    const textModels = models.filter(m => !m.is_embedding);
+    const embedModels = models.filter(m => m.is_embedding);
+
     return (
         <div className="space-y-6">
             <APIKeyForm 
@@ -187,7 +190,7 @@ export function AISettingsForm() {
                 label={t("parseModelTitle")}
                 fieldName="parse_model"
                 initialValue={settings.parse_model || ""}
-                models={models}
+                models={textModels}
                 onSave={(val) => updateSetting("parse_model", val)}
             />
 
@@ -197,7 +200,7 @@ export function AISettingsForm() {
                 label={t("scoreModelTitle")}
                 fieldName="score_model"
                 initialValue={settings.score_model || ""}
-                models={models}
+                models={textModels}
                 onSave={(val) => updateSetting("score_model", val)}
             />
 
@@ -207,7 +210,7 @@ export function AISettingsForm() {
                 label={t("embedModelTitle")}
                 fieldName="embed_model"
                 initialValue={settings.embed_model || ""}
-                models={models}
+                models={embedModels}
                 onSave={(val) => updateSetting("embed_model", val)}
             />
 
@@ -217,7 +220,7 @@ export function AISettingsForm() {
                 label={t("chatModeTitle")}
                 fieldName="chat_model"
                 initialValue={settings.chat_model || ""}
-                models={models}
+                models={textModels}
                 onSave={(val) => updateSetting("chat_model", val)}
             />
         </div>

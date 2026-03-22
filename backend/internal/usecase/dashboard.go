@@ -21,15 +21,15 @@ type DashboardUseCase interface {
 type dashboardUseCase struct {
 	log        *zap.Logger
 	repo       repo.DashboardRepository
-	authClient pbAuth.AuthServiceClient
-	aiClient   pbAI.AIEngineServiceClient
+	authClient *pbAuth.AuthServiceClient
+	aiClient   *pbAI.AIEngineServiceClient
 }
 
 func NewDashboardUseCase(
 	log *zap.Logger,
 	repo repo.DashboardRepository,
-	authClient pbAuth.AuthServiceClient,
-	aiClient pbAI.AIEngineServiceClient,
+	authClient *pbAuth.AuthServiceClient,
+	aiClient *pbAI.AIEngineServiceClient,
 ) DashboardUseCase {
 	return &dashboardUseCase{
 		log:        log,
@@ -84,8 +84,8 @@ func (u *dashboardUseCase) GetRecentActivity(ctx context.Context, teamID string,
 	}
 
 	usersMap := make(map[string]*pbAuth.UserObj)
-	if len(userIDs) > 0 && u.authClient != nil {
-		userRes, authErr := u.authClient.GetUsers(ctx, &pbAuth.GetUsersRequest{UserIds: userIDs})
+	if len(userIDs) > 0 && u.authClient != nil && *u.authClient != nil {
+		userRes, authErr := (*u.authClient).GetUsers(ctx, &pbAuth.GetUsersRequest{UserIds: userIDs})
 		if authErr != nil {
 			u.log.Error("failed to fetch users from auth service", zap.Error(authErr))
 		} else {
@@ -96,9 +96,9 @@ func (u *dashboardUseCase) GetRecentActivity(ctx context.Context, teamID string,
 	}
 
 	scoresMap := make(map[string]*pbAI.GetCandidateScoreResponse)
-	if len(candidateIDs) > 0 && u.aiClient != nil {
+	if len(candidateIDs) > 0 && u.aiClient != nil && *u.aiClient != nil {
 		for _, candidateID := range candidateIDs {
-			scoreRes, aiErr := u.aiClient.GetCandidateScore(ctx, &pbAI.GetCandidateScoreRequest{CandidateId: candidateID})
+			scoreRes, aiErr := (*u.aiClient).GetCandidateScore(ctx, &pbAI.GetCandidateScoreRequest{CandidateId: candidateID})
 			if aiErr != nil {
 				u.log.Error("failed to fetch candidate scores from ai_engine", zap.Error(aiErr))
 			} else {

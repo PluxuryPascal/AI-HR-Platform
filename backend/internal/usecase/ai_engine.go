@@ -12,17 +12,21 @@ type AiUseCase interface {
 }
 
 type aiUseCase struct {
-	aiClient pbAI.AIEngineServiceClient
+	aiClient *pbAI.AIEngineServiceClient
 }
 
-func NewAiUseCase(aiClient pbAI.AIEngineServiceClient) AiUseCase {
+func NewAiUseCase(aiClient *pbAI.AIEngineServiceClient) AiUseCase {
 	return &aiUseCase{
 		aiClient: aiClient,
 	}
 }
 
 func (u *aiUseCase) ParseJobDescription(ctx context.Context, rawText, locale string) (*domain.JobParseResult, error) {
-	resp, err := u.aiClient.ParseJobDescription(ctx, &pbAI.ParseJobDescriptionRequest{
+	if u.aiClient == nil || *u.aiClient == nil {
+		return nil, fmt.Errorf("ai client not initialized")
+	}
+
+	resp, err := (*u.aiClient).ParseJobDescription(ctx, &pbAI.ParseJobDescriptionRequest{
 		RawText: rawText,
 		Locale:  locale,
 	})

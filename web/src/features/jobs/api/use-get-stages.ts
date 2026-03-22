@@ -12,5 +12,6 @@ export function useGetStages(jobId?: string) {
             return response?.data;
         },
         enabled: !!jobId,
+        refetchInterval: 5000,
     });
 }

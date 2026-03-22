@@ -36,5 +36,6 @@ export function useGetCandidates(jobId?: string) {
         },
         enabled: !!jobId,
         staleTime: 1000 * 60 * 5,
+        refetchInterval: 5000,
     });
 }

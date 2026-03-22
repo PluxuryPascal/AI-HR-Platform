@@ -19,5 +19,6 @@ export function useGetJobs({ page = 1, per_page = 10, filter }: GetJobsParams = 
             });
             return response;
         },
+        refetchInterval: 5000,
     });
 }

@@ -15,6 +15,7 @@ export interface AIModel {
     id: string;
     name: string;
     provider?: string;
+    is_embedding?: boolean;
 }
 
 export function useGetAISettings() {

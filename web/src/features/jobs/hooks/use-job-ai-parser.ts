@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { JobFormValues } from "@/features/jobs/schemas/job-schema";
 import { apiClient } from "@/lib/api-client";
+import { toast } from "sonner";
 import { ApiResponse } from "@/types";
 
 export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
@@ -48,6 +49,8 @@ export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
             return { success: true as const };
         } catch (error) {
             console.error("AI Parse Error:", error);
+            const message = error instanceof Error ? error.message : "Failed to parse job description";
+            toast.error(message);
             return { success: false, reason: "error" as const };
         } finally {
             setIsAnalyzing(false);

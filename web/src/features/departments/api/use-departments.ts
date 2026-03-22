@@ -11,6 +11,7 @@ export function useGetDepartments() {
             const response = await apiClient.get<ApiResponse<Department[]>>("/departments");
             return response.data;
         },
+        refetchInterval: 5000,
     });
 }
 

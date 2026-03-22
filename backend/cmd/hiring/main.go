@@ -268,10 +268,10 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 		job:        usecase.NewJobUseCase(r.job, r.access, auditor),
 		candidate:  usecase.NewCandidateUseCase(infra.log.Log, r.candidate, r.pipeline, r.job, r.access, infra.storage, infra.mqPublisher, auditor),
 		pipeline:   usecase.NewPipelineUseCase(r.pipeline, auditor),
-		dashboard:  usecase.NewDashboardUseCase(infra.log.Log, r.dashboard, authSvcClient, aiSvcClient),
+		dashboard:  usecase.NewDashboardUseCase(infra.log.Log, r.dashboard, &authSvcClient, &aiSvcClient),
 		chat:       usecase.NewChatUseCase(infra.log.Log, r.chat, infra.temporalClient),
 		interview:  usecase.NewInterviewUseCase(infra.log.Log, infra.temporalClient.TemporalClient),
-		ai:         usecase.NewAiUseCase(aiSvcClient),
+		ai:         usecase.NewAiUseCase(&aiSvcClient),
 	}
 }
 

@@ -16,10 +16,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamManagement } from "@/features/settings/components/team-management";
 import { AISettingsForm } from "@/features/settings/components/ai-settings-form";
 import { useAuth } from "@/store/use-auth";
+import { useGetProfile } from "@/features/profile/api/use-profile";
 
 export default function SettingsPage() {
     const t = useTranslations("Settings");
     const { user } = useAuth();
+    const { data: profile } = useGetProfile();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -27,7 +29,7 @@ export default function SettingsPage() {
     // We'll just rely on Tabs internal state or a URL param if we wanted deep linking.
     // For now, let's just stick to the requested redirect logic.
 
-    const isOwner = user?.role === "owner";
+    const isOwner = profile?.role === "owner" || user?.role === "owner";
 
     // Handle tab change to enforce security on "team" tab access via UI
     const [activeTab, setActiveTab] = useState("general");

@@ -15,6 +15,12 @@ services:
     networks:
       - ai_hr_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-ai_hr_user} -d $${POSTGRES_DB:-ai_hr_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   redis:
     image: redis:7.4-alpine
@@ -118,9 +124,12 @@ services:
       dockerfile: docker/auth/Dockerfile
     container_name: auth_service
     depends_on:
-      - postgres
-      - redis
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
     ports:
       - "127.0.0.1:8081:8081"
       - "127.0.0.1:50052:50052"
@@ -134,12 +143,18 @@ services:
       dockerfile: docker/hiring/Dockerfile
     container_name: hiring_service
     depends_on:
-      - postgres
-      - redis
-      - rabbitmq
-      - temporal
-      - auth
-      - ai_engine
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      temporal:
+        condition: service_started
+      auth:
+        condition: service_started
+      ai_engine:
+        condition: service_started
     ports:
       - "127.0.0.1:8082:8082"
       - "127.0.0.1:50051:50051"
@@ -153,9 +168,12 @@ services:
       dockerfile: docker/ai_engine/Dockerfile
     container_name: ai_engine_service
     depends_on:
-      - postgres
-      - redis
-      - temporal
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      temporal:
+        condition: service_started
     ports:
       - "127.0.0.1:50053:50053"
     networks:
@@ -191,8 +209,10 @@ services:
       dockerfile: Dockerfile
     container_name: web_frontend
     depends_on:
-      - auth
-      - hiring
+      auth:
+        condition: service_started
+      hiring:
+        condition: service_started
     ports:
       - "127.0.0.1:3000:3000"
     networks:
