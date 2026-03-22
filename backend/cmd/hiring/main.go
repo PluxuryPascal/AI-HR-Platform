@@ -151,6 +151,9 @@ func run(ctx context.Context) error {
 		infra.mqPublisher,
 		infra.storage,
 		infra.casbinClient,
+		infra.authClient,
+		infra.aiClient,
+		infra.temporalClient,
 		apiServer,
 	}); err != nil {
 		return fmt.Errorf("run service error: %w", err)
@@ -265,7 +268,7 @@ func initUseCases(infra *infrastructureComponents, utils *utilityComponents, r r
 	return usecases{
 		access:     usecase.NewAccessUseCase(r.access, auditor),
 		department: usecase.NewDepartmentUseCase(r.department),
-		job:        usecase.NewJobUseCase(r.job, r.access, auditor),
+		job:        usecase.NewJobUseCase(r.job, r.access, r.pipeline, auditor),
 		candidate:  usecase.NewCandidateUseCase(infra.log.Log, r.candidate, r.pipeline, r.job, r.access, infra.storage, infra.mqPublisher, auditor),
 		pipeline:   usecase.NewPipelineUseCase(r.pipeline, auditor),
 		dashboard:  usecase.NewDashboardUseCase(infra.log.Log, r.dashboard, &authSvcClient, &aiSvcClient),

@@ -86,6 +86,36 @@ func (c *Client) GetAvailableModels(ctx context.Context) ([]Model, error) {
 		}
 	}
 
+	// Because OpenRouter's /models endpoint does not return embedding-only models, 
+	// we manually append common embedding models available on OpenRouter.
+	knownEmbeddings := []Model{
+		{
+			ID: "openai/text-embedding-3-small", 
+			Name: "OpenAI: text-embedding-3-small", 
+			IsEmbedding: true,
+			ContextLength: 8191,
+		},
+		{
+			ID: "openai/text-embedding-3-large", 
+			Name: "OpenAI: text-embedding-3-large", 
+			IsEmbedding: true,
+			ContextLength: 8191,
+		},
+		{
+			ID: "jinaai/jina-embeddings-v2-base-en", 
+			Name: "Jina: embeddings-v2-base-en", 
+			IsEmbedding: true,
+			ContextLength: 8192,
+		},
+		{
+			ID: "nomic-ai/nomic-embed-text-v1.5", 
+			Name: "Nomic: embed-text-v1.5", 
+			IsEmbedding: true,
+			ContextLength: 8192,
+		},
+	}
+	parsed.Data = append(parsed.Data, knownEmbeddings...)
+
 	return parsed.Data, nil
 }
 

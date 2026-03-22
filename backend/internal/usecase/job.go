@@ -20,22 +20,61 @@ type JobUseCase interface {
 }
 
 type jobUseCase struct {
-	jobRepo    repo.JobRepository
-	accessRepo repo.AccessRepository
-	auditor    *audit.Logger
+	jobRepo      repo.JobRepository
+	accessRepo   repo.AccessRepository
+	pipelineRepo repo.PipelineRepository
+	auditor      *audit.Logger
 }
 
-func NewJobUseCase(jobRepo repo.JobRepository, accessRepo repo.AccessRepository, auditor *audit.Logger) JobUseCase {
+func NewJobUseCase(
+	jobRepo repo.JobRepository, 
+	accessRepo repo.AccessRepository, 
+	pipelineRepo repo.PipelineRepository,
+	auditor *audit.Logger,
+) JobUseCase {
 	return &jobUseCase{
-		jobRepo:    jobRepo,
-		accessRepo: accessRepo,
-		auditor:    auditor,
+		jobRepo:      jobRepo,
+		accessRepo:   accessRepo,
+		pipelineRepo: pipelineRepo,
+		auditor:      auditor,
 	}
+}
+
+var defaultStages = []struct {
+	Code       string
+	Title      string
+	IsTerminal bool
+	Color      string
+}{
+	{Code: "waiting", Title: "Waiting", IsTerminal: false, Color: "#94a3b8"},
+	{Code: "ai_processing", Title: "AI Processing", IsTerminal: false, Color: "#6366f1"},
+	{Code: "interview", Title: "Interview", IsTerminal: false, Color: "#f59e0b"},
+	{Code: "offer", Title: "Offer", IsTerminal: true, Color: "#10b981"},
+	{Code: "reject", Title: "Reject", IsTerminal: true, Color: "#ef4444"},
 }
 
 func (u *jobUseCase) CreateJob(ctx context.Context, job *domain.Job) error {
 	if err := u.jobRepo.Create(ctx, job); err != nil {
 		return fmt.Errorf("create job: %w", err)
+	}
+
+	// Initialize default stages
+	for i, s := range defaultStages {
+		_, err := u.pipelineRepo.CreateStage(ctx, domain.CreateStageParams{
+			JobID:      &job.ID,
+			TeamID:     job.TeamID,
+			ActorID:    job.CreatedBy,
+			Code:       s.Code,
+			Title:      s.Title,
+			Position:   i + 1,
+			IsTerminal: s.IsTerminal,
+			Color:      &s.Color,
+		})
+		if err != nil {
+			// We log the error but don't fail the whole job creation, 
+			// though in a real system we might want this to be transactional.
+			fmt.Printf("failed to create default stage %s for job %s: %v\n", s.Code, job.ID, err)
+		}
 	}
 
 	_ = u.auditor.Log(ctx, audit.Entry{
