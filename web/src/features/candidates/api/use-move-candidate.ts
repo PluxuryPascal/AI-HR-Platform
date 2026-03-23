@@ -37,12 +37,12 @@ export function useMoveCandidate(jobId?: string) {
             await queryClient.cancelQueries({ queryKey: ["candidates", jobId] });
 
             // Snapshot the previous value
-            const previousCandidates = optimisticSnapshot || queryClient.getQueryData<Record<ColumnId, CandidateCard[]>>(["candidates", jobId]);
+            const previousCandidates = optimisticSnapshot || queryClient.getQueryData<Record<ColumnId, CandidateCard[]>>(["candidates", jobId, "grouped"]);
 
             // If we provided a snapshot, the cache might already be updated by the drag-over handler.
             // If NOT, we need to apply the update now.
             if (!optimisticSnapshot && previousCandidates) {
-                queryClient.setQueryData<Record<ColumnId, CandidateCard[]>>(["candidates", jobId], (old) => {
+                queryClient.setQueryData<Record<ColumnId, CandidateCard[]>>(["candidates", jobId, "grouped"], (old) => {
                     if (!old) return old;
 
                     const newColumns = { ...old };
@@ -70,7 +70,7 @@ export function useMoveCandidate(jobId?: string) {
         onError: (err, newTodo, context) => {
             // Rollback to the previous value
             if (context?.previousCandidates) {
-                queryClient.setQueryData(["candidates", jobId], context.previousCandidates);
+                queryClient.setQueryData(["candidates", jobId, "grouped"], context.previousCandidates);
             }
             toast.error("Failed to move candidate. Reverting changes.");
         },

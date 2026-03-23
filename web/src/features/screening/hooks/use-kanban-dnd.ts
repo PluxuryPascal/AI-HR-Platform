@@ -95,7 +95,7 @@ export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, 
             return;
         }
 
-        queryClient.setQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId], (prev) => {
+        queryClient.setQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId, "grouped"], (prev) => {
             if (!prev) return prev;
             const activeItems = prev[activeContainer] || [];
             const overItems = prev[overContainer] || [];
@@ -167,7 +167,7 @@ export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, 
             );
 
             if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-                queryClient.setQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId], (prev) => {
+                queryClient.setQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId, "grouped"], (prev) => {
                     if (!prev) return prev;
                     return {
                         ...prev,
@@ -189,7 +189,7 @@ export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, 
         }
 
         if (activeColumn && overContainer && activeColumn !== overContainer) {
-            const currentColumns = queryClient.getQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId]);
+            const currentColumns = queryClient.getQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId, "grouped"]);
             if (currentColumns) {
                 const overItems = currentColumns[overContainer] || [];
                 const finalIndex = overItems.findIndex((c) => c.id === id);
@@ -209,7 +209,7 @@ export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, 
         }
 
         if (activeColumn && overContainer && activeColumn !== overContainer) {
-            const card = (queryClient.getQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId]) || {})[overContainer]?.find((c: CandidateCardType) => c.id === id);
+            const card = (queryClient.getQueryData<Record<string, CandidateCardType[]>>(["candidates", jobId, "grouped"]) || {})[overContainer]?.find((c: CandidateCardType) => c.id === id);
             if (card) {
                 onColumnChange?.(id as string, card, activeColumn, overContainer);
             }

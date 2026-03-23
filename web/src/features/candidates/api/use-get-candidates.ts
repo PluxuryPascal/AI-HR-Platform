@@ -9,7 +9,7 @@ import { mapBackendCandidateToCard } from "../utils/mappers";
 // Original hook for Kanban board (grouped by stage)
 export function useGetCandidates(jobId?: string) {
     return useQuery({
-        queryKey: ["candidates", "grouped", jobId],
+        queryKey: ["candidates", jobId, "grouped"],
         queryFn: async () => {
             if (!jobId) {
                 return {} as Record<string, CandidateCard[]>;

@@ -273,6 +273,11 @@
             "action": {
                 "bulkReject": "Bulk Reject ({count})"
             }
+        },
+        "empty": {
+            "title": "No candidates found",
+            "desc": "Upload resumes to start the AI screening process for this job.",
+            "button": "Upload First Resume"
         }
     },
     "Screening": {

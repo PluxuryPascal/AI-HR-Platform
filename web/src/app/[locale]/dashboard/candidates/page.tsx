@@ -2,6 +2,8 @@
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 
+import { useGetJobs } from "@/features/jobs/api/use-get-jobs";
+import { useGetJob } from "@/features/jobs/api/use-get-job";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -11,7 +13,6 @@ import { UploadResumeDialog } from "@/features/candidates/components/upload-resu
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useGetJobs } from "@/features/jobs/api/use-get-jobs";
 import {
     Select,
     SelectContent,
@@ -24,9 +25,17 @@ export default function CandidatesPage() {
     const t = useTranslations("Candidates");
     const searchParams = useSearchParams();
     const jobIdFromUrl = searchParams.get("job_id");
+    const [isJobsEnabled, setIsJobsEnabled] = useState(false);
 
-    const { data: jobsResponse } = useGetJobs({ per_page: 100 });
+    const { data: jobsResponse } = useGetJobs({ 
+        per_page: 100, 
+        enabled: !jobIdFromUrl || isJobsEnabled,
+        refetchInterval: false 
+    });
+    const { data: jobResponse } = useGetJob(jobIdFromUrl || "");
+    
     const jobs = jobsResponse?.data || [];
+    const currentJob = jobResponse;
     
     const [selectedJobId, setSelectedJobId] = useState<string>(jobIdFromUrl || "");
     const [search, setSearch] = useState("");
@@ -64,16 +73,26 @@ export default function CandidatesPage() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                     <div className="w-[250px]">
-                        <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+                        <Select 
+                            value={selectedJobId} 
+                            onValueChange={setSelectedJobId}
+                            onOpenChange={(open) => open && setIsJobsEnabled(true)}
+                        >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a job" />
+                                <SelectValue placeholder={currentJob?.title || "Select a job"} />
                             </SelectTrigger>
                             <SelectContent>
-                                {jobs.map((job) => (
-                                    <SelectItem key={job.id} value={job.id}>
-                                        {job.title}
+                                {jobs.length > 0 ? (
+                                    jobs.map((job) => (
+                                        <SelectItem key={job.id} value={job.id}>
+                                            {job.title}
+                                        </SelectItem>
+                                    ))
+                                ) : currentJob ? (
+                                    <SelectItem value={currentJob.id}>
+                                        {currentJob.title}
                                     </SelectItem>
-                                ))}
+                                ) : null}
                             </SelectContent>
                         </Select>
                     </div>

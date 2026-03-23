@@ -7,9 +7,17 @@ interface GetJobsParams {
     page?: number;
     per_page?: number;
     filter?: JobFilter;
+    enabled?: boolean;
+    refetchInterval?: number | false;
 }
 
-export function useGetJobs({ page = 1, per_page = 10, filter }: GetJobsParams = {}) {
+export function useGetJobs({ 
+    page = 1, 
+    per_page = 10, 
+    filter,
+    enabled = true,
+    refetchInterval = 5000,
+}: GetJobsParams = {}) {
     return useQuery({
         queryKey: ["jobs", { page, per_page, filter }],
         queryFn: async () => {
@@ -19,6 +27,7 @@ export function useGetJobs({ page = 1, per_page = 10, filter }: GetJobsParams = 
             });
             return response;
         },
-        refetchInterval: 5000,
+        enabled,
+        refetchInterval,
     });
 }

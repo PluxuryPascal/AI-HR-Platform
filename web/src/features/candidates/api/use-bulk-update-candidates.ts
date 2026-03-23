@@ -22,10 +22,10 @@ export function useBulkUpdateCandidates(jobId?: string) {
         onMutate: async ({ candidateIds, newStatus }) => {
             await queryClient.cancelQueries({ queryKey: ["candidates", jobId] });
 
-            const previousCandidates = queryClient.getQueryData<Record<string, CandidateCard[]>>(["candidates", jobId]);
+            const previousCandidates = queryClient.getQueryData<Record<string, CandidateCard[]>>(["candidates", jobId, "grouped"]);
 
             if (previousCandidates) {
-                queryClient.setQueryData<Record<string, CandidateCard[]>>(["candidates", jobId], (old) => {
+                queryClient.setQueryData<Record<string, CandidateCard[]>>(["candidates", jobId, "grouped"], (old) => {
                     if (!old) return old;
 
                     const newData = { ...old };
@@ -54,7 +54,7 @@ export function useBulkUpdateCandidates(jobId?: string) {
         },
         onError: (err, newTodo, context) => {
             if (context?.previousCandidates) {
-                queryClient.setQueryData(["candidates", jobId], context.previousCandidates);
+                queryClient.setQueryData(["candidates", jobId, "grouped"], context.previousCandidates);
             }
         },
         onSettled: () => {
