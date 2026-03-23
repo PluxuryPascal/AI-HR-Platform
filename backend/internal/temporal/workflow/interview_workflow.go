@@ -35,6 +35,15 @@ func InterviewQuestionsWorkflow(ctx workflow.Context, input activity.InterviewIn
 		return activity.InterviewOutput{}, fmt.Errorf("failed to generate interview questions: %w", err)
 	}
 
+	if err := workflow.ExecuteActivity(
+		workflow.WithActivityOptions(ctx, interviewActivityOptions()),
+		a.InterviewSaveGuide,
+		input,
+		output,
+	).Get(ctx, nil); err != nil {
+		return activity.InterviewOutput{}, fmt.Errorf("failed to save interview guide: %w", err)
+	}
+
 	logger.Info("InterviewQuestionsWorkflow completed", zap.String("candidate_id", input.CandidateID))
 	return output, nil
 }

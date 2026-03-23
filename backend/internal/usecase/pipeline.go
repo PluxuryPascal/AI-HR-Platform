@@ -21,14 +21,16 @@ type PipelineUseCase interface {
 }
 
 type pipelineUseCase struct {
-	pipelineRepo repo.PipelineRepository
-	auditor      *audit.Logger
+	pipelineRepo  repo.PipelineRepository
+	candidateRepo repo.CandidateRepository
+	auditor       *audit.Logger
 }
 
-func NewPipelineUseCase(pipelineRepo repo.PipelineRepository, auditor *audit.Logger) PipelineUseCase {
+func NewPipelineUseCase(pipelineRepo repo.PipelineRepository, candidateRepo repo.CandidateRepository, auditor *audit.Logger) PipelineUseCase {
 	return &pipelineUseCase{
-		pipelineRepo: pipelineRepo,
-		auditor:      auditor,
+		pipelineRepo:  pipelineRepo,
+		candidateRepo: candidateRepo,
+		auditor:       auditor,
 	}
 }
 
@@ -94,6 +96,37 @@ func (u *pipelineUseCase) UpdateStage(ctx context.Context, stage *domain.Pipelin
 }
 
 func (u *pipelineUseCase) DeleteStage(ctx context.Context, id, actorID, teamID string) error {
+	// 1. Get the stage to be deleted to find its JobID
+	stage, err := u.pipelineRepo.GetStageByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("get stage to delete: %w", err)
+	}
+
+	// 2. If it's a job-specific stage, we must move candidates
+	if stage.JobID != nil {
+		stages, err := u.pipelineRepo.GetStagesByJobID(ctx, *stage.JobID)
+		if err != nil {
+			return fmt.Errorf("get job stages: %w", err)
+		}
+
+		if len(stages) <= 1 {
+			return fmt.Errorf("cannot delete the only stage in a pipeline")
+		}
+
+		// Pick the first stage as the target for moved candidates
+		targetStageID := stages[0].ID
+		if targetStageID == id {
+			// If we are deleting the first stage, pick the second one
+			targetStageID = stages[1].ID
+		}
+
+		// 3. Move candidates before deleting the stage
+		if err := u.candidateRepo.MoveAllToStage(ctx, id, targetStageID); err != nil {
+			return fmt.Errorf("move candidates before deletion: %w", err)
+		}
+	}
+
+	// 4. Delete the stage
 	if err := u.pipelineRepo.DeleteStage(ctx, id); err != nil {
 		return fmt.Errorf("delete pipeline stage: %w", err)
 	}

@@ -18,7 +18,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (profile) {
             login({
                 id: profile.id,
-                name: `${profile.first_name} ${profile.last_name}`.trim(),
+                firstName: profile.first_name,
+                lastName: profile.last_name,
                 email: profile.email,
                 role: profile.role,
             });

@@ -16,19 +16,19 @@ export function RecentActivity() {
         const now = new Date();
         const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-        if (diffInSeconds < 60) return "только что";
+        if (diffInSeconds < 60) return t("justNow");
         const diffInMinutes = Math.floor(diffInSeconds / 60);
-        if (diffInMinutes < 60) return `${diffInMinutes} мин. назад`;
+        if (diffInMinutes < 60) return t("minsAgo", { count: diffInMinutes });
         const diffInHours = Math.floor(diffInMinutes / 60);
-        if (diffInHours < 24) return `${diffInHours} ч. назад`;
+        if (diffInHours < 24) return t("hoursAgo", { count: diffInHours });
         const diffInDays = Math.floor(diffInHours / 24);
-        return `${diffInDays} дн. назад`;
+        return t("daysAgo", { count: diffInDays });
     };
 
     const activities = (rawActivities || []).map(log => {
         let icon = Clock;
         let color = "text-muted-foreground";
-        let action = log.action_code;
+        let action = t(`codes.${log.action_code}` as any) || log.action_code;
         let target = log.job_title || log.candidate_first_name || "Object";
         let isAi = log.actor_type === "ai";
 

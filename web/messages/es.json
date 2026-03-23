@@ -1,4 +1,11 @@
 {
+    "Common": {
+        "pagination": {
+            "previous": "Anterior",
+            "next": "Siguiente",
+            "pageOf": "Página {current} de {total}"
+        }
+    },
     "Landing": {
         "heroTitle": "Automatiza la selección de currículums con <span class=\"text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600\">Inteligencia Artificial</span>",
         "heroDescription": "Deja de leer miles de PDFs. Permite que nuestros agentes de IA analicen, clasifiquen y evalúen candidatos en segundos con un nivel de comprensión humano.",
@@ -45,32 +52,29 @@
         "stage4": "Finalizando puntuación de coincidencia..."
     },
     "Auth": {
-        "nav": {
-            "dashboard": "Tablero",
-            "jobs": "Empleos",
-            "departments": "Departamentos",
-            "candidates": "Candidatos",
-            "screening": "Selección",
-            "settings": "Configuración",
-            "new": "Nuevo"
-        },
-        "header": {
-            "profile": "Perfil",
-            "logout": "Cerrar sesión"
-        },
-        "tabs": {
-            "overview": "Visión general",
-            "chat": "Chat IA",
-            "resume": "Currículum",
-            "interview": "Preparación de entrevista"
-        }
+        "logout": "Cerrar sesión",
+        "signIn": "Iniciar sesión",
+        "signInDesc": "Introduce tu correo electrónico a continuación para acceder a tu cuenta",
+        "email": "Correo electrónico",
+        "password": "Contraseña",
+        "signInBtn": "Iniciar sesión",
+        "noAccount": "¿No tienes una cuenta?",
+        "signUp": "Registrarse",
+        "signUpDesc": "Crea una cuenta para empezar a filtrar currículums",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "teamName": "Nombre del equipo",
+        "signUpBtn": "Crear cuenta",
+        "hasAccount": "¿Ya tienes una cuenta?",
+        "successMessage": "¡Éxito!"
     },
     "Stats": {
         "activeJobs": "Empleos activos",
         "totalCandidates": "Total de candidatos",
         "pendingScreenings": "Selecciones pendientes",
         "fromLastMonth": "+{count} desde el mes pasado",
-        "requiresAttention": "Requiere atención"
+        "requiresAttention": "Requiere atención",
+        "days": "días"
     },
     "Dashboard": {
         "welcome": "¡Bienvenido de nuevo, {name}!",
@@ -86,7 +90,40 @@
         },
         "activity": {
             "title": "Actividad reciente",
-            "empty": "Sin actividad reciente."
+            "empty": "Sin actividad reciente.",
+            "justNow": "hace un momento",
+            "minsAgo": "hace {count}m",
+            "hoursAgo": "hace {count}h",
+            "daysAgo": "hace {count}d",
+            "codes": {
+                "auth": {
+                    "owner_registered": "registró un nuevo equipo",
+                    "invite_sent": "envió una invitación",
+                    "invite_accepted": "aceptó una invitación",
+                    "user_logged_in": "inició sesión",
+                    "user_logged_out": "cerró sesión"
+                },
+                "hiring": {
+                    "job_created": "creó un trabajo",
+                    "job_published": "publicó un trabajo",
+                    "job_closed": "cerró un trabajo",
+                    "job_archived": "archivó un trabajo",
+                    "job_deleted": "eliminó un trabajo",
+                    "candidate_added": "añadió un candidato",
+                    "candidate_moved": "movió un candidato",
+                    "candidate_deleted": "eliminó un candidato",
+                    "access_granted": "concedió acceso",
+                    "access_revoked": "revocó acceso",
+                    "stage_created": "creó una etapa",
+                    "stage_updated": "actualizó una etapa",
+                    "stage_deleted": "eliminó una etapa"
+                },
+                "ai": {
+                    "resume_parsed": "analizó un currículum",
+                    "score_computed": "calculó una puntuación",
+                    "email_generated": "generó un correo electrónico"
+                }
+            }
         },
         "nav": {
             "dashboard": "Tablero",
@@ -125,14 +162,53 @@
             "actions": "Acciones",
             "viewCandidates": "Ver candidatos",
             "editJob": "Editar empleo",
-            "archive": "Archivar"
+            "archive": "Archivar",
+            "type": "Formato",
+            "salary": "Salario"
         }
     },
     "Settings": {
         "title": "Configuración",
         "general": "Configuración general",
         "language": "Idioma de la interfaz",
-        "languageDesc": "Selecciona tu idioma preferido para la aplicación."
+        "languageDesc": "Selecciona tu idioma preferido para la aplicación.",
+        "ai": "Configuración de IA",
+        "team": "Equipo",
+        "billing": "Facturación",
+        "billingDesc": "Administre su información de facturación y plan de suscripción.",
+        "billingSoon": "La configuración de facturación estará disponible pronto..."
+    },
+    "AISettings": {
+        "title": "Configuración de IA",
+        "apiKeyTitle": "Clave API de OpenRouter",
+        "apiKeyDesc": "Ingrese su clave API para acceder a los modelos a través de OpenRouter.",
+        "parseModelTitle": "Modelo de Análisis",
+        "parseModelDesc": "Modelo utilizado para analizar currículums y descripciones de puestos.",
+        "scoreModelTitle": "Modelo de Puntuación",
+        "scoreModelDesc": "Modelo utilizado para la coincidencia y puntuación de candidatos.",
+        "embedModelTitle": "Modelo de Incrustación",
+        "embedModelDesc": "Modelo utilizado para crear incrustaciones de vectores.",
+        "chatModeTitle": "Modo de Chat",
+        "chatModeDesc": "Modelo utilizado para interactuar con el chat del asistente de IA y generar correos electrónicos.",
+        "save": "Guardar",
+        "success": "Configuración actualizada con éxito",
+        "error": "Error al actualizar la configuración"
+    },
+    "CandidateProfile": {
+        "tabs": {
+            "overview": "Visión General",
+            "chat": "Chat de IA",
+            "resume": "Currículum",
+            "interview": "Preparación de Entrevista"
+        },
+        "analysis": {
+            "summary": "Resumen Ejecutivo",
+            "strengths": "Fortalezas Clave",
+            "weaknesses": "Riesgos Potenciales",
+            "skills": "Habilidades Extraídas",
+            "matchScore": "Puntuación de Coincidencia"
+        },
+        "chatPlaceholder": "Haga una pregunta sobre este candidato..."
     },
     "JobWizard": {
         "title": "Crear empleo",
@@ -146,7 +222,10 @@
             "description": "Descripción",
             "requirements": "Requisitos",
             "type": "Tipo de empleo",
-            "location": "Ubicación"
+            "location": "Ubicación",
+            "salaryMin": "Salario mín",
+            "salaryMax": "Salario máx",
+            "currency": "Moneda"
         },
         "submitBtn": "Crear empleo",
         "successMessage": "¡Empleo creado con éxito!",
@@ -200,6 +279,8 @@
     },
     "Screening": {
         "title": "Pipeline de Candidatos",
+        "candidateRole": "Candidato",
+        "unknownCandidate": "Candidato desconocido",
         "jobSelectorPlaceholder": "Seleccionar empleo",
         "noJobsSelected": "Por favor, seleccione un empleo para ver el tablero",
         "editMode": "Gestionar Etapas",
@@ -208,6 +289,7 @@
         "addStagePrompt": "Ingrese el nombre de la etapa:",
         "renameStagePrompt": "Ingrese el nuevo nombre de la etapa:",
         "deleteStageConfirm": "¿Está seguro de que desea eliminar esta etapa? Los candidatos se moverán a la primera columna.",
+        "isTerminal": "Etapa terminal (permite mover sin validación)",
         "columns": {
             "new": "Nuevas Aplicaciones",
             "screening": "Selección IA",

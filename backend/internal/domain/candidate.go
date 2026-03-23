@@ -11,6 +11,7 @@ type Candidate struct {
 	JobID         string                 `json:"job_id" db:"job_id"`
 	FirstName     *string                `json:"first_name,omitempty" db:"first_name"`
 	LastName      *string                `json:"last_name,omitempty" db:"last_name"`
+	JobTitle      string                 `json:"job_title,omitempty" db:"job_title"`
 	Email         *string                `json:"email,omitempty" db:"email"`
 	ResumeFileKey *string                `json:"resume_file_key,omitempty" db:"resume_file_key"`
 	ResumeURL     *string                `json:"resume_url,omitempty" db:"-"`
@@ -19,6 +20,8 @@ type Candidate struct {
 	Skills        []string               `json:"skills,omitempty" db:"skills"`
 	ParsingStatus CandidateParsingStatus `json:"parsing_status" db:"parsing_status"`
 	StageID       *string                `json:"stage_id,omitempty" db:"-"`
+	StageName     *string                `json:"stage_name,omitempty" db:"-"`
+	MatchScore    *int                   `json:"match_score,omitempty" db:"-"`
 	CreatedAt     time.Time              `json:"created_at" db:"created_at"`
 	UpdatedAt     *time.Time             `json:"updated_at,omitempty" db:"updated_at"`
 }

@@ -1,12 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/store/use-auth";
 import { OverviewChart } from "@/components/dashboard/overview-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { StatsGrid } from "@/components/dashboard/stats-grid";
 
 export default function DashboardPage() {
     const t = useTranslations("Dashboard");
+    const { user } = useAuth();
 
     return (
         <div className="relative flex-1 min-h-full overflow-hidden">
@@ -19,7 +21,7 @@ export default function DashboardPage() {
             <div className="relative z-10 space-y-6 p-6 pt-6">
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
-                        {t("welcome", { name: "Recruiter" })}
+                        {t("welcome", { name: user?.firstName || "Recruiter" })}
                     </h2>
                 </div>
                 <div className="space-y-6">

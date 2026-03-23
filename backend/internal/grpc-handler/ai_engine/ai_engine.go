@@ -90,7 +90,7 @@ func (h *Handler) GenerateCandidateEmail(ctx context.Context, req *pb.GenerateCa
 		CandidateFirstName: firstName,
 		CandidateLastName:  lastName,
 		CandidateEmail:     email,
-		Role:               cand.JobID,
+		Role:               cand.JobTitle,
 		Skills:             cand.Skills,
 		MatchScore:         matchScore,
 		TeamID:             req.GetTeamId(),

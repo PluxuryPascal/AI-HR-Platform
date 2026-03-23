@@ -28,9 +28,11 @@ type CandidateUseCase interface {
 	GetCandidatesByJob(ctx context.Context, jobID, userID, role string, offset, limit int, filter domain.CandidateFilter) (*domain.CandidatesDTO, error)
 	DeleteCandidate(ctx context.Context, id, actorID, teamID, role string) error
 	MoveCandidate(ctx context.Context, p domain.MoveCandidateParams, role string) error
+	BulkMoveCandidates(ctx context.Context, p domain.BulkMoveCandidateParams, role string) error
 	FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error
 	UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate, userID, role string) error
 	ConfirmManualReview(ctx context.Context, candidate *domain.Candidate, userID, role string) error
+	SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error
 	GetStageHistory(ctx context.Context, candidateID, userID, role string) ([]domain.StageHistoryEntry, error)
 }
 
@@ -62,6 +64,10 @@ func (u *candidateUseCase) ConfirmManualReview(ctx context.Context, candidate *d
 	}
 
 	return nil
+}
+
+func (u *candidateUseCase) SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error {
+	return u.candidateRepo.SaveInterviewGuide(ctx, candidateID, guide)
 }
 
 func (u *candidateUseCase) FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error {
@@ -229,6 +235,55 @@ func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id, actorID, tea
 		Action:    audit.HiringCandidateDeleted,
 		TargetID:  &id,
 	})
+
+	return nil
+}
+
+func (u *candidateUseCase) BulkMoveCandidates(ctx context.Context, p domain.BulkMoveCandidateParams, role string) error {
+	if len(p.CandidateIDs) == 0 {
+		return nil
+	}
+
+	// 1. Validate access to target stage
+	targetStage, err := u.pipelineRepo.GetStageByID(ctx, p.ToStageID)
+	if err != nil {
+		return fmt.Errorf("get target stage: %w", err)
+	}
+
+	if role != "owner" && role != "admin" {
+		if targetStage.JobID != nil {
+			ok, err := u.accessRepo.HasAccess(ctx, p.ChangedBy, *targetStage.JobID)
+			if err != nil {
+				return fmt.Errorf("check job access: %w", err)
+			}
+			if !ok {
+				return errors.New("access denied to this job")
+			}
+		}
+	}
+
+	// 2. Execute bulk move
+	if err := u.candidateRepo.BulkMoveToStage(ctx, p.CandidateIDs, p.ToStageID, p.ChangedBy); err != nil {
+		return fmt.Errorf("bulk move repo: %w", err)
+	}
+
+	// 3. Audit log (simplified for bulk)
+	if targetStage.JobID != nil {
+		job, _ := u.jobRepo.GetByID(ctx, *targetStage.JobID)
+		if job != nil {
+			_ = u.auditor.Log(ctx, audit.Entry{
+				TeamID:    job.TeamID,
+				ActorType: audit.ActorUser,
+				ActorID:   &p.ChangedBy,
+				Action:    audit.HiringCandidateMoved, // Reuse existing action or add new one
+				Payload: map[string]interface{}{
+					"to_stage_id":   p.ToStageID,
+					"candidate_ids": p.CandidateIDs,
+					"is_bulk":       true,
+				},
+			})
+		}
+	}
 
 	return nil
 }

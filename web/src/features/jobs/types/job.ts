@@ -24,6 +24,10 @@ export interface JobFilter {
     department_name?: string;
     status?: JobStatus;
     work_format?: WorkFormat;
+    sort?: {
+        sort_id?: string;
+        sort_desc?: boolean;
+    };
 }
 
 export interface CreateJobRequest {

@@ -2,6 +2,7 @@ package activity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	hiringv1 "backend/internal/proto/hiring/v1"
@@ -44,4 +45,26 @@ func (a *Activities) InterviewGenerateQuestions(ctx context.Context, input Inter
 	}
 
 	return InterviewOutput{Questions: questions}, nil
+}
+
+func (a *Activities) InterviewSaveGuide(ctx context.Context, input InterviewInput, output InterviewOutput) error {
+	a.log.Debug("InterviewSaveGuide started", zap.String("candidate_id", input.CandidateID))
+
+	jsonData, err := json.Marshal(output.Questions)
+	if err != nil {
+		return fmt.Errorf("marshal interview guide: %w", err)
+	}
+
+	conn := a.hiringGRPC.GetConn()
+	client := hiringv1.NewHiringServiceClient(conn)
+
+	_, err = client.UpdateInterviewGuide(ctx, &hiringv1.UpdateInterviewGuideRequest{
+		CandidateId:    input.CandidateID,
+		InterviewGuide: jsonData,
+	})
+	if err != nil {
+		return fmt.Errorf("hiring grpc UpdateInterviewGuide: %w", err)
+	}
+
+	return nil
 }

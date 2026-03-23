@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,11 +29,12 @@ export function InterviewGuide({ matchScore, candidateId }: InterviewGuideProps)
 
     const { data: guide, isLoading } = useGetInterviewGuide(candidateId);
     const { mutate: generate, isPending: isGenerating } = useGenerateInterview();
+    const locale = useLocale();
 
     const isExpert = matchScore >= 80;
 
     const handleGenerate = () => {
-        generate({ id: candidateId, locale: "ru" });
+        generate({ id: candidateId, locale });
     };
 
     const questions: Question[] = guide?.questions?.map((q, index) => ({

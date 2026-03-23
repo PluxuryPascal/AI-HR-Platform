@@ -52,8 +52,8 @@ type updateCandidateRequest struct {
 }
 
 type moveCandidateRequest struct {
-	ToStageID   string  `json:"to_stage_id" validate:"required,uuid4"`
-	NewPosition float64 `json:"new_position" validate:"required,min=0"`
+	ToStageID   string   `json:"to_stage_id" validate:"required,uuid4"`
+	NewPosition *float64 `json:"new_position" validate:"required,min=0"`
 }
 
 type uploadResumeResponse struct {
@@ -180,7 +180,7 @@ func (h *CandidateHandler) PostCandidateMove() echo.HandlerFunc {
 		params := domain.MoveCandidateParams{
 			CandidateID: id,
 			ToStageID:   req.ToStageID,
-			NewPosition: req.NewPosition,
+			NewPosition: *req.NewPosition,
 			ChangedBy:   userID,
 		}
 
@@ -255,6 +255,35 @@ func (h *CandidateHandler) PatchCandidate() echo.HandlerFunc {
 		}
 
 		return response.OK(c, candidate)
+	}
+}
+
+func (h *CandidateHandler) PostBulkCandidateMove() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var req struct {
+			CandidateIDs []string `json:"candidate_ids" validate:"required,dive,uuid4"`
+			ToStageID    string   `json:"to_stage_id" validate:"required,uuid4"`
+		}
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
+		}
+		if err := c.Validate(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
+		}
+
+		params := domain.BulkMoveCandidateParams{
+			CandidateIDs: req.CandidateIDs,
+			ToStageID:    req.ToStageID,
+			ChangedBy:    c.Get("id").(string),
+		}
+
+		role := c.Get("role").(string)
+		if err := h.candidateUC.BulkMoveCandidates(c.Request().Context(), params, role); err != nil {
+			h.log.Error("bulk move candidates error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return response.OK(c, map[string]bool{"success": true})
 	}
 }
 

@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
+import { useLocale } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { JobFormValues } from "@/features/jobs/schemas/job-schema";
 import { apiClient } from "@/lib/api-client";
 import { ApiResponse } from "@/types";
 
 export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
+    const locale = useLocale();
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [rawDescription, setRawDescription] = useState("");
 
@@ -25,7 +27,7 @@ export function useJobAiParser(form: UseFormReturn<JobFormValues>) {
                 currency: string;
             }>>("/ai/parse-job", {
                 raw_text: rawDescription,
-                locale: "ru" // TODO: get from next-intl if needed
+                locale
             });
 
             const result = response.data;

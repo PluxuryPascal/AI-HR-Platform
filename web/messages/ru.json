@@ -1,4 +1,11 @@
 {
+    "Common": {
+        "pagination": {
+            "previous": "Назад",
+            "next": "Вперед",
+            "pageOf": "Страница {current} из {total}"
+        }
+    },
     "Landing": {
         "heroTitle": "Автоматизируйте скрининг резюме с помощью <span class=\"text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600\">Искусственного Интеллекта</span>",
         "heroDescription": "Перестаньте читать тысячи PDF-файлов. Позвольте нашим AI-агентам анализировать, ранжировать и разбирать кандидатов за секунды с человеческим уровнем понимания.",
@@ -92,7 +99,40 @@
         },
         "activity": {
             "title": "Недавняя активность",
-            "empty": "Нет недавней активности."
+            "empty": "Нет недавней активности.",
+            "justNow": "только что",
+            "minsAgo": "{count} мин. назад",
+            "hoursAgo": "{count} ч. назад",
+            "daysAgo": "{count} дн. назад",
+            "codes": {
+                "auth": {
+                    "owner_registered": "зарегистрировал новую команду",
+                    "invite_sent": "отправил приглашение",
+                    "invite_accepted": "принял приглашение",
+                    "user_logged_in": "вошел в систему",
+                    "user_logged_out": "вышел из системы"
+                },
+                "hiring": {
+                    "job_created": "создал вакансию",
+                    "job_published": "опубликовал вакансию",
+                    "job_closed": "закрыл вакансию",
+                    "job_archived": "архивировал вакансию",
+                    "job_deleted": "удалил вакансию",
+                    "candidate_added": "добавил кандидата",
+                    "candidate_moved": "переместил кандидата",
+                    "candidate_deleted": "удалил кандидата",
+                    "access_granted": "предоставил доступ",
+                    "access_revoked": "отозвал доступ",
+                    "stage_created": "создал этап",
+                    "stage_updated": "обновил этап",
+                    "stage_deleted": "удалил этап"
+                },
+                "ai": {
+                    "resume_parsed": "распознал резюме",
+                    "score_computed": "рассчитал оценку",
+                    "email_generated": "сгенерировал письмо"
+                }
+            }
         },
         "nav": {
             "dashboard": "Дашборд",
@@ -154,7 +194,11 @@
         "general": "Общие настройки",
         "language": "Язык интерфейса",
         "languageDesc": "Выберите предпочтительный язык для приложения.",
-        "ai": "Настройки ИИ"
+        "ai": "Настройки ИИ",
+        "team": "Команда",
+        "billing": "Оплата",
+        "billingDesc": "Управление платежной информацией и тарифным планом.",
+        "billingSoon": "Настройки оплаты скоро появятся..."
     },
     "AISettings": {
         "title": "Настройки ИИ",
@@ -244,6 +288,8 @@
     },
     "Screening": {
         "title": "Воронка кандидатов",
+        "candidateRole": "Кандидат",
+        "unknownCandidate": "Неизвестный кандидат",
         "jobSelectorPlaceholder": "Выберите вакансию",
         "noJobsSelected": "Пожалуйста, выберите вакансию для просмотра доски",
         "editMode": "Управление этапами",
@@ -252,6 +298,7 @@
         "addStagePrompt": "Введите название этапа:",
         "renameStagePrompt": "Введите новое название этапа:",
         "deleteStageConfirm": "Вы уверены, что хотите удалить этот этап? Кандидаты будут перемещены в первую колонку.",
+        "isTerminal": "Терминальный этап (позволяет перейти на него без валидации)",
         "columns": {
             "new": "Новые заявки",
             "screening": "AI Скрининг",

@@ -22,6 +22,8 @@ type CandidateRepository interface {
 	UpdateParsingStatus(ctx context.Context, candidateID string, status domain.CandidateParsingStatus) error
 	Delete(ctx context.Context, id string) error
 	MoveStage(ctx context.Context, p domain.MoveCandidateParams) error
+	MoveAllToStage(ctx context.Context, fromStageID, toStageID string) error
+	BulkMoveToStage(ctx context.Context, candidateIDs []string, toStageID string, changedBy string) error
 	GetStageHistory(ctx context.Context, candidateID string) ([]domain.StageHistoryEntry, error)
 
 	// AI Support
@@ -174,12 +176,15 @@ func (r *candidateRepo) Create(ctx context.Context, jobID, fileKey string) (*dom
 func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candidate, *domain.CandidateProfile, *string, error) {
 	const query = `
 		SELECT 
-			c.id, c.job_id, c.first_name, c.last_name, c.email, c.resume_file_key, c.parsed_text, c.location, c.skills, c.parsing_status, c.created_at, c.updated_at,
+			c.id, c.job_id, j.title AS job_title, c.first_name, c.last_name, c.email, c.resume_file_key, c.parsed_text, c.location, c.skills, c.parsing_status, c.created_at, c.updated_at,
 			cp.structured_data, cp.missing_fields, cp.ai_parsed_at, cp.updated_at, cp.interview_guide,
-		cs.stage_id
+		cs.stage_id, ps.title AS stage_name, sco.match_score
 		FROM hiring.t_candidates c
+		JOIN hiring.t_jobs j ON c.job_id = j.id
 		LEFT JOIN hiring.t_candidate_profiles cp ON c.id = cp.candidate_id
 		LEFT JOIN hiring.t_candidate_stages cs ON c.id = cs.candidate_id
+		LEFT JOIN hiring.t_pipeline_stages ps ON cs.stage_id = ps.id
+		LEFT JOIN ai_engine.t_candidate_scores sco ON c.id = sco.candidate_id
 		WHERE c.id = @id
 	`
 
@@ -188,9 +193,9 @@ func (r *candidateRepo) GetByID(ctx context.Context, id string) (*domain.Candida
 	var stageID *string
 
 	err := r.dbClient.Pool.QueryRow(ctx, query, pgx.NamedArgs{"id": id}).Scan(
-		&cand.ID, &cand.JobID, &cand.FirstName, &cand.LastName, &cand.Email, &cand.ResumeFileKey, &cand.ParsedText, &cand.Location, &cand.Skills, &cand.ParsingStatus, &cand.CreatedAt, &cand.UpdatedAt,
+		&cand.ID, &cand.JobID, &cand.JobTitle, &cand.FirstName, &cand.LastName, &cand.Email, &cand.ResumeFileKey, &cand.ParsedText, &cand.Location, &cand.Skills, &cand.ParsingStatus, &cand.CreatedAt, &cand.UpdatedAt,
 		&profile.StructuredData, &profile.MissingFields, &profile.AIParsedAt, &profile.UpdatedAt, &profile.InterviewGuide,
-		&stageID,
+		&stageID, &cand.StageName, &cand.MatchScore,
 	)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("query candidate: %w", err)
@@ -232,9 +237,17 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 	rawQuery := fmt.Sprintf(`
 		WITH
 			all_candidates AS (
-				SELECT c.*, cs.stage_id
+				SELECT 
+					c.*, 
+					j.title AS job_title,
+					cs.stage_id,
+					ps.title AS stage_name,
+					sco.match_score
 				FROM hiring.t_candidates c
+				JOIN hiring.t_jobs j ON c.job_id = j.id
 				LEFT JOIN hiring.t_candidate_stages cs ON c.id = cs.candidate_id
+				LEFT JOIN hiring.t_pipeline_stages ps ON cs.stage_id = ps.id
+				LEFT JOIN ai_engine.t_candidate_scores sco ON c.id = sco.candidate_id
 				WHERE c.job_id = @job_id::uuid
 			),
 			
@@ -291,6 +304,7 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 				SELECT jsonb_agg(jsonb_build_object(
 					'id',              l.id,
 					'job_id',          l.job_id,
+					'job_title',       l.job_title,
 					'first_name',      l.first_name,
 					'last_name',       l.last_name,
 					'email',           l.email,
@@ -299,6 +313,8 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 					'skills',          l.skills,
 					'parsing_status',  l.parsing_status,
 					'stage_id',        l.stage_id,
+					'stage_name',      l.stage_name,
+					'match_score',     l.match_score,
 					'created_at',      TO_CHAR(l.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
 					'updated_at',      CASE WHEN l.updated_at IS NOT NULL THEN TO_CHAR(l.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END
 				)) AS build
@@ -441,6 +457,85 @@ func (r *candidateRepo) Delete(ctx context.Context, id string) error {
 	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{"id": id})
 	if err != nil {
 		return fmt.Errorf("delete candidate: %w", err)
+	}
+	return nil
+}
+
+func (r *candidateRepo) BulkMoveToStage(ctx context.Context, candidateIDs []string, toStageID string, changedBy string) error {
+	if len(candidateIDs) == 0 {
+		return nil
+	}
+
+	tx, err := r.dbClient.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Get current stages for history
+	const queryGetCurr = `SELECT candidate_id, stage_id FROM hiring.t_candidate_stages WHERE candidate_id = ANY(@ids)`
+	rows, err := tx.Query(ctx, queryGetCurr, pgx.NamedArgs{"ids": candidateIDs})
+	if err != nil {
+		return fmt.Errorf("get current stages: %w", err)
+	}
+	defer rows.Close()
+
+	currStages := make(map[string]*string)
+	for rows.Next() {
+		var cid string
+		var sid *string
+		if err := rows.Scan(&cid, &sid); err != nil {
+			return fmt.Errorf("scan current stage: %w", err)
+		}
+		currStages[cid] = sid
+	}
+
+	// 2. Update stages
+	const queryUpdate = `
+		INSERT INTO hiring.t_candidate_stages (candidate_id, stage_id, position, moved_at)
+		SELECT unnest(@ids), @to_id, 0, NOW()
+		ON CONFLICT (candidate_id) DO UPDATE 
+		SET stage_id = EXCLUDED.stage_id, position = 0, moved_at = NOW()
+	`
+	_, err = tx.Exec(ctx, queryUpdate, pgx.NamedArgs{
+		"ids":   candidateIDs,
+		"to_id": toStageID,
+	})
+	if err != nil {
+		return fmt.Errorf("bulk update stages: %w", err)
+	}
+
+	// 3. Record history
+	if len(candidateIDs) > 0 {
+		batch := &pgx.Batch{}
+		const queryHistory = `
+			INSERT INTO hiring.t_candidate_stage_history (candidate_id, from_stage_id, to_stage_id, changed_by)
+			VALUES ($1, $2, $3, $4)
+		`
+		for _, cid := range candidateIDs {
+			batch.Queue(queryHistory, cid, currStages[cid], toStageID, changedBy)
+		}
+		br := tx.SendBatch(ctx, batch)
+		if err := br.Close(); err != nil {
+			return fmt.Errorf("insert history batch: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *candidateRepo) MoveAllToStage(ctx context.Context, fromStageID, toStageID string) error {
+	const query = `
+		UPDATE hiring.t_candidate_stages
+		SET stage_id = @to_id, moved_at = NOW()
+		WHERE stage_id = @from_id
+	`
+	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{
+		"from_id": fromStageID,
+		"to_id":   toStageID,
+	})
+	if err != nil {
+		return fmt.Errorf("move all candidates: %w", err)
 	}
 	return nil
 }

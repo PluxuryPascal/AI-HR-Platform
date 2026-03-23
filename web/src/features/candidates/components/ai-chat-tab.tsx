@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCandidateChat, useGetChatSessions, useGetChatHistory, ChatMessage, ChatSession } from "../api/use-candidate-ai";
@@ -25,6 +25,7 @@ export const AIChatTab = () => {
     const [inputValue, setInputValue] = useState("");
     const { mutate: sendMessage, isPending: isTyping } = useCandidateChat();
     const { data: sessions } = useGetChatSessions();
+    const locale = useLocale();
 
     const candidateSession = sessions?.find((s: ChatSession) => s.target_candidate_id === candidateId);
     const { data: history, isLoading: isLoadingHistory } = useGetChatHistory(candidateSession?.id || "");
@@ -73,7 +74,7 @@ export const AIChatTab = () => {
         sendMessage({
             candidate_id: candidateId,
             question: userText,
-            locale: "ru"
+            locale
         }, {
             onSuccess: (data) => {
                 const newAiMessage: Message = {

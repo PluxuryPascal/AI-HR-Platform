@@ -32,7 +32,9 @@ export function useKanbanSelection(jobId?: string) {
     const getSelectedCandidates = useMemo(() => {
         const allCandidates: CandidateCardType[] = [];
         Object.values(columns).forEach(col => {
-            allCandidates.push(...col);
+            if (Array.isArray(col)) {
+                allCandidates.push(...col);
+            }
         });
         return allCandidates.filter(c => selectedCandidateIds.includes(c.id));
     }, [columns, selectedCandidateIds]);

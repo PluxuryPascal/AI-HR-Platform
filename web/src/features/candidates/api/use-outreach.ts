@@ -25,7 +25,7 @@ interface SendEmailRequest {
 export const useGenerateEmail = () => {
     return useMutation({
         mutationFn: async (req: GenerateEmailRequest) => {
-            const response = await apiClient.post<GenerateEmailResponse>(
+            const response = await apiClient.post<{ data: GenerateEmailResponse }>(
                 `/outreach/${req.candidateId}/generate`,
                 {
                     type: req.type,
@@ -33,7 +33,7 @@ export const useGenerateEmail = () => {
                     locale: req.locale,
                 }
             );
-            return response;
+            return response.data;
         },
         onError: (error: any) => {
             toast.error(error.message || "Failed to generate email");
@@ -46,7 +46,7 @@ export const useSendEmail = () => {
 
     return useMutation({
         mutationFn: async (req: SendEmailRequest) => {
-            const response = await apiClient.post<{ success: boolean }>(
+            const response = await apiClient.post<{ data: any; success: boolean }>(
                 `/outreach/${req.communicationId}/send`,
                 {
                     subject: req.subject,

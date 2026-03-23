@@ -1,4 +1,5 @@
 "use client";
+import { useState, useMemo, useEffect } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslations } from "next-intl";
@@ -16,18 +17,43 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { UploadResumeDialog } from "./upload-resume-dialog";
 
-import { useCandidates } from "../hooks/use-candidates";
+import { useCandidatesPagination } from "../hooks/use-candidates";
 import { BulkActionBar } from "./bulk-action-bar";
 import { CandidateRow } from "./candidate-row";
 import { useTableSelection } from "../hooks/use-table-selection";
 import { useBulkActions } from "../hooks/use-bulk-actions";
+import { useGetStages } from "@/features/jobs/api/use-get-stages";
+import { Pagination } from "@/components/shared/pagination";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { CandidateFilter } from "../types/candidate";
 
 import { OutreachDrawer } from "@/features/screening/components/outreach-drawer";
 
-export function CandidatesTable({ jobId }: { jobId: string }) {
+export function CandidatesTable({ jobId, filter }: { jobId: string; filter?: CandidateFilter }) {
     const t = useTranslations("Candidates.table");
     const tEmpty = useTranslations("Candidates.empty");
-    const { data: candidates, isLoading } = useCandidates(jobId);
+    
+    const [page, setPage] = useState(1);
+    const [perPage] = useState(10);
+    const [sortId, setSortId] = useState<string>("created_at");
+    const [sortDesc, setSortDesc] = useState(true);
+
+    // Reset to page 1 when filter or job changes
+    useEffect(() => {
+        setPage(1);
+    }, [jobId, JSON.stringify(filter)]);
+
+    const { data: candidates, meta, isLoading } = useCandidatesPagination({ 
+        jobId, 
+        page, 
+        per_page: perPage,
+        filter: {
+            ...filter,
+            sort: { sort_id: sortId, sort_desc: sortDesc }
+        }
+    });
+
+    const { data: stages } = useGetStages(jobId);
 
     const {
         selectedIds,
@@ -38,6 +64,21 @@ export function CandidatesTable({ jobId }: { jobId: string }) {
         selectedItems,
     } = useTableSelection(candidates);
 
+    const handleSort = (id: string) => {
+        if (sortId === id) {
+            setSortDesc(!sortDesc);
+        } else {
+            setSortId(id);
+            setSortDesc(true);
+        }
+        setPage(1);
+    };
+
+    const SortIcon = ({ id }: { id: string }) => {
+        if (sortId !== id) return <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />;
+        return sortDesc ? <ChevronDown className="ml-2 h-4 w-4" /> : <ChevronUp className="ml-2 h-4 w-4" />;
+    };
+
     const {
         bulkActionType,
         isOutreachOpen,
@@ -45,7 +86,7 @@ export function CandidatesTable({ jobId }: { jobId: string }) {
         handleBulkMove,
         handleSendEmail,
         closeOutreach,
-    } = useBulkActions({ selectedIds, clearSelection });
+    } = useBulkActions({ selectedIds, clearSelection, jobId, stages });
 
     if (isLoading) {
         return (
@@ -89,9 +130,19 @@ export function CandidatesTable({ jobId }: { jobId: string }) {
                                     onCheckedChange={toggleAll}
                                 />
                             </TableHead>
-                            <TableHead>{t("name")}</TableHead>
+                            <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort("first_name")}>
+                                <div className="flex items-center">
+                                    {t("name")}
+                                    <SortIcon id="first_name" />
+                                </div>
+                            </TableHead>
                             <TableHead>{t("role")}</TableHead>
-                            <TableHead>{t("score")}</TableHead>
+                            <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort("match_score")}>
+                                <div className="flex items-center">
+                                    {t("score")}
+                                    <SortIcon id="match_score" />
+                                </div>
+                            </TableHead>
                             <TableHead>{t("status")}</TableHead>
                             <TableHead className="text-right"></TableHead>
                         </TableRow>
@@ -107,6 +158,11 @@ export function CandidatesTable({ jobId }: { jobId: string }) {
                         ))}
                     </TableBody>
                 </Table>
+                <Pagination 
+                    currentPage={page} 
+                    totalPages={meta?.total_pages || 1} 
+                    onPageChange={setPage} 
+                />
             </div>
 
             <BulkActionBar
@@ -114,6 +170,7 @@ export function CandidatesTable({ jobId }: { jobId: string }) {
                 onClear={clearSelection}
                 onRejectAll={handleBulkReject}
                 onMoveTo={handleBulkMove}
+                stages={stages}
             />
 
             <OutreachDrawer

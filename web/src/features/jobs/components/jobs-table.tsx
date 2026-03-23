@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 import {
     Table,
@@ -18,10 +19,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, FileText, Archive, Eye, Briefcase } from "lucide-react";
+import { MoreHorizontal, FileText, Archive, Eye, Briefcase, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useRouter } from "@/i18n/routing";
+import { Pagination } from "@/components/shared/pagination";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 
 
 import { useGetJobs } from "../api/use-get-jobs";
@@ -73,10 +76,41 @@ const StatusBadge = ({ status }: StatusBadgeProps) => {
 export function JobsTable({ filter }: JobsTableProps) {
     const t = useTranslations("Jobs");
     const router = useRouter();
-    const { data: jobsResponse, isLoading, error } = useGetJobs({ filter });
+    
+    const [page, setPage] = useState(1);
+    const [perPage] = useState(10);
+    const [sortId, setSortId] = useState<string>("created_at");
+    const [sortDesc, setSortDesc] = useState(true);
+
+    const { data: jobsResponse, isLoading, error } = useGetJobs({ 
+        page, 
+        per_page: perPage, 
+        filter: {
+            ...filter,
+            sort: {
+                sort_id: sortId,
+                sort_desc: sortDesc
+            }
+        } 
+    });
     const publishJob = usePublishJob();
     const closeJob = useCloseJob();
     const archiveJob = useArchiveJob();
+
+    const handleSort = (id: string) => {
+        if (sortId === id) {
+            setSortDesc(!sortDesc);
+        } else {
+            setSortId(id);
+            setSortDesc(true);
+        }
+        setPage(1); // Reset to first page on sort
+    };
+
+    const SortIcon = ({ id }: { id: string }) => {
+        if (sortId !== id) return <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />;
+        return sortDesc ? <ChevronDown className="ml-2 h-4 w-4" /> : <ChevronUp className="ml-2 h-4 w-4" />;
+    };
 
     if (isLoading) {
         return (
@@ -113,11 +147,21 @@ export function JobsTable({ filter }: JobsTableProps) {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[30%]">{t("table.title")}</TableHead>
+                        <TableHead className="w-[30%] cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort("title")}>
+                            <div className="flex items-center">
+                                {t("table.title")}
+                                <SortIcon id="title" />
+                            </div>
+                        </TableHead>
                         <TableHead>{t("table.department")}</TableHead>
                         <TableHead>{t("table.type")}</TableHead>
                         <TableHead>{t("table.salary")}</TableHead>
-                        <TableHead>{t("table.created")}</TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleSort("created_at")}>
+                            <div className="flex items-center">
+                                {t("table.created")}
+                                <SortIcon id="created_at" />
+                            </div>
+                        </TableHead>
                         <TableHead>{t("table.status")}</TableHead>
                         <TableHead className="text-right">{t("table.actions")}</TableHead>
                     </TableRow>
@@ -154,8 +198,8 @@ export function JobsTable({ filter }: JobsTableProps) {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>{t("table.actions")}</DropdownMenuLabel>
-                                        <DropdownMenuItem onClick={() => router.push(`/dashboard/jobs/${job.id}`)}>
-                                            <Eye className="mr-2 h-4 w-4" />
+                                        <DropdownMenuItem onClick={() => router.push(`/dashboard/candidates?job_id=${job.id}`)}>
+                                            <Users className="mr-2 h-4 w-4" />
                                             {t("table.viewCandidates")}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => router.push(`/dashboard/jobs/${job.id}/edit`)}>
@@ -191,6 +235,11 @@ export function JobsTable({ filter }: JobsTableProps) {
                     ))}
                 </TableBody>
             </Table>
+            <Pagination 
+                currentPage={page} 
+                totalPages={jobsResponse?.meta?.total_pages || 1} 
+                onPageChange={setPage} 
+            />
         </div>
     );
 }

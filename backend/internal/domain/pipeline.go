@@ -32,6 +32,12 @@ type MoveCandidateParams struct {
 	ChangedBy   string  `json:"changed_by"`
 }
 
+type BulkMoveCandidateParams struct {
+	CandidateIDs []string `json:"candidate_ids"`
+	ToStageID    string   `json:"to_stage_id"`
+	ChangedBy    string   `json:"changed_by"`
+}
+
 // CreateStageParams
 type CreateStageParams struct {
 	JobID      *string `json:"job_id,omitempty"`

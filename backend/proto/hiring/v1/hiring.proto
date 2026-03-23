@@ -15,6 +15,9 @@ service HiringService {
 
     // Get candidate data (parsed text etc)
     rpc GetCandidate(GetCandidateRequest) returns (GetCandidateResponse);
+
+    // Update interview guide
+    rpc UpdateInterviewGuide(UpdateInterviewGuideRequest) returns (UpdateInterviewGuideResponse);
 }
 
 enum ParsingStatus {
@@ -67,4 +70,13 @@ message GetCandidateResponse {
     string parsed_text = 2;
     string first_name = 3;
     string last_name = 4;
+}
+
+message UpdateInterviewGuideRequest {
+    string candidate_id = 1;
+    bytes interview_guide = 2;
+}
+
+message UpdateInterviewGuideResponse {
+    bool success = 1;
 }

@@ -27,24 +27,22 @@ const moveCandidateApi = async ({ candidateId, targetColumnId, newIndex }: MoveC
     return response.data;
 };
 
-export function useMoveCandidate() {
+export function useMoveCandidate(jobId?: string) {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: moveCandidateApi,
         onMutate: async ({ candidateId, sourceColumnId, targetColumnId, newIndex, optimisticSnapshot }) => {
             // Cancel any outgoing refetches
-            await queryClient.cancelQueries({ queryKey: ["candidates"] });
+            await queryClient.cancelQueries({ queryKey: ["candidates", jobId] });
 
             // Snapshot the previous value
-            // If optimisticSnapshot is provided, use it (assumes UI is already updated)
-            // Otherwise, fetch current cache (assumes UI is waiting for this update)
-            const previousCandidates = optimisticSnapshot || queryClient.getQueryData<Record<ColumnId, CandidateCard[]>>(["candidates"]);
+            const previousCandidates = optimisticSnapshot || queryClient.getQueryData<Record<ColumnId, CandidateCard[]>>(["candidates", jobId]);
 
             // If we provided a snapshot, the cache might already be updated by the drag-over handler.
             // If NOT, we need to apply the update now.
             if (!optimisticSnapshot && previousCandidates) {
-                queryClient.setQueryData<Record<ColumnId, CandidateCard[]>>(["candidates"], (old) => {
+                queryClient.setQueryData<Record<ColumnId, CandidateCard[]>>(["candidates", jobId], (old) => {
                     if (!old) return old;
 
                     const newColumns = { ...old };
@@ -72,12 +70,12 @@ export function useMoveCandidate() {
         onError: (err, newTodo, context) => {
             // Rollback to the previous value
             if (context?.previousCandidates) {
-                queryClient.setQueryData(["candidates"], context.previousCandidates);
+                queryClient.setQueryData(["candidates", jobId], context.previousCandidates);
             }
             toast.error("Failed to move candidate. Reverting changes.");
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["candidates"] });
+            queryClient.invalidateQueries({ queryKey: ["candidates", jobId] });
         },
     });
 }

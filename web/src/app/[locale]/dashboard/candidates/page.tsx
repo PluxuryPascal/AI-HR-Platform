@@ -3,12 +3,14 @@ import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 import { CandidatesTable } from "@/features/candidates/components/candidates-table";
 import { UploadResumeDialog } from "@/features/candidates/components/upload-resume-dialog";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGetJobs } from "@/features/jobs/api/use-get-jobs";
 import {
     Select,
@@ -20,12 +22,25 @@ import {
 
 export default function CandidatesPage() {
     const t = useTranslations("Candidates");
+    const searchParams = useSearchParams();
+    const jobIdFromUrl = searchParams.get("job_id");
+
     const { data: jobsResponse } = useGetJobs({ per_page: 100 });
     const jobs = jobsResponse?.data || [];
     
-    const [selectedJobId, setSelectedJobId] = useState<string>("");
+    const [selectedJobId, setSelectedJobId] = useState<string>(jobIdFromUrl || "");
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
 
-    // Set first job as default if none selected
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    // Set default job if none selected and jobs loaded
     useEffect(() => {
         if (!selectedJobId && jobs.length > 0) {
             setSelectedJobId(jobs[0].id);
@@ -42,6 +57,12 @@ export default function CandidatesPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
+                    <Input
+                        placeholder="Search by name or email..."
+                        className="h-9 w-[250px]"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
                     <div className="w-[250px]">
                         <Select value={selectedJobId} onValueChange={setSelectedJobId}>
                             <SelectTrigger>
@@ -65,7 +86,12 @@ export default function CandidatesPage() {
                 </div>
             </div>
             <Separator />
-            <CandidatesTable jobId={selectedJobId} />
+            {selectedJobId && (
+                <CandidatesTable 
+                    jobId={selectedJobId} 
+                    filter={{ first_name: debouncedSearch || undefined }} 
+                />
+            )}
         </div>
     );
 }

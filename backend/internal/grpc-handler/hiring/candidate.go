@@ -48,6 +48,23 @@ func (h *Handler) GetCandidate(ctx context.Context, req *pb.GetCandidateRequest)
 	}, nil
 }
 
+func (h *Handler) UpdateInterviewGuide(ctx context.Context, req *pb.UpdateInterviewGuideRequest) (*pb.UpdateInterviewGuideResponse, error) {
+	if req.GetCandidateId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "candidate_id is required")
+	}
+
+	h.logger.Debug("received UpdateInterviewGuide request", zap.String("candidate_id", req.GetCandidateId()))
+
+	if err := h.candidateUC.SaveInterviewGuide(ctx, req.GetCandidateId(), req.GetInterviewGuide()); err != nil {
+		h.logger.Error("failed to save interview guide", zap.Error(err))
+		return nil, status.Errorf(codes.Internal, "failed to save interview guide: %v", err)
+	}
+
+	return &pb.UpdateInterviewGuideResponse{
+		Success: true,
+	}, nil
+}
+
 func (h *Handler) UpdateCandidateProfile(ctx context.Context, req *pb.UpdateCandidateProfileRequest) (*pb.UpdateCandidateProfileResponse, error) {
 	if req.GetCandidateId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "candidate_id is required")

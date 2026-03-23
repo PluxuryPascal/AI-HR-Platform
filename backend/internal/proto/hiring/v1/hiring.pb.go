@@ -445,6 +445,102 @@ func (x *GetCandidateResponse) GetLastName() string {
 	return ""
 }
 
+type UpdateInterviewGuideRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	CandidateId    string                 `protobuf:"bytes,1,opt,name=candidate_id,json=candidateId,proto3" json:"candidate_id,omitempty"`
+	InterviewGuide []byte                 `protobuf:"bytes,2,opt,name=interview_guide,json=interviewGuide,proto3" json:"interview_guide,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *UpdateInterviewGuideRequest) Reset() {
+	*x = UpdateInterviewGuideRequest{}
+	mi := &file_proto_hiring_v1_hiring_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateInterviewGuideRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateInterviewGuideRequest) ProtoMessage() {}
+
+func (x *UpdateInterviewGuideRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_hiring_v1_hiring_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateInterviewGuideRequest.ProtoReflect.Descriptor instead.
+func (*UpdateInterviewGuideRequest) Descriptor() ([]byte, []int) {
+	return file_proto_hiring_v1_hiring_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UpdateInterviewGuideRequest) GetCandidateId() string {
+	if x != nil {
+		return x.CandidateId
+	}
+	return ""
+}
+
+func (x *UpdateInterviewGuideRequest) GetInterviewGuide() []byte {
+	if x != nil {
+		return x.InterviewGuide
+	}
+	return nil
+}
+
+type UpdateInterviewGuideResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateInterviewGuideResponse) Reset() {
+	*x = UpdateInterviewGuideResponse{}
+	mi := &file_proto_hiring_v1_hiring_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateInterviewGuideResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateInterviewGuideResponse) ProtoMessage() {}
+
+func (x *UpdateInterviewGuideResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_hiring_v1_hiring_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateInterviewGuideResponse.ProtoReflect.Descriptor instead.
+func (*UpdateInterviewGuideResponse) Descriptor() ([]byte, []int) {
+	return file_proto_hiring_v1_hiring_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UpdateInterviewGuideResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_proto_hiring_v1_hiring_proto protoreflect.FileDescriptor
 
 const file_proto_hiring_v1_hiring_proto_rawDesc = "" +
@@ -479,16 +575,22 @@ const file_proto_hiring_v1_hiring_proto_rawDesc = "" +
 	"parsedText\x12\x1d\n" +
 	"\n" +
 	"first_name\x18\x03 \x01(\tR\tfirstName\x12\x1b\n" +
-	"\tlast_name\x18\x04 \x01(\tR\blastName*\x87\x01\n" +
+	"\tlast_name\x18\x04 \x01(\tR\blastName\"i\n" +
+	"\x1bUpdateInterviewGuideRequest\x12!\n" +
+	"\fcandidate_id\x18\x01 \x01(\tR\vcandidateId\x12'\n" +
+	"\x0finterview_guide\x18\x02 \x01(\fR\x0einterviewGuide\"8\n" +
+	"\x1cUpdateInterviewGuideResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess*\x87\x01\n" +
 	"\rParsingStatus\x12\x1e\n" +
 	"\x1aPARSING_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16PARSING_STATUS_SUCCESS\x10\x01\x12\x1f\n" +
 	"\x1bPARSING_STATUS_NEEDS_REVIEW\x10\x02\x12\x19\n" +
-	"\x15PARSING_STATUS_FAILED\x10\x032\xaf\x02\n" +
+	"\x15PARSING_STATUS_FAILED\x10\x032\x98\x03\n" +
 	"\rHiringService\x12m\n" +
 	"\x16UpdateCandidateProfile\x12(.hiring.v1.UpdateCandidateProfileRequest\x1a).hiring.v1.UpdateCandidateProfileResponse\x12^\n" +
 	"\x11TransferJobAccess\x12#.hiring.v1.TransferJobAccessRequest\x1a$.hiring.v1.TransferJobAccessResponse\x12O\n" +
-	"\fGetCandidate\x12\x1e.hiring.v1.GetCandidateRequest\x1a\x1f.hiring.v1.GetCandidateResponseB#Z!internal/proto/hiring/v1;hiringv1b\x06proto3"
+	"\fGetCandidate\x12\x1e.hiring.v1.GetCandidateRequest\x1a\x1f.hiring.v1.GetCandidateResponse\x12g\n" +
+	"\x14UpdateInterviewGuide\x12&.hiring.v1.UpdateInterviewGuideRequest\x1a'.hiring.v1.UpdateInterviewGuideResponseB#Z!internal/proto/hiring/v1;hiringv1b\x06proto3"
 
 var (
 	file_proto_hiring_v1_hiring_proto_rawDescOnce sync.Once
@@ -503,7 +605,7 @@ func file_proto_hiring_v1_hiring_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_hiring_v1_hiring_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_hiring_v1_hiring_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_hiring_v1_hiring_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_proto_hiring_v1_hiring_proto_goTypes = []any{
 	(ParsingStatus)(0),                     // 0: hiring.v1.ParsingStatus
 	(*UpdateCandidateProfileRequest)(nil),  // 1: hiring.v1.UpdateCandidateProfileRequest
@@ -512,17 +614,21 @@ var file_proto_hiring_v1_hiring_proto_goTypes = []any{
 	(*TransferJobAccessResponse)(nil),      // 4: hiring.v1.TransferJobAccessResponse
 	(*GetCandidateRequest)(nil),            // 5: hiring.v1.GetCandidateRequest
 	(*GetCandidateResponse)(nil),           // 6: hiring.v1.GetCandidateResponse
+	(*UpdateInterviewGuideRequest)(nil),    // 7: hiring.v1.UpdateInterviewGuideRequest
+	(*UpdateInterviewGuideResponse)(nil),   // 8: hiring.v1.UpdateInterviewGuideResponse
 }
 var file_proto_hiring_v1_hiring_proto_depIdxs = []int32{
 	0, // 0: hiring.v1.UpdateCandidateProfileRequest.parsing_status:type_name -> hiring.v1.ParsingStatus
 	1, // 1: hiring.v1.HiringService.UpdateCandidateProfile:input_type -> hiring.v1.UpdateCandidateProfileRequest
 	3, // 2: hiring.v1.HiringService.TransferJobAccess:input_type -> hiring.v1.TransferJobAccessRequest
 	5, // 3: hiring.v1.HiringService.GetCandidate:input_type -> hiring.v1.GetCandidateRequest
-	2, // 4: hiring.v1.HiringService.UpdateCandidateProfile:output_type -> hiring.v1.UpdateCandidateProfileResponse
-	4, // 5: hiring.v1.HiringService.TransferJobAccess:output_type -> hiring.v1.TransferJobAccessResponse
-	6, // 6: hiring.v1.HiringService.GetCandidate:output_type -> hiring.v1.GetCandidateResponse
-	4, // [4:7] is the sub-list for method output_type
-	1, // [1:4] is the sub-list for method input_type
+	7, // 4: hiring.v1.HiringService.UpdateInterviewGuide:input_type -> hiring.v1.UpdateInterviewGuideRequest
+	2, // 5: hiring.v1.HiringService.UpdateCandidateProfile:output_type -> hiring.v1.UpdateCandidateProfileResponse
+	4, // 6: hiring.v1.HiringService.TransferJobAccess:output_type -> hiring.v1.TransferJobAccessResponse
+	6, // 7: hiring.v1.HiringService.GetCandidate:output_type -> hiring.v1.GetCandidateResponse
+	8, // 8: hiring.v1.HiringService.UpdateInterviewGuide:output_type -> hiring.v1.UpdateInterviewGuideResponse
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -539,7 +645,7 @@ func file_proto_hiring_v1_hiring_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_hiring_v1_hiring_proto_rawDesc), len(file_proto_hiring_v1_hiring_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

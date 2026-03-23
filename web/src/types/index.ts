@@ -14,9 +14,9 @@ export interface ApiResponse<T> {
  */
 export interface PaginationMeta {
     page: number;
-    perPage: number;
+    per_page: number;
     total: number;
-    totalPages: number;
+    total_pages: number;
 }
 
 /**

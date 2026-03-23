@@ -31,7 +31,7 @@ interface UseKanbanDndOptions {
 
 export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, onColumnChange }: UseKanbanDndOptions) {
     const queryClient = useQueryClient();
-    const { mutate: moveCandidateApi } = useMoveCandidate();
+    const { mutate: moveCandidateApi } = useMoveCandidate(jobId);
 
     const previousColumnsRef = useRef<Record<string, CandidateCardType[]> | null>(null);
 
@@ -54,9 +54,10 @@ export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, 
             return id;
         }
 
-        return Object.keys(columns).find((key) =>
-            (columns[key] as CandidateCardType[]).find((c) => c.id === id)
-        );
+        return Object.keys(columns).find((key) => {
+            const col = columns[key];
+            return Array.isArray(col) && col.find((c) => c.id === id);
+        });
     };
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -66,7 +67,8 @@ export function useKanbanDnd({ jobId, isSelectionMode, initialColumns: columns, 
         const activeContainer = findContainer(id as string);
         if (activeContainer) {
             setActiveColumn(activeContainer);
-            const card = (columns[activeContainer] as CandidateCardType[]).find((c) => c.id === id);
+            const activeItems = columns[activeContainer];
+            const card = Array.isArray(activeItems) ? activeItems.find((c) => c.id === id) : null;
             if (card) {
                 setActiveCard(card);
             }

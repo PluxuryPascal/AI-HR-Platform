@@ -15,10 +15,11 @@ interface BulkActionBarProps {
     selectedCount: number;
     onClear: () => void;
     onRejectAll: () => void;
-    onMoveTo: (status: string) => void;
+    onMoveTo: (stageId: string) => void;
+    stages?: { id: string; title: string }[];
 }
 
-export function BulkActionBar({ selectedCount, onClear, onRejectAll, onMoveTo }: BulkActionBarProps) {
+export function BulkActionBar({ selectedCount, onClear, onRejectAll, onMoveTo, stages }: BulkActionBarProps) {
     const t = useTranslations("BulkActions");
 
     return (
@@ -53,15 +54,11 @@ export function BulkActionBar({ selectedCount, onClear, onRejectAll, onMoveTo }:
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onMoveTo("screening")}>
-                                    Screening
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onMoveTo("interview")}>
-                                    Interview
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onMoveTo("offer")}>
-                                    Offer
-                                </DropdownMenuItem>
+                                {stages?.map((stage) => (
+                                    <DropdownMenuItem key={stage.id} onClick={() => onMoveTo(stage.id)}>
+                                        {stage.title}
+                                    </DropdownMenuItem>
+                                ))}
                             </DropdownMenuContent>
                         </DropdownMenu>
 

@@ -57,12 +57,6 @@ func (u *interviewUseCase) GenerateQuestions(ctx context.Context, candidateID, t
 		return activity.InterviewOutput{}, fmt.Errorf("interview workflow failed: %w", err)
 	}
 
-	// Save to DB
-	jsonData, _ := json.Marshal(result.Questions)
-	if err := u.candidateRepo.SaveInterviewGuide(ctx, candidateID, jsonData); err != nil {
-		u.log.Error("failed to save interview guide", zap.Error(err))
-	}
-
 	return result, nil
 }
 

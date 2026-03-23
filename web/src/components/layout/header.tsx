@@ -36,7 +36,9 @@ export function Header() {
     const { user, logout } = useAuth();
     const { data: profile } = useGetProfile();
 
-    const displayName = profile?.first_name ? `${profile.first_name} ${profile.last_name}` : user?.name;
+    const displayName = profile?.first_name 
+        ? `${profile.first_name} ${profile.last_name}` 
+        : (user?.firstName ? `${user.firstName} ${user.lastName}`.trim() : "");
     const displayEmail = profile?.email || user?.email;
 
     return (

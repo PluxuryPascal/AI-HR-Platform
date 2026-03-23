@@ -17,7 +17,7 @@ interface BoardColumnProps {
     onToggleSelection: (id: string) => void;
     isSelectionMode: boolean;
     isEditMode?: boolean;
-    onRename?: (newTitle: string) => void;
+    onEdit?: () => void;
     onDelete?: () => void;
 }
 
@@ -29,7 +29,7 @@ export function BoardColumn({
     onToggleSelection, 
     isSelectionMode,
     isEditMode,
-    onRename,
+    onEdit,
     onDelete
 }: BoardColumnProps) {
     const t = useTranslations('Screening');
@@ -46,11 +46,8 @@ export function BoardColumn({
         overscan: 5,
     });
 
-    const handleRename = () => {
-        const newTitle = window.prompt(t("renameStagePrompt"), title);
-        if (newTitle && newTitle !== title) {
-            onRename?.(newTitle);
-        }
+    const handleEdit = () => {
+        onEdit?.();
     };
 
     return (
@@ -66,7 +63,7 @@ export function BoardColumn({
                     {isEditMode && (
                         <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
                             <button 
-                                onClick={handleRename}
+                                onClick={handleEdit}
                                 className="p-1 hover:bg-accent rounded text-muted-foreground"
                             >
                                 <Edit2 className="w-3 h-3" />

@@ -70,7 +70,8 @@ export function PersonalInfoForm() {
                 if (profile) {
                     login({
                         ...profile,
-                        name: values.name,
+                        firstName: firstName,
+                        lastName: lastName,
                         email: values.email,
                     });
                 }

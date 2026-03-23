@@ -56,9 +56,9 @@ export default function SettingsPage() {
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="general">{t("general")}</TabsTrigger>
-                    {isOwner && <TabsTrigger value="team">Team</TabsTrigger>}
+                    {isOwner && <TabsTrigger value="team">{t("team")}</TabsTrigger>}
                     <TabsTrigger value="ai">{t("ai")}</TabsTrigger>
-                    <TabsTrigger value="billing">Billing</TabsTrigger>
+                    <TabsTrigger value="billing">{t("billing")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-4">
@@ -93,13 +93,13 @@ export default function SettingsPage() {
                 <TabsContent value="billing" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Billing</CardTitle>
+                            <CardTitle>{t("billing")}</CardTitle>
                             <CardDescription>
-                                Manage your billing information and subscription plan.
+                                {t("billingDesc")}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-muted-foreground">Billing settings coming soon...</p>
+                            <p className="text-sm text-muted-foreground">{t("billingSoon")}</p>
                         </CardContent>
                     </Card>
                 </TabsContent>

@@ -13,8 +13,11 @@ export interface Candidate {
     skills?: string[];
     parsing_status: CandidateParsingStatus;
     stage_id?: string;
+    stage_name?: string;
+    match_score?: number;
     created_at: string;
     updated_at?: string;
+    job_title?: string;
 }
 
 export interface CandidateProfile {
@@ -52,6 +55,10 @@ export interface CandidateFilter {
     last_name?: string;
     email?: string;
     current_stage_id?: string;
+    sort?: {
+        sort_id?: string;
+        sort_desc?: boolean;
+    };
 }
 
 export interface MoveCandidateRequest {

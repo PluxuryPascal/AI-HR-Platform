@@ -22,12 +22,19 @@ import { useKanbanSelection } from "../hooks/use-kanban-selection";
 import { useKanbanOutreach } from "../hooks/use-kanban-outreach";
 
 import { useGetStages } from "../../jobs/api/use-get-stages";
+import { useCreateStage } from "../../jobs/api/use-create-stage";
+import { useUpdateStage } from "../../jobs/api/use-update-stage";
+import { useDeleteStage } from "../../jobs/api/use-delete-stage";
 import { useGetCandidates } from "../../candidates/api/use-get-candidates";
 import { CandidateCard } from "../types";
+import { StageModal } from "./stage-modal";
+import { Stage } from "../../jobs/types/stage";
 
 export function KanbanBoard({ jobId }: { jobId: string }) {
     const t = useTranslations("Screening");
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isStageModalOpen, setIsStageModalOpen] = useState(false);
+    const [editingStage, setEditingStage] = useState<Stage | null>(null);
 
     const { data: stages = [], isLoading: isLoadingStages } = useGetStages(jobId);
     const { data: groupedCandidates = {}, isLoading: isLoadingCandidates } = useGetCandidates(jobId);
@@ -45,26 +52,17 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
         getSelectedCandidates,
     } = useKanbanSelection(jobId);
 
-    // Map backend candidates to CandidateCard UI format
+    // Ensure all stages from the backend are represented in the columns object
+    // even if they have no candidates yet. This is critical for drag-and-drop.
     const boardColumns = useMemo(() => {
-        const mapped: Record<string, CandidateCard[]> = {};
-        stages.forEach(stage => {
-            const candidates = groupedCandidates[stage.id] || [];
-            mapped[stage.id] = candidates.map(c => ({
-                id: c.id,
-                name: `${c.first_name || ""} ${c.last_name || ""}`.trim() || t("unknownCandidate") || "Unknown",
-                role: t("candidateRole") || "Candidate",
-                score: 0,
-                avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${c.id}`,
-                email: c.email || "-",
-                appliedDate: new Date(c.created_at).toLocaleDateString(),
-                status: c.parsing_status,
-                matchSummary: "",
-                scoreBreakdown: []
-            }));
+        const cols: Record<string, CandidateCard[]> = {};
+        stages.forEach((stage) => {
+            cols[stage.id] = groupedCandidates[stage.id] || [];
         });
-        return mapped;
-    }, [stages, groupedCandidates, t]);
+        return cols;
+    }, [stages, groupedCandidates]);
+    
+    // Previous simplification was too aggressive - it broke dropping onto empty columns
 
     const {
         activeCard,
@@ -84,9 +82,39 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
         return Object.values(boardColumns).every(col => col.length === 0);
     }, [boardColumns]);
 
+    const { mutate: createStage } = useCreateStage(jobId);
+    const { mutate: updateStage } = useUpdateStage(jobId);
+    const { mutate: deleteStage } = useDeleteStage(jobId);
+
     const handleAddStage = () => {
-        // In a real app, this would call useCreateStage mutation
-        toast.info("Эта фича будет доступна скоро");
+        setEditingStage(null);
+        setIsStageModalOpen(true);
+    };
+
+    const handleEditStage = (stage: Stage) => {
+        setEditingStage(stage);
+        setIsStageModalOpen(true);
+    };
+
+    const onModalSubmit = (values: { title: string; is_terminal: boolean }) => {
+        if (editingStage) {
+            updateStage({
+                stageId: editingStage.id,
+                data: {
+                    title: values.title,
+                    is_terminal: values.is_terminal,
+                    code: values.title.toLowerCase().replace(/\s+/g, "_"),
+                },
+            });
+        } else {
+            createStage({
+                title: values.title,
+                code: values.title.toLowerCase().replace(/\s+/g, "_"),
+                position: stages.length,
+                is_terminal: values.is_terminal,
+            });
+        }
+        setIsStageModalOpen(false);
     };
 
     return (
@@ -122,10 +150,10 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
                             onToggleSelection={handleToggleSelection}
                             isSelectionMode={isSelectionMode}
                             isEditMode={isEditMode}
-                            onRename={(newTitle) => toast.info("Rename feature coming soon")}
+                            onEdit={() => handleEditStage(stage)}
                             onDelete={() => {
                                 if (window.confirm(t("deleteStageConfirm"))) {
-                                    toast.info("Delete feature coming soon");
+                                    deleteStage(stage.id);
                                 }
                             }}
                         />
@@ -163,6 +191,17 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
                     type={outreachState.type}
                 />
             </DndContext>
+
+            <StageModal
+                isOpen={isStageModalOpen}
+                onClose={() => setIsStageModalOpen(false)}
+                onSubmit={onModalSubmit}
+                initialValues={editingStage ? {
+                    title: editingStage.title,
+                    is_terminal: editingStage.is_terminal,
+                } : undefined}
+                title={editingStage ? t("renameStagePrompt") : t("addStage")}
+            />
         </div>
     );
 }
