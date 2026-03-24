@@ -169,6 +169,7 @@
         "statusActive": "Активные",
         "statusClosed": "Закрытые",
         "statusDraft": "Черновики",
+        "statusArchived": "Архивированные",
         "error": "Не удалось загрузить вакансии",
         "table": {
             "title": "Название",

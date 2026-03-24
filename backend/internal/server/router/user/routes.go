@@ -15,6 +15,7 @@ type UserRoutes interface {
 	GetProfile() echo.HandlerFunc
 	PatchProfile() echo.HandlerFunc
 	PatchPassword() echo.HandlerFunc
+	DeleteMember() echo.HandlerFunc
 }
 
 type userRouter struct {
@@ -51,5 +52,6 @@ func (r *userRouter) initRoutes() {
 		router.NewRoute(http.MethodGet, "/profile", r.handler.GetProfile, r.rateLimit, r.session),
 		router.NewRoute(http.MethodPatch, "/profile", r.handler.PatchProfile, r.rateLimit, r.session),
 		router.NewRoute(http.MethodPatch, "/password", r.handler.PatchPassword, r.rateLimit, r.session),
+		router.NewRoute(http.MethodDelete, "/members/:id", r.handler.DeleteMember, r.rateLimit, r.session),
 	}
 }

@@ -234,8 +234,23 @@ func (u *candidateUseCase) GetCandidatesByJob(ctx context.Context, jobID, userID
 }
 
 func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id, actorID, teamID, role string) error {
-	if _, _, _, _, _, err := u.GetCandidateByID(ctx, id, actorID, role); err != nil {
-		return err
+	idToJobID, err := u.candidateRepo.GetJobIDsByCandidateIDs(ctx, []string{id})
+	if err != nil {
+		return fmt.Errorf("get job id: %w", err)
+	}
+	jobID, ok := idToJobID[id]
+	if !ok {
+		return ErrCandidateNotFound
+	}
+
+	if role != "owner" && role != "admin" {
+		ok, err := u.accessRepo.HasAccess(ctx, actorID, jobID)
+		if err != nil {
+			return fmt.Errorf("check job access: %w", err)
+		}
+		if !ok {
+			return errors.New("access denied to this candidate")
+		}
 	}
 
 	if err := u.candidateRepo.Delete(ctx, id); err != nil {
@@ -258,11 +273,34 @@ func (u *candidateUseCase) BulkDeleteCandidates(ctx context.Context, ids []strin
 		return nil
 	}
 
-	// Validate access for all (for simplicity we check one by one, 
-	// but a proper repo method to check all at once would be better)
-	for _, id := range ids {
-		if _, _, _, _, _, err := u.GetCandidateByID(ctx, id, actorID, role); err != nil {
-			return fmt.Errorf("access check for candidate %s: %w", id, err)
+	// 1. Get JobIDs for all candidates
+	idToJobID, err := u.candidateRepo.GetJobIDsByCandidateIDs(ctx, ids)
+	if err != nil {
+		return fmt.Errorf("get job ids: %w", err)
+	}
+
+	// 2. Validate all candidates exist
+	if len(idToJobID) != len(ids) {
+		return errors.New("one or more candidates not found")
+	}
+
+	// 3. Validate access
+	if role != "owner" && role != "admin" {
+		// Get unique JobIDs
+		uniqueJobIDs := make(map[string]struct{})
+		for _, jobID := range idToJobID {
+			uniqueJobIDs[jobID] = struct{}{}
+		}
+
+		// Check access for each unique JobID
+		for jobID := range uniqueJobIDs {
+			ok, err := u.accessRepo.HasAccess(ctx, actorID, jobID)
+			if err != nil {
+				return fmt.Errorf("check access for job %s: %w", jobID, err)
+			}
+			if !ok {
+				return errors.New("access denied to one or more candidates")
+			}
 		}
 	}
 

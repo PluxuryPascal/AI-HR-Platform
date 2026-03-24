@@ -3,8 +3,19 @@
 import {
     DndContext,
     MeasuringStrategy,
+    DragStartEvent,
+    DragEndEvent,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    closestCenter,
 } from "@dnd-kit/core";
-import { useMemo, useState } from "react";
+import {
+    arrayMove,
+    SortableContext,
+    horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useMemo, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Layers } from "lucide-react";
 import { BoardColumn } from "./board-column";
@@ -29,6 +40,8 @@ import { useGetCandidates } from "../../candidates/api/use-get-candidates";
 import { CandidateCard } from "../types";
 import { StageModal } from "./stage-modal";
 import { Stage } from "../../jobs/types/stage";
+import { useReorderStages } from "../../jobs/api/use-reorder-stages";
+import { SortableBoardColumn } from "./sortable-board-column";
 
 export function KanbanBoard({ jobId }: { jobId: string }) {
     const t = useTranslations("Screening");
@@ -36,8 +49,15 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
     const [isStageModalOpen, setIsStageModalOpen] = useState(false);
     const [editingStage, setEditingStage] = useState<Stage | null>(null);
 
-    const { data: stages = [], isLoading: isLoadingStages } = useGetStages(jobId);
+    const { data: stagesData = [], isLoading: isLoadingStages } = useGetStages(jobId);
+    const [stages, setStages] = useState<Stage[]>([]);
     const { data: groupedCandidates = {}, isLoading: isLoadingCandidates } = useGetCandidates(jobId);
+
+    useEffect(() => {
+        if (stagesData.length > 0) {
+            setStages(stagesData);
+        }
+    }, [stagesData]);
 
     const { outreachState, handleColumnChange, closeOutreach } = useKanbanOutreach(stages);
 
@@ -85,6 +105,23 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
     const { mutate: createStage } = useCreateStage(jobId);
     const { mutate: updateStage } = useUpdateStage(jobId);
     const { mutate: deleteStage } = useDeleteStage(jobId);
+    const { mutate: reorderStages } = useReorderStages(jobId);
+
+    const onDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (isEditMode && over && active.id !== over.id) {
+            const oldIndex = stages.findIndex((s) => s.id === active.id);
+            const newIndex = stages.findIndex((s) => s.id === over.id);
+
+            const newStages = arrayMove(stages, oldIndex, newIndex);
+            setStages(newStages);
+            reorderStages(newStages.map((s) => s.id));
+            return;
+        }
+
+        handleDragEnd(event);
+    };
 
     const handleAddStage = () => {
         setEditingStage(null);
@@ -138,10 +175,10 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
 
             <DndContext
                 sensors={sensors}
-                collisionDetection={collisionDetectionStrategy}
+                collisionDetection={isEditMode ? closestCenter : collisionDetectionStrategy}
                 onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
+                onDragOver={isEditMode ? undefined : handleDragOver}
+                onDragEnd={onDragEnd}
                 measuring={{
                     droppable: {
                         strategy: MeasuringStrategy.Always,
@@ -149,24 +186,30 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
                 }}
             >
                 <div className="flex h-full gap-4 overflow-x-auto pb-4 relative">
-                    {stages.map((stage) => (
-                        <BoardColumn
-                            key={stage.id}
-                            id={stage.id}
-                            title={stage.title}
-                            candidates={boardColumns[stage.id] || []}
-                            selectedCandidateIds={selectedCandidateIds}
-                            onToggleSelection={handleToggleSelection}
-                            isSelectionMode={isSelectionMode}
-                            isEditMode={isEditMode}
-                            onEdit={() => handleEditStage(stage)}
-                            onDelete={() => {
-                                if (window.confirm(t("deleteStageConfirm"))) {
-                                    deleteStage(stage.id);
-                                }
-                            }}
-                        />
-                    ))}
+                    <SortableContext
+                        items={stages.map((s) => s.id)}
+                        strategy={horizontalListSortingStrategy}
+                        disabled={!isEditMode}
+                    >
+                        {stages.map((stage) => (
+                            <SortableBoardColumn
+                                key={stage.id}
+                                id={stage.id}
+                                title={stage.title}
+                                candidates={boardColumns[stage.id] || []}
+                                selectedCandidateIds={selectedCandidateIds}
+                                onToggleSelection={handleToggleSelection}
+                                isSelectionMode={isSelectionMode}
+                                isEditMode={isEditMode}
+                                onEdit={() => handleEditStage(stage)}
+                                onDelete={() => {
+                                    if (window.confirm(t("deleteStageConfirm"))) {
+                                        deleteStage(stage.id);
+                                    }
+                                }}
+                            />
+                        ))}
+                    </SortableContext>
                     {isEditMode && (
                         <button
                             onClick={handleAddStage}

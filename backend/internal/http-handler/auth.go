@@ -222,3 +222,18 @@ func (i *AuthHandler) PatchPassword() echo.HandlerFunc {
 		return response.NoContent(c, http.StatusOK)
 	}
 }
+func (i *AuthHandler) DeleteMember() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		memberID := c.Param("id")
+		teamID := c.Get("team_id").(string)
+		actorID := c.Get("id").(string)
+		actorRole := c.Get("role").(string)
+
+		if err := i.usecase.DeleteMember(c.Request().Context(), teamID, memberID, actorID, actorRole); err != nil {
+			i.log.Error("delete member error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, fmt.Sprintf("delete member error: %v", err))
+		}
+
+		return response.NoContent(c, http.StatusNoContent)
+	}
+}

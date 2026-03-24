@@ -14,6 +14,7 @@ type PipelineRepository interface {
 	GetStagesByJobID(ctx context.Context, jobID string) ([]domain.PipelineStage, error)
 	GetStagesByTeamID(ctx context.Context, teamID string) ([]domain.PipelineStage, error)
 	UpdateStage(ctx context.Context, stage *domain.PipelineStage) error
+	UpdateStagesOrder(ctx context.Context, jobID string, stageIDs []string) error
 	DeleteStage(ctx context.Context, id string) error
 	GetStageByID(ctx context.Context, id string) (*domain.PipelineStage, error)
 }
@@ -139,6 +140,32 @@ func (r *pipelineRepo) UpdateStage(ctx context.Context, stage *domain.PipelineSt
 	}
 
 	return nil
+}
+
+func (r *pipelineRepo) UpdateStagesOrder(ctx context.Context, jobID string, stageIDs []string) error {
+	tx, err := r.dbClient.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	for i, id := range stageIDs {
+		const query = `
+			UPDATE hiring.t_pipeline_stages
+			SET position = @position
+			WHERE id = @id AND job_id = @job_id
+		`
+		_, err := tx.Exec(ctx, query, pgx.NamedArgs{
+			"id":       id,
+			"position": i,
+			"job_id":   jobID,
+		})
+		if err != nil {
+			return fmt.Errorf("update stage position (id=%s): %w", id, err)
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *pipelineRepo) DeleteStage(ctx context.Context, id string) error {

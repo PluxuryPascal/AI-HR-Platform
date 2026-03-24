@@ -247,13 +247,14 @@ func (h *JobHandler) changeStatus(newStatus domain.JobStatus) echo.HandlerFunc {
 // isValidStatusTransition checks allowed job status transitions:
 // Draft → Published, Published → Closed, Closed → Archived
 func isValidStatusTransition(from, to domain.JobStatus) bool {
-	transitions := map[domain.JobStatus]domain.JobStatus{
-		domain.JobStatusDraft:     domain.JobStatusPublished,
-		domain.JobStatusPublished: domain.JobStatusClosed,
-		domain.JobStatusClosed:    domain.JobStatusArchived,
+	if from == to {
+		return true
 	}
-	allowed, ok := transitions[from]
-	return ok && allowed == to
+	// Prevent going back to Draft once published/closed/archived (optional, but safer)
+	if to == domain.JobStatusDraft && from != domain.JobStatusDraft {
+		return false
+	}
+	return true
 }
 
 func (h *JobHandler) DeleteJob() echo.HandlerFunc {

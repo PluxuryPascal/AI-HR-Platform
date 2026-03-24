@@ -208,24 +208,24 @@ export function JobsTable({ filter }: JobsTableProps) {
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         
-                                        {job.status === "status_draft" && (
+                                        {job.status !== "status_published" && (
                                             <DropdownMenuItem onClick={() => publishJob.mutate(job.id)} disabled={publishJob.isPending}>
                                                 <Zap className="mr-2 h-4 w-4 text-amber-500" />
                                                 Опубликовать
                                             </DropdownMenuItem>
                                         )}
                                         
-                                        {job.status === "status_published" && (
+                                        {job.status !== "status_closed" && job.status !== "status_draft" && (
                                             <DropdownMenuItem onClick={() => closeJob.mutate(job.id)} disabled={closeJob.isPending}>
                                                 <XCircle className="mr-2 h-4 w-4 text-red-500" />
                                                 Закрыть
                                             </DropdownMenuItem>
                                         )}
                                         
-                                        {job.status === "status_closed" && (
+                                        {job.status !== "status_archived" && job.status !== "status_draft" && (
                                             <DropdownMenuItem onClick={() => archiveJob.mutate(job.id)} disabled={archiveJob.isPending}>
-                                                <ArchiveRestore className="mr-2 h-4 w-4 text-slate-500" />
-                                                {t("table.archive")}
+                                                <Archive className="mr-2 h-4 w-4 text-slate-500" />
+                                                Архивировать
                                             </DropdownMenuItem>
                                         )}
                                     </DropdownMenuContent>

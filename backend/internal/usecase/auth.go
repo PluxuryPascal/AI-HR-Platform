@@ -30,6 +30,7 @@ type AuthUseCase interface {
 	GetProfile(ctx context.Context, userID string) (*domain.User, error)
 	UpdateProfile(ctx context.Context, userID string, firstName, lastName, email string) error
 	UpdatePassword(ctx context.Context, userID string, currentPassword, newPassword string) error
+	DeleteMember(ctx context.Context, teamID, memberID, actorID, actorRole string) error
 }
 
 type authUseCase struct {
@@ -224,6 +225,46 @@ func (a *authUseCase) UpdatePassword(ctx context.Context, userID string, current
 	if err := a.repo.UpdatePassword(ctx, userID, hashedPassword); err != nil {
 		return fmt.Errorf("repo update password: %w", err)
 	}
+
+	return nil
+}
+
+func (a *authUseCase) DeleteMember(ctx context.Context, teamID, memberID, actorID, actorRole string) error {
+	if memberID == actorID {
+		return errors.New("cannot delete yourself")
+	}
+
+	// Check if member belongs to the same team
+	member, err := a.repo.GetUserByID(ctx, memberID)
+	if err != nil {
+		return fmt.Errorf("get member: %w", err)
+	}
+
+	if member.TeamID != teamID {
+		return errors.New("member does not belong to your team")
+	}
+
+	// Check permissions: only owners/admins can delete
+	if actorRole != "owner" && actorRole != "admin" {
+		return errors.New("only owners or admins can delete team members")
+	}
+
+	// If deleting an owner, only another owner can do it (or maybe not at all, but let's allow owner to delete owner if not self)
+	if member.Role == "owner" && actorRole != "owner" {
+		return errors.New("only owners can delete other owners")
+	}
+
+	if err := a.repo.DeleteUser(ctx, memberID); err != nil {
+		return fmt.Errorf("repo delete user: %w", err)
+	}
+
+	_ = a.auditor.Log(ctx, audit.Entry{
+		TeamID:    teamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &actorID,
+		Action:    audit.HiringStageDeleted, // Reuse or add new audit action
+		TargetID:  &memberID,
+	})
 
 	return nil
 }

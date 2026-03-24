@@ -81,6 +81,7 @@ type ResumeEmbedding struct {
 }
 
 type CandidateFilter struct {
+	Search         *string     `json:"search"`
 	FirstName      *string     `json:"first_name"`
 	LastName       *string     `json:"last_name"`
 	Email          *string     `json:"email"`

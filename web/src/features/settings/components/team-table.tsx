@@ -22,6 +22,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useDeleteMember } from "../../auth/api/use-delete-member";
+import { useAuth } from "@/store/use-auth";
+import { Trash2 } from "lucide-react";
 
 export type Role = "owner" | "recruiter" | "hiring_manager";
 export type Status = "active" | "pending";
@@ -63,6 +66,14 @@ interface TeamTableProps {
 
 export function TeamTable({ members }: TeamTableProps) {
     const t = useTranslations("Team");
+    const { user: currentUser } = useAuth();
+    const deleteMember = useDeleteMember();
+
+    const handleDelete = (id: string) => {
+        if (confirm("Are you sure you want to remove this member?")) {
+            deleteMember.mutate(id);
+        }
+    };
 
     return (
         <Table>
@@ -134,7 +145,14 @@ export function TeamTable({ members }: TeamTableProps) {
                                         Copy Email
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-red-600">Remove Member</DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                        onClick={() => handleDelete(member.id)}
+                                        disabled={member.id === currentUser?.id || deleteMember.isPending}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Remove Member
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>

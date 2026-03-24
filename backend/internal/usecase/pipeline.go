@@ -17,6 +17,7 @@ type PipelineUseCase interface {
 	GetStagesByTeamID(ctx context.Context, teamID string) ([]domain.PipelineStage, error)
 	GetFirstStageByJobID(ctx context.Context, jobID string) (*domain.PipelineStage, error)
 	UpdateStage(ctx context.Context, stage *domain.PipelineStage, actorID string) error
+	ReorderStages(ctx context.Context, jobID string, stageIDs []string, actorID, teamID string) error
 	DeleteStage(ctx context.Context, id, actorID, teamID string) error
 }
 
@@ -77,6 +78,26 @@ func (u *pipelineUseCase) GetStagesByTeamID(ctx context.Context, teamID string) 
 		return nil, fmt.Errorf("get stages by team: %w", err)
 	}
 	return stages, nil
+}
+
+func (u *pipelineUseCase) ReorderStages(ctx context.Context, jobID string, stageIDs []string, actorID, teamID string) error {
+	if err := u.pipelineRepo.UpdateStagesOrder(ctx, jobID, stageIDs); err != nil {
+		return fmt.Errorf("reorder stages: %w", err)
+	}
+
+	_ = u.auditor.Log(ctx, audit.Entry{
+		TeamID:    teamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &actorID,
+		Action:    audit.HiringStageUpdated, // Reuse or add new audit action
+		Payload: map[string]interface{}{
+			"job_id":    jobID,
+			"stage_ids": stageIDs,
+			"is_order":  true,
+		},
+	})
+
+	return nil
 }
 
 func (u *pipelineUseCase) UpdateStage(ctx context.Context, stage *domain.PipelineStage, actorID string) error {

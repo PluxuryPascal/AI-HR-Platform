@@ -11,6 +11,7 @@ type PipelineRoutes interface {
 	PostStage() echo.HandlerFunc
 	GetStages() echo.HandlerFunc
 	PatchStage() echo.HandlerFunc
+	PutStagesOrder() echo.HandlerFunc
 	DeleteStage() echo.HandlerFunc
 }
 
@@ -33,6 +34,7 @@ func (r *pipelineRouter) Routes() []router.Route {
 		router.NewRoute(http.MethodGet, "", r.handler.GetStages, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "", r.handler.PostStage, r.session, r.rbac),
 		router.NewRoute(http.MethodPatch, "/:stage_id", r.handler.PatchStage, r.session, r.rbac),
+		router.NewRoute(http.MethodPut, "/order", r.handler.PutStagesOrder, r.session, r.rbac),
 		router.NewRoute(http.MethodDelete, "/:stage_id", r.handler.DeleteStage, r.session, r.rbac),
 	}
 }

@@ -35,6 +35,7 @@ type CandidateRepository interface {
 	SearchEmbeddings(ctx context.Context, teamID string, candidateID *string, queryVector []float32, limit int) ([]domain.ResumeEmbedding, error)
 
 	SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error
+	GetJobIDsByCandidateIDs(ctx context.Context, ids []string) (map[string]string, error)
 }
 
 type candidateRepo struct {
@@ -228,9 +229,10 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 		}
 
 		allowedSortFields := map[string]string{
-			"first_name": "first_name",
-			"last_name":  "last_name",
-			"created_at": "created_at",
+			"first_name":  "first_name",
+			"last_name":   "last_name",
+			"created_at":  "created_at",
+			"match_score": "match_score",
 		}
 
 		if dbField, ok := allowedSortFields[sortID]; ok {
@@ -254,7 +256,7 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 				LEFT JOIN hiring.t_candidate_stages cs ON c.id = cs.candidate_id
 				LEFT JOIN hiring.t_pipeline_stages ps ON cs.stage_id = ps.id
 				LEFT JOIN ai_engine.t_candidate_scores sco ON c.id = sco.candidate_id
-				WHERE c.job_id = @job_id::uuid
+				WHERE c.job_id = @job_id
 			),
 			
 			filtered AS (
@@ -262,22 +264,31 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 				FROM all_candidates ac
 				WHERE
 					CASE 
+						WHEN @ifSearch THEN 
+							(COALESCE(ac.first_name, '') ILIKE @search OR 
+							 COALESCE(ac.last_name, '') ILIKE @search OR 
+							 COALESCE(ac.email, '') ILIKE @search)
+						ELSE 
+							TRUE 
+					END
+					AND
+					CASE 
 						WHEN @ifFirstName THEN 
-							lower(ac.first_name) ILIKE @first_name
+							COALESCE(ac.first_name, '') ILIKE @first_name
 						ELSE 
 							TRUE 
 					END
 					AND 
 					CASE 
 						WHEN @ifLastName THEN 
-							lower(ac.last_name) ILIKE @last_name
+							COALESCE(ac.last_name, '') ILIKE @last_name
 						ELSE 
 							TRUE 
 					END
 					AND
 					CASE 
 						WHEN @ifEmail THEN 
-							lower(ac.email) ILIKE @email
+							COALESCE(ac.email, '') ILIKE @email
 						ELSE 
 							TRUE 
 					END
@@ -321,8 +332,8 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 					'stage_id',        l.stage_id,
 					'stage_name',      l.stage_name,
 					'match_score',     l.match_score,
-					'created_at',      TO_CHAR(l.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-					'updated_at',      CASE WHEN l.updated_at IS NOT NULL THEN TO_CHAR(l.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') ELSE NULL END
+					'created_at',      l.created_at::TIMESTAMPTZ,
+					'updated_at',      l.updated_at::TIMESTAMPTZ
 				)) AS build
 				FROM limited l
 			)
@@ -339,6 +350,14 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 		"job_id": jobID,
 		"offset": offset,
 		"limit":  limit,
+	}
+
+	if filter.Search != nil {
+		args["ifSearch"] = true
+		args["search"] = "%" + strings.ToLower(*filter.Search) + "%"
+	} else {
+		args["ifSearch"] = false
+		args["search"] = ""
 	}
 
 	if filter.FirstName != nil {
@@ -370,7 +389,7 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 		args["stage_id"] = *filter.CurrentStageID
 	} else {
 		args["ifStage"] = false
-		args["stage_id"] = ""
+		args["stage_id"] = nil
 	}
 
 	var dateFilterClause string
@@ -409,22 +428,14 @@ func (r *candidateRepo) GetByJobID(ctx context.Context, jobID string, offset, li
 
 	finalQuery := strings.Replace(rawQuery, "{{DATE_FILTER}}", dateFilterClause, 1)
 
-	rows, err := r.dbClient.Pool.Query(ctx, finalQuery, pgx.NamedArgs{
-		"job_id": jobID,
-		"offset": offset,
-		"limit":  limit,
-	})
+	rows, err := r.dbClient.Pool.Query(ctx, finalQuery, args)
 	if err != nil {
 		return nil, fmt.Errorf("query candidates: %w", err)
 	}
-	defer rows.Close()
 
-	var res domain.CandidatesDTO
-	if rows.Next() {
-		err = rows.Scan(&res.Total, &res.Candidates)
-		if err != nil {
-			return nil, fmt.Errorf("scan candidates dto: %w", err)
-		}
+	res, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[domain.CandidatesDTO])
+	if err != nil {
+		return nil, fmt.Errorf("collect candidates dto: %w", err)
 	}
 
 	return &res, nil
@@ -812,6 +823,29 @@ func (r *candidateRepo) GetStageHistory(ctx context.Context, candidateID string)
 	}
 
 	return entries, nil
+}
+
+func (r *candidateRepo) GetJobIDsByCandidateIDs(ctx context.Context, ids []string) (map[string]string, error) {
+	if len(ids) == 0 {
+		return map[string]string{}, nil
+	}
+
+	const query = `SELECT id, job_id FROM hiring.t_candidates WHERE id = ANY(@ids)`
+	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{"ids": ids})
+	if err != nil {
+		return nil, fmt.Errorf("query job ids: %w", err)
+	}
+	defer rows.Close()
+
+	res := make(map[string]string)
+	for rows.Next() {
+		var id, jobID string
+		if err := rows.Scan(&id, &jobID); err != nil {
+			return nil, fmt.Errorf("scan job id: %w", err)
+		}
+		res[id] = jobID
+	}
+	return res, nil
 }
 
 func (r *candidateRepo) SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error {

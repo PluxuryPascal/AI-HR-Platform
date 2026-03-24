@@ -96,3 +96,25 @@ func (h *PipelineHandler) GetStages() echo.HandlerFunc {
 		return response.OK(c, stages)
 	}
 }
+func (h *PipelineHandler) PutStagesOrder() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		jobID := c.Param("job_id")
+		
+		var req struct {
+			StageIDs []string `json:"stage_ids"`
+		}
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
+		}
+
+		actorID := c.Get("id").(string)
+		teamID := c.Get("team_id").(string)
+
+		if err := h.pipelineUC.ReorderStages(c.Request().Context(), jobID, req.StageIDs, actorID, teamID); err != nil {
+			h.log.Error("reorder stages error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return response.OK(c, map[string]bool{"success": true})
+	}
+}

@@ -108,7 +108,7 @@ export default function CandidatesPage() {
             {selectedJobId && (
                 <CandidatesTable 
                     jobId={selectedJobId} 
-                    filter={{ first_name: debouncedSearch || undefined }} 
+                    filter={{ search: debouncedSearch || undefined }} 
                 />
             )}
         </div>

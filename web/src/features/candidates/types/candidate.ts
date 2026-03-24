@@ -51,13 +51,19 @@ export interface CandidateDetailResponse {
 }
 
 export interface CandidateFilter {
+    search?: string;
     first_name?: string;
     last_name?: string;
     email?: string;
     current_stage_id?: string;
+    date_filter?: {
+        type: "before" | "after" | "between";
+        date_from?: string;
+        date_to?: string;
+    };
     sort?: {
-        sort_id?: string;
-        sort_desc?: boolean;
+        sort_id: string;
+        sort_desc: boolean;
     };
 }
 

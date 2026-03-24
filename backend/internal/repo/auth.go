@@ -18,6 +18,7 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id string) (*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	UpdatePassword(ctx context.Context, userID string, hashedPassword string) error
+	DeleteUser(ctx context.Context, userID string) error
 }
 
 var ErrUserNotFound = errors.New("user not found")
@@ -297,6 +298,15 @@ func (i *userRepo) UpdatePassword(ctx context.Context, userID string, hashedPass
 		return fmt.Errorf("update password: %w", err)
 	}
 
+	return nil
+}
+
+func (i *userRepo) DeleteUser(ctx context.Context, userID string) error {
+	const query = `DELETE FROM auth.t_users WHERE id = @id`
+	_, err := i.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{"id": userID})
+	if err != nil {
+		return fmt.Errorf("delete user: %w", err)
+	}
 	return nil
 }
 
