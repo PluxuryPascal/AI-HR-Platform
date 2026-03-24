@@ -342,3 +342,32 @@ func (h *CandidateHandler) PostBulkCandidateDelete() echo.HandlerFunc {
 		return response.NoContent(c, http.StatusNoContent)
 	}
 }
+
+func (h *CandidateHandler) PostCandidateCompare() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		jobID := c.Param("job_id")
+		var req struct {
+			CandidateIDs []string `json:"candidate_ids" validate:"required,dive,uuid4"`
+		}
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
+		}
+		if err := c.Validate(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
+		}
+
+		teamID := c.Get("team_id").(string)
+		locale := c.FormValue("locale")
+		if locale == "" {
+			locale = "ru" // Default
+		}
+
+		result, err := h.candidateUC.CompareCandidates(c.Request().Context(), jobID, req.CandidateIDs, teamID, locale)
+		if err != nil {
+			h.log.Error("compare candidates error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, "failed to compare candidates")
+		}
+
+		return response.OK(c, result)
+	}
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
     Dialog,
@@ -15,49 +15,29 @@ import { Loader2, Download, Sparkles } from "lucide-react";
 import { CandidateCard } from "../types";
 import { ComparisonTable } from "./comparison-table";
 import { useCsvExport } from "../hooks/use-csv-export";
+import { useCompareCandidates } from "../../candidates/api/use-compare-candidates";
 
 interface ComparisonModalProps {
     isOpen: boolean;
     onClose: () => void;
     candidates: CandidateCard[];
+    jobId: string;
 }
 
-// Mock AI data generator
-const generateMockData = (candidate: CandidateCard) => {
-    // Deterministic simulation based on name length/char codes
-    const seed = candidate.name.length;
 
-    return {
-        skills: ["React", "TypeScript", "Node.js", "Python", "AWS", "Docker"].slice(0, 3 + (seed % 4)),
-        experience: `${2 + (seed % 8)} years`,
-        risks: seed % 3 === 0 ? "High salary expectations" : seed % 4 === 0 ? "Remote only" : "None identified",
-        salary: `$${80 + (seed % 10) * 10}k - $${100 + (seed % 12) * 10}k`,
-        summary: seed % 2 === 0
-            ? "Strong technical background with proven track record in scalable systems."
-            : "Great cultural fit with innovative mindset and rapid learning ability."
-    };
-};
-
-export function ComparisonModal({ isOpen, onClose, candidates }: ComparisonModalProps) {
+export function ComparisonModal({ isOpen, onClose, candidates, jobId }: ComparisonModalProps) {
     const t = useTranslations("Screening.modal");
-    const [isLoading, setIsLoading] = useState(true);
-    const [aiData, setAiData] = useState<Record<string, any>>({});
     const { handleExport } = useCsvExport();
+    
+    const { mutate: compare, data: aiData, isPending: isLoading } = useCompareCandidates(jobId);
 
     useEffect(() => {
-        if (isOpen) {
-            setIsLoading(true);
-            const timer = setTimeout(() => {
-                const data: Record<string, any> = {};
-                candidates.forEach(c => {
-                    data[c.id] = generateMockData(c);
-                });
-                setAiData(data);
-                setIsLoading(false);
-            }, 2000);
-            return () => clearTimeout(timer);
+        if (isOpen && candidates.length >= 2) {
+            compare({
+                candidate_ids: candidates.map(c => c.id)
+            });
         }
-    }, [isOpen, candidates]);
+    }, [isOpen, candidates, compare]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -69,7 +49,7 @@ export function ComparisonModal({ isOpen, onClose, candidates }: ComparisonModal
                             {t("title")}
                         </DialogTitle>
                         {!isLoading && (
-                            <Button variant="outline" size="sm" onClick={() => handleExport({ candidates, aiData })}>
+                            <Button variant="outline" size="sm" onClick={() => handleExport({ candidates, aiData: aiData || {} })}>
                                 <Download className="w-4 h-4 mr-2" />
                                 {t("exportBtn")}
                             </Button>
@@ -87,7 +67,7 @@ export function ComparisonModal({ isOpen, onClose, candidates }: ComparisonModal
                     </div>
                 ) : (
                     <ScrollArea className="flex-1 -mx-6 px-6">
-                        <ComparisonTable candidates={candidates} aiData={aiData} />
+                        <ComparisonTable candidates={candidates} aiData={aiData || {}} />
                         <ScrollBar orientation="horizontal" />
                     </ScrollArea>
                 )}

@@ -191,6 +191,7 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
                     isOpen={isComparisonModalOpen}
                     onClose={() => setIsComparisonModalOpen(false)}
                     candidates={getSelectedCandidates}
+                    jobId={jobId}
                 />
 
                 <OutreachDrawer

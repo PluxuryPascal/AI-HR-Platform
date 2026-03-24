@@ -4,14 +4,19 @@ import (
 	"backend/internal/audit"
 	"backend/internal/domain"
 	"backend/internal/repo"
+	"backend/internal/temporal"
+	"backend/internal/temporal/activity"
+	"backend/internal/temporal/workflow"
 	"backend/pkg/mq"
 	"backend/pkg/storage"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
@@ -35,6 +40,7 @@ type CandidateUseCase interface {
 	BulkDeleteCandidates(ctx context.Context, ids []string, actorID, teamID, role string) error
 	SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error
 	GetStageHistory(ctx context.Context, candidateID, userID, role string) ([]domain.StageHistoryEntry, error)
+	CompareCandidates(ctx context.Context, jobID string, candidateIDs []string, teamID, locale string) (activity.CandidateCompareOutput, error)
 }
 
 type candidateUseCase struct {
@@ -46,6 +52,7 @@ type candidateUseCase struct {
 	storage       storage.FileStorage
 	publisher     *mq.MQPublisher
 	auditor       *audit.Logger
+	temporalClient *temporal.Client
 }
 
 func (u *candidateUseCase) ConfirmManualReview(ctx context.Context, candidate *domain.Candidate, userID, role string) error {
@@ -394,8 +401,82 @@ func (u *candidateUseCase) GetStageHistory(ctx context.Context, candidateID, use
 
 	return entries, nil
 }
+	
+func (u *candidateUseCase) CompareCandidates(ctx context.Context, jobID string, candidateIDs []string, teamID, locale string) (activity.CandidateCompareOutput, error) {
+	u.log.Info("CompareCandidates usecase started", zap.String("job_id", jobID), zap.Strings("candidate_ids", candidateIDs))
 
-func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, jobRepo repo.JobRepository, accessRepo repo.AccessRepository, storage storage.FileStorage, publisher *mq.MQPublisher, auditor *audit.Logger) CandidateUseCase {
+	job, err := u.jobRepo.GetByID(ctx, jobID)
+	if err != nil {
+		return nil, fmt.Errorf("get job: %w", err)
+	}
+
+	jobRequirements := ""
+	if job.ExtractedRequirements != nil {
+		jobRequirements = string(job.ExtractedRequirements)
+	}
+
+	candidates := make([]activity.CandidateCompareCandidate, 0, len(candidateIDs))
+	for _, id := range candidateIDs {
+		cand, _, _, score, _, err := u.GetCandidateByID(ctx, id, "system", "admin") // Use admin role to bypass access check for internal call
+		if err != nil {
+			u.log.Warn("failed to get candidate for comparison", zap.String("candidate_id", id), zap.Error(err))
+			continue
+		}
+
+		matchScore := 0
+		if score != nil {
+			matchScore = score.MatchScore
+		}
+
+		parsedText := ""
+		if cand.ParsedText != nil {
+			parsedText = *cand.ParsedText
+		}
+
+		candidates = append(candidates, activity.CandidateCompareCandidate{
+			ID:         cand.ID,
+			FirstName:  ptrVal(cand.FirstName),
+			LastName:   ptrVal(cand.LastName),
+			Role:       job.Title,
+			MatchScore: matchScore,
+			Skills:     cand.Skills,
+			ParsedText: parsedText,
+		})
+	}
+
+	input := activity.CandidateCompareInput{
+		TeamID:          teamID,
+		Candidates:      candidates,
+		JobRequirements: jobRequirements,
+		Locale:          locale,
+	}
+
+	workflowOptions := client.StartWorkflowOptions{
+		ID:        fmt.Sprintf("candidate-compare-%s-%d", jobID, time.Now().Unix()),
+		TaskQueue: u.temporalClient.TaskQueue(),
+	}
+
+	run, err := u.temporalClient.TemporalClient.ExecuteWorkflow(ctx, workflowOptions, workflow.CompareCandidatesWorkflow, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute compare workflow: %w", err)
+	}
+
+	var result activity.CandidateCompareOutput
+	if err := run.Get(ctx, &result); err != nil {
+		return nil, fmt.Errorf("compare workflow failed: %w", err)
+	}
+
+	return result, nil
+}
+
+func ptrVal(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository, pipelineRepo repo.PipelineRepository, jobRepo repo.JobRepository, accessRepo repo.AccessRepository, storage storage.FileStorage, publisher *mq.MQPublisher, auditor *audit.Logger, temporalClient *temporal.Client) CandidateUseCase {
 	return &candidateUseCase{
 		log:           log,
 		candidateRepo: candidateRepo,
@@ -405,6 +486,7 @@ func NewCandidateUseCase(log *zap.Logger, candidateRepo repo.CandidateRepository
 		storage:       storage,
 		publisher:     publisher,
 		auditor:       auditor,
+		temporalClient: temporalClient,
 	}
 }
 

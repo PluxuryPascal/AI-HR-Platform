@@ -77,7 +77,7 @@ export function ComparisonTable({ candidates, aiData }: ComparisonTableProps) {
                 <TableRow>
                     <TableCell className="font-medium">{tCriteria("salary")}</TableCell>
                     {candidates.map(c => (
-                        <TableCell key={c.id}>{aiData[c.id]?.salary}</TableCell>
+                        <TableCell key={c.id}>{aiData[c.id]?.salary_range}</TableCell>
                     ))}
                 </TableRow>
                 <TableRow>
