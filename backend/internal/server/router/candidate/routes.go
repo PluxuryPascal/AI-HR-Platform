@@ -17,6 +17,7 @@ type CandidateRoutes interface {
 	PostConfirmReview() echo.HandlerFunc
 	PostUploadResume() echo.HandlerFunc
 	PostBulkCandidateMove() echo.HandlerFunc
+	PostBulkCandidateDelete() echo.HandlerFunc
 }
 
 type candidateRouter struct {
@@ -63,6 +64,7 @@ func (r *candidateJobRouter) Routes() []router.Route {
 		router.NewRoute(http.MethodPost, "/list", r.handler.PostCandidateList, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "/upload", r.handler.PostUploadResume, r.session, r.rbac),
 		router.NewRoute(http.MethodPost, "/bulk-move", r.handler.PostBulkCandidateMove, r.session, r.rbac),
+		router.NewRoute(http.MethodPost, "/bulk-delete", r.handler.PostBulkCandidateDelete, r.session, r.rbac),
 	}
 }
 

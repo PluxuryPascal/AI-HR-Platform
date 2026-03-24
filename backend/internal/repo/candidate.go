@@ -25,6 +25,7 @@ type CandidateRepository interface {
 	MoveAllToStage(ctx context.Context, fromStageID, toStageID string) error
 	BulkMoveToStage(ctx context.Context, candidateIDs []string, toStageID string, changedBy string) error
 	GetStageHistory(ctx context.Context, candidateID string) ([]domain.StageHistoryEntry, error)
+	BulkDelete(ctx context.Context, ids []string) error
 
 	// AI Support
 	SaveCandidateScore(ctx context.Context, score *domain.CandidateScore, factors []domain.ScoreFactor) error
@@ -152,9 +153,14 @@ func (r *candidateRepo) UpdateFromAIParsing(ctx context.Context, result *domain.
 
 func (r *candidateRepo) Create(ctx context.Context, jobID, fileKey string) (*domain.Candidate, error) {
 	const query = `
-		INSERT INTO hiring.t_candidates (job_id, resume_file_key, parsing_status)
-		VALUES (@job_id, @resume_file_key, @parsing_status)
-		RETURNING id, job_id, resume_file_key, parsing_status, created_at, first_name, last_name, email, parsed_text, location, skills, updated_at
+		WITH inserted AS (
+			INSERT INTO hiring.t_candidates (job_id, resume_file_key, parsing_status)
+			VALUES (@job_id, @resume_file_key, @parsing_status)
+			RETURNING id, job_id, resume_file_key, parsing_status, created_at, first_name, last_name, email, parsed_text, location, skills, updated_at
+		)
+		SELECT i.*, j.title AS job_title
+		FROM inserted i
+		JOIN hiring.t_jobs j ON i.job_id = j.id
 	`
 	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
 		"job_id":          jobID,
@@ -457,6 +463,18 @@ func (r *candidateRepo) Delete(ctx context.Context, id string) error {
 	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{"id": id})
 	if err != nil {
 		return fmt.Errorf("delete candidate: %w", err)
+	}
+	return nil
+}
+
+func (r *candidateRepo) BulkDelete(ctx context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	const query = `DELETE FROM hiring.t_candidates WHERE id = ANY(@ids)`
+	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{"ids": ids})
+	if err != nil {
+		return fmt.Errorf("bulk delete candidates: %w", err)
 	}
 	return nil
 }

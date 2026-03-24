@@ -1,0 +1,7 @@
+BEGIN;
+
+ALTER TABLE hiring.t_pipeline_stages
+    ADD COLUMN is_rejection BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN is_interview BOOLEAN NOT NULL DEFAULT FALSE;
+
+COMMIT;

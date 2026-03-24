@@ -39,7 +39,7 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
     const { data: stages = [], isLoading: isLoadingStages } = useGetStages(jobId);
     const { data: groupedCandidates = {}, isLoading: isLoadingCandidates } = useGetCandidates(jobId);
 
-    const { outreachState, handleColumnChange, closeOutreach } = useKanbanOutreach();
+    const { outreachState, handleColumnChange, closeOutreach } = useKanbanOutreach(stages);
 
     const {
         selectedCandidateIds,
@@ -96,13 +96,20 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
         setIsStageModalOpen(true);
     };
 
-    const onModalSubmit = (values: { title: string; is_terminal: boolean }) => {
+    const onModalSubmit = (values: { 
+        title: string; 
+        is_terminal: boolean; 
+        is_rejection: boolean; 
+        is_interview: boolean 
+    }) => {
         if (editingStage) {
             updateStage({
                 stageId: editingStage.id,
                 data: {
                     title: values.title,
                     is_terminal: values.is_terminal,
+                    is_rejection: values.is_rejection,
+                    is_interview: values.is_interview,
                     code: values.title.toLowerCase().replace(/\s+/g, "_"),
                 },
             });
@@ -112,6 +119,8 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
                 code: values.title.toLowerCase().replace(/\s+/g, "_"),
                 position: stages.length,
                 is_terminal: values.is_terminal,
+                is_rejection: values.is_rejection,
+                is_interview: values.is_interview,
             });
         }
         setIsStageModalOpen(false);
@@ -199,6 +208,8 @@ export function KanbanBoard({ jobId }: { jobId: string }) {
                 initialValues={editingStage ? {
                     title: editingStage.title,
                     is_terminal: editingStage.is_terminal,
+                    is_rejection: editingStage.is_rejection,
+                    is_interview: editingStage.is_interview,
                 } : undefined}
                 title={editingStage ? t("renameStagePrompt") : t("addStage")}
             />

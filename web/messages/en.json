@@ -271,6 +271,11 @@
             "status": "Status",
             "date": "Date",
             "action": {
+                "title": "Actions",
+                "viewDetails": "View Details",
+                "viewResume": "View Resume",
+                "emailCandidate": "Email Candidate",
+                "delete": "Delete Candidate",
                 "bulkReject": "Bulk Reject ({count})"
             }
         },
@@ -278,6 +283,12 @@
             "title": "No candidates found",
             "desc": "Upload resumes to start the AI screening process for this job.",
             "button": "Upload First Resume"
+        },
+        "mutations": {
+            "bulkDeleteSuccess": "Selected candidates deleted",
+            "bulkDeleteError": "Failed to delete candidates",
+            "deleteSuccess": "Candidate deleted",
+            "deleteError": "Failed to delete candidate"
         }
     },
     "Screening": {
@@ -293,6 +304,8 @@
         "renameStagePrompt": "Enter new stage name:",
         "deleteStageConfirm": "Are you sure you want to delete this stage? Candidates will be moved to the first column.",
         "isTerminal": "Terminal stage (allows moving without validation)",
+        "isRejection": "Rejection stage (triggers rejection email)",
+        "isInterview": "Interview stage (triggers confetti and invitation)",
         "columns": {
             "new": "New Applications",
             "screening": "AI Screening",
@@ -527,6 +540,7 @@
     "BulkActions": {
         "selectedCount": "{count} selected",
         "rejectAll": "Reject All",
+        "deleteAll": "Delete All",
         "moveTo": "Move to...",
         "clear": "Clear Selection"
     }

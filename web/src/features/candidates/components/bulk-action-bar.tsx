@@ -15,11 +15,12 @@ interface BulkActionBarProps {
     selectedCount: number;
     onClear: () => void;
     onRejectAll: () => void;
+    onDeleteAll: () => void;
     onMoveTo: (stageId: string) => void;
     stages?: { id: string; title: string }[];
 }
 
-export function BulkActionBar({ selectedCount, onClear, onRejectAll, onMoveTo, stages }: BulkActionBarProps) {
+export function BulkActionBar({ selectedCount, onClear, onRejectAll, onDeleteAll, onMoveTo, stages }: BulkActionBarProps) {
     const t = useTranslations("BulkActions");
 
     return (
@@ -70,6 +71,16 @@ export function BulkActionBar({ selectedCount, onClear, onRejectAll, onMoveTo, s
                         >
                             <Trash2 className="mr-2 h-4 w-4" />
                             {t("rejectAll")}
+                        </Button>
+
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            className="rounded-full"
+                            onClick={onDeleteAll}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {t("deleteAll")}
                         </Button>
                     </div>
                 </motion.div>

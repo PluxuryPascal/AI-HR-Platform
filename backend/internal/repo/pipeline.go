@@ -28,19 +28,21 @@ func NewPipelineRepo(dbClient *db.PostgresClient) PipelineRepository {
 
 func (r *pipelineRepo) CreateStage(ctx context.Context, params domain.CreateStageParams) (*domain.PipelineStage, error) {
 	const query = `
-		INSERT INTO hiring.t_pipeline_stages (job_id, team_id, code, title, position, is_terminal, color)
-		VALUES (@job_id, @team_id, @code, @title, @position, @is_terminal, @color)
-		RETURNING id, job_id, team_id, code, title, position, is_terminal, color
+		INSERT INTO hiring.t_pipeline_stages (job_id, team_id, code, title, position, is_terminal, is_rejection, is_interview, color)
+		VALUES (@job_id, @team_id, @code, @title, @position, @is_terminal, @is_rejection, @is_interview, @color)
+		RETURNING id, job_id, team_id, code, title, position, is_terminal, is_rejection, is_interview, color
 	`
 
 	rows, err := r.dbClient.Pool.Query(ctx, query, pgx.NamedArgs{
-		"job_id":      params.JobID,
-		"team_id":     params.TeamID,
-		"code":        params.Code,
-		"title":       params.Title,
-		"position":    params.Position,
-		"is_terminal": params.IsTerminal,
-		"color":       params.Color,
+		"job_id":       params.JobID,
+		"team_id":      params.TeamID,
+		"code":         params.Code,
+		"title":        params.Title,
+		"position":     params.Position,
+		"is_terminal":  params.IsTerminal,
+		"is_rejection": params.IsRejection,
+		"is_interview": params.IsInterview,
+		"color":        params.Color,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("insert stage: %w", err)
@@ -56,7 +58,7 @@ func (r *pipelineRepo) CreateStage(ctx context.Context, params domain.CreateStag
 
 func (r *pipelineRepo) GetStagesByJobID(ctx context.Context, jobID string) ([]domain.PipelineStage, error) {
 	const query = `
-		SELECT id, job_id, team_id, code, title, position, is_terminal, color
+		SELECT id, job_id, team_id, code, title, position, is_terminal, is_rejection, is_interview, color
 		FROM hiring.t_pipeline_stages
 		WHERE job_id = @job_id
 		ORDER BY position ASC
@@ -77,7 +79,7 @@ func (r *pipelineRepo) GetStagesByJobID(ctx context.Context, jobID string) ([]do
 
 func (r *pipelineRepo) GetStagesByTeamID(ctx context.Context, teamID string) ([]domain.PipelineStage, error) {
 	const query = `
-		SELECT id, job_id, team_id, code, title, position, is_terminal, color
+		SELECT id, job_id, team_id, code, title, position, is_terminal, is_rejection, is_interview, color
 		FROM hiring.t_pipeline_stages
 		WHERE team_id = @team_id AND job_id IS NULL
 		ORDER BY position ASC
@@ -98,7 +100,7 @@ func (r *pipelineRepo) GetStagesByTeamID(ctx context.Context, teamID string) ([]
 
 func (r *pipelineRepo) GetStageByID(ctx context.Context, id string) (*domain.PipelineStage, error) {
 	const query = `
-		SELECT id, job_id, team_id, code, title, position, is_terminal, color
+		SELECT id, job_id, team_id, code, title, position, is_terminal, is_rejection, is_interview, color
 		FROM hiring.t_pipeline_stages
 		WHERE id = @id
 	`
@@ -119,16 +121,18 @@ func (r *pipelineRepo) GetStageByID(ctx context.Context, id string) (*domain.Pip
 func (r *pipelineRepo) UpdateStage(ctx context.Context, stage *domain.PipelineStage) error {
 	const query = `
 		UPDATE hiring.t_pipeline_stages
-		SET title = @title, position = @position, is_terminal = @is_terminal, color = @color
+		SET title = @title, position = @position, is_terminal = @is_terminal, is_rejection = @is_rejection, is_interview = @is_interview, color = @color
 		WHERE id = @id
 	`
 
 	_, err := r.dbClient.Pool.Exec(ctx, query, pgx.NamedArgs{
-		"id":          stage.ID,
-		"title":       stage.Title,
-		"position":    stage.Position,
-		"is_terminal": stage.IsTerminal,
-		"color":       stage.Color,
+		"id":           stage.ID,
+		"title":        stage.Title,
+		"position":     stage.Position,
+		"is_terminal":  stage.IsTerminal,
+		"is_rejection": stage.IsRejection,
+		"is_interview": stage.IsInterview,
+		"color":        stage.Color,
 	})
 	if err != nil {
 		return fmt.Errorf("update stage: %w", err)

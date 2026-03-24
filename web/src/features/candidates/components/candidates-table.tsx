@@ -83,6 +83,7 @@ export function CandidatesTable({ jobId, filter }: { jobId: string; filter?: Can
         bulkActionType,
         isOutreachOpen,
         handleBulkReject,
+        handleBulkDelete,
         handleBulkMove,
         handleSendEmail,
         closeOutreach,
@@ -169,6 +170,7 @@ export function CandidatesTable({ jobId, filter }: { jobId: string; filter?: Can
                 selectedCount={selectedIds.size}
                 onClear={clearSelection}
                 onRejectAll={handleBulkReject}
+                onDeleteAll={handleBulkDelete}
                 onMoveTo={handleBulkMove}
                 stages={stages}
             />

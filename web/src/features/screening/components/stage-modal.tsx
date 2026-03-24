@@ -28,6 +28,8 @@ import { useEffect } from "react";
 const stageSchema = z.object({
     title: z.string().min(1, "Title is required"),
     is_terminal: z.boolean().default(false),
+    is_rejection: z.boolean().default(false),
+    is_interview: z.boolean().default(false),
 });
 
 type StageFormValues = z.infer<typeof stageSchema>;
@@ -54,6 +56,8 @@ export function StageModal({
         defaultValues: {
             title: "",
             is_terminal: false,
+            is_rejection: false,
+            is_interview: false,
             ...initialValues,
         },
     });
@@ -63,6 +67,8 @@ export function StageModal({
             form.reset({
                 title: "",
                 is_terminal: false,
+                is_rejection: false,
+                is_interview: false,
                 ...initialValues,
             });
         }
@@ -103,6 +109,44 @@ export function StageModal({
                                     <div className="space-y-1 leading-none">
                                         <FormLabel>
                                             {t("isTerminal")}
+                                        </FormLabel>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control as any}
+                            name="is_rejection"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            {t("isRejection")}
+                                        </FormLabel>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control as any}
+                            name="is_interview"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            {t("isInterview")}
                                         </FormLabel>
                                     </div>
                                 </FormItem>

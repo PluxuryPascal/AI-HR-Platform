@@ -6,6 +6,8 @@ export interface Stage {
     title: string;
     position: number;
     is_terminal: boolean;
+    is_rejection: boolean;
+    is_interview: boolean;
     color?: string;
 }
 
@@ -14,6 +16,8 @@ export interface CreateStageRequest {
     code: string;
     position: number;
     is_terminal?: boolean;
+    is_rejection?: boolean;
+    is_interview?: boolean;
     color?: string;
 }
 
@@ -22,5 +26,7 @@ export interface UpdateStageRequest {
     code?: string;
     position?: number;
     is_terminal?: boolean;
+    is_rejection?: boolean;
+    is_interview?: boolean;
     color?: string;
 }

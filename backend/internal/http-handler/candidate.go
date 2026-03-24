@@ -317,3 +317,28 @@ func (h *CandidateHandler) PostConfirmReview() echo.HandlerFunc {
 		return response.OK(c, map[string]bool{"success": true})
 	}
 }
+
+func (h *CandidateHandler) PostBulkCandidateDelete() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var req struct {
+			CandidateIDs []string `json:"candidate_ids" validate:"required,dive,uuid4"`
+		}
+		if err := c.Bind(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("bind: %v", err))
+		}
+		if err := c.Validate(&req); err != nil {
+			return response.Error(c, http.StatusBadRequest, fmt.Sprintf("validate: %v", err))
+		}
+
+		actorID := c.Get("id").(string)
+		teamID := c.Get("team_id").(string)
+		role := c.Get("role").(string)
+
+		if err := h.candidateUC.BulkDeleteCandidates(c.Request().Context(), req.CandidateIDs, actorID, teamID, role); err != nil {
+			h.log.Error("bulk delete candidates error", zap.Error(err))
+			return response.Error(c, http.StatusInternalServerError, "internal server error")
+		}
+
+		return response.NoContent(c, http.StatusNoContent)
+	}
+}

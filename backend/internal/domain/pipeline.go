@@ -12,8 +12,10 @@ type PipelineStage struct {
 	Code       string  `json:"code" db:"code"`
 	Title      string  `json:"title" db:"title"`
 	Position   int     `json:"position" db:"position"`
-	IsTerminal bool    `json:"is_terminal" db:"is_terminal"`
-	Color      *string `json:"color,omitempty" db:"color"`
+	IsTerminal  bool    `json:"is_terminal" db:"is_terminal"`
+	IsRejection bool    `json:"is_rejection" db:"is_rejection"`
+	IsInterview bool    `json:"is_interview" db:"is_interview"`
+	Color       *string `json:"color,omitempty" db:"color"`
 }
 
 // CandidateStage represents hiring.t_candidate_stages (Current position)
@@ -45,7 +47,9 @@ type CreateStageParams struct {
 	ActorID    string  `json:"actor_id"`
 	Code       string  `json:"code"`
 	Title      string  `json:"title"`
-	Position   int     `json:"position"`
-	IsTerminal bool    `json:"is_terminal"`
-	Color      *string `json:"color,omitempty"`
+	Position    int     `json:"position"`
+	IsTerminal  bool    `json:"is_terminal"`
+	IsRejection bool    `json:"is_rejection"`
+	IsInterview bool    `json:"is_interview"`
+	Color       *string `json:"color,omitempty"`
 }

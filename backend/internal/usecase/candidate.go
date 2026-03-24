@@ -32,6 +32,7 @@ type CandidateUseCase interface {
 	FinalizeAIParsing(ctx context.Context, result domain.AIParsingResult) error
 	UpdateByRecruiter(ctx context.Context, candidate *domain.Candidate, userID, role string) error
 	ConfirmManualReview(ctx context.Context, candidate *domain.Candidate, userID, role string) error
+	BulkDeleteCandidates(ctx context.Context, ids []string, actorID, teamID, role string) error
 	SaveInterviewGuide(ctx context.Context, candidateID string, guide []byte) error
 	GetStageHistory(ctx context.Context, candidateID, userID, role string) ([]domain.StageHistoryEntry, error)
 }
@@ -111,18 +112,24 @@ func (u *candidateUseCase) UpdateByRecruiter(ctx context.Context, candidate *dom
 
 func (u *candidateUseCase) CreateCandidate(ctx context.Context, params domain.CreateCandidateParams) (*domain.Candidate, error) {
 	// Get job to extract TeamID for the event
+	u.log.Debug("fetching job", zap.String("job_id", params.JobID))
 	job, err := u.jobRepo.GetByID(ctx, params.JobID)
 	if err != nil {
+		u.log.Error("job lookup failed", zap.String("job_id", params.JobID), zap.Error(err))
 		return nil, fmt.Errorf("get job for team_id: %w", err)
 	}
 
+	u.log.Debug("uploading file to storage", zap.String("filename", params.Filename))
 	fileKey, err := u.storage.UploadFile(ctx, params.File, params.Filename)
 	if err != nil {
+		u.log.Error("storage upload failed", zap.String("filename", params.Filename), zap.Error(err))
 		return nil, fmt.Errorf("upload file: %w", err)
 	}
 
+	u.log.Debug("creating candidate record", zap.String("job_id", params.JobID), zap.String("file_key", fileKey))
 	candidate, err := u.candidateRepo.Create(ctx, params.JobID, fileKey)
 	if err != nil {
+		u.log.Error("candidate record creation failed", zap.Error(err))
 		return nil, fmt.Errorf("create candidate: %w", err)
 	}
 
@@ -234,6 +241,37 @@ func (u *candidateUseCase) DeleteCandidate(ctx context.Context, id, actorID, tea
 		ActorID:   &actorID,
 		Action:    audit.HiringCandidateDeleted,
 		TargetID:  &id,
+	})
+
+	return nil
+}
+
+func (u *candidateUseCase) BulkDeleteCandidates(ctx context.Context, ids []string, actorID, teamID, role string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	// Validate access for all (for simplicity we check one by one, 
+	// but a proper repo method to check all at once would be better)
+	for _, id := range ids {
+		if _, _, _, _, _, err := u.GetCandidateByID(ctx, id, actorID, role); err != nil {
+			return fmt.Errorf("access check for candidate %s: %w", id, err)
+		}
+	}
+
+	if err := u.candidateRepo.BulkDelete(ctx, ids); err != nil {
+		return fmt.Errorf("bulk delete repo: %w", err)
+	}
+
+	_ = u.auditor.Log(ctx, audit.Entry{
+		TeamID:    teamID,
+		ActorType: audit.ActorUser,
+		ActorID:   &actorID,
+		Action:    audit.HiringCandidateDeleted,
+		Payload: map[string]interface{}{
+			"candidate_ids": ids,
+			"is_bulk":       true,
+		},
 	})
 
 	return nil

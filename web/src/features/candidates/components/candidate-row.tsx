@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
-import { MoreHorizontal, FileText, Mail, User } from "lucide-react";
+import { MoreHorizontal, FileText, Mail, User, Trash2 } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,16 +20,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MatchScoreBadge } from "./match-score-badge";
-import { Candidate } from "../hooks/use-candidates";
+import { CandidateCard } from "@/features/screening/types";
+import { useDeleteCandidate } from "../api/use-delete-candidate";
 
 interface CandidateRowProps {
-    candidate: Candidate;
+    candidate: CandidateCard;
     isSelected: boolean;
     onToggleSelection: (id: string) => void;
 }
 
 export function CandidateRow({ candidate, isSelected, onToggleSelection }: CandidateRowProps) {
     const router = useRouter();
+    const t = useTranslations("Candidates.table.action");
+    const { mutate: deleteCandidate } = useDeleteCandidate();
+
+    const handleDelete = () => {
+        if (window.confirm("Are you sure you want to delete this candidate?")) {
+            deleteCandidate(candidate.id);
+        }
+    };
 
     return (
         <TableRow data-state={isSelected ? "selected" : undefined}>
@@ -74,15 +83,18 @@ export function CandidateRow({ candidate, isSelected, onToggleSelection }: Candi
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>{t("title")}</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => router.push(`/dashboard/candidates/${candidate.id}`)}>
-                            <User className="mr-2 h-4 w-4" /> View Details
+                            <User className="mr-2 h-4 w-4" /> {t("viewDetails")}
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                            <FileText className="mr-2 h-4 w-4" /> View Resume
+                            <FileText className="mr-2 h-4 w-4" /> {t("viewResume")}
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" /> Email Candidate
+                            <Mail className="mr-2 h-4 w-4" /> {t("emailCandidate")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={handleDelete}>
+                            <Trash2 className="mr-2 h-4 w-4" /> {t("delete")}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import confetti from "canvas-confetti";
 import { CandidateCard as CandidateCardType, ColumnId } from "../types";
+import { Stage } from "../../jobs/types/stage";
 
 interface OutreachState {
     isOpen: boolean;
@@ -7,7 +9,7 @@ interface OutreachState {
     type: "rejection" | "invitation";
 }
 
-export function useKanbanOutreach() {
+export function useKanbanOutreach(stages: Stage[]) {
     const [outreachState, setOutreachState] = useState<OutreachState>({
         isOpen: false,
         candidate: null,
@@ -18,15 +20,24 @@ export function useKanbanOutreach() {
         _candidateId: string,
         card: CandidateCardType,
         _sourceColumn: ColumnId,
-        targetColumn: ColumnId,
+        targetColumnId: ColumnId,
     ) => {
-        if (targetColumn === "rejected") {
+        const targetStage = stages.find(s => s.id === targetColumnId);
+        if (!targetStage) return;
+
+        if (targetStage.is_rejection) {
             setOutreachState({
                 isOpen: true,
                 candidate: card,
                 type: "rejection",
             });
-        } else if (targetColumn === "interview") {
+        } else if (targetStage.is_interview) {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ["#2563eb", "#4f46e5", "#818cf8"],
+            });
             setOutreachState({
                 isOpen: true,
                 candidate: card,
@@ -36,7 +47,7 @@ export function useKanbanOutreach() {
     };
 
     const closeOutreach = () => {
-        setOutreachState(prev => ({ ...prev, isOpen: false }));
+        setOutreachState((prev: OutreachState) => ({ ...prev, isOpen: false }));
     };
 
     return {

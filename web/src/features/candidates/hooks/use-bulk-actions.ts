@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useBulkUpdateCandidates } from "../api/use-bulk-update-candidates";
+import { useBulkDeleteCandidates } from "../api/use-bulk-delete-candidates";
 import { ColumnId } from "@/features/screening/types";
 
 interface UseBulkActionsOptions {
@@ -12,6 +13,7 @@ interface UseBulkActionsOptions {
 export function useBulkActions({ selectedIds, clearSelection, jobId, stages }: UseBulkActionsOptions) {
     const [bulkActionType, setBulkActionType] = useState<"rejection" | "invitation" | null>(null);
     const { mutate: bulkUpdate } = useBulkUpdateCandidates(jobId);
+    const { mutate: bulkDelete } = useBulkDeleteCandidates(jobId);
 
     const handleBulkReject = useCallback(() => {
         setBulkActionType("rejection");
@@ -24,6 +26,15 @@ export function useBulkActions({ selectedIds, clearSelection, jobId, stages }: U
         });
         clearSelection();
     }, [selectedIds, clearSelection, bulkUpdate]);
+
+    const handleBulkDelete = useCallback(() => {
+        if (window.confirm("Are you sure you want to delete these candidates?")) {
+            bulkDelete({
+                candidateIds: Array.from(selectedIds)
+            });
+            clearSelection();
+        }
+    }, [selectedIds, clearSelection, bulkDelete]);
 
     const handleSendEmail = useCallback((content: string) => {
         // Find the correct stage ID based on the action type
@@ -51,6 +62,7 @@ export function useBulkActions({ selectedIds, clearSelection, jobId, stages }: U
         bulkActionType,
         isOutreachOpen: !!bulkActionType,
         handleBulkReject,
+        handleBulkDelete,
         handleBulkMove,
         handleSendEmail,
         closeOutreach,

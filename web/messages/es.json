@@ -290,6 +290,8 @@
         "renameStagePrompt": "Ingrese el nuevo nombre de la etapa:",
         "deleteStageConfirm": "¿Está seguro de que desea eliminar esta etapa? Los candidatos se moverán a la primera columna.",
         "isTerminal": "Etapa terminal (permite mover sin validación)",
+        "isRejection": "Etapa de rechazo (activa email de rechazo)",
+        "isInterview": "Etapa de entrevista (activa confeti e invitación)",
         "columns": {
             "new": "Nuevas Aplicaciones",
             "screening": "Selección IA",
