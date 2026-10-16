@@ -1,0 +1,20 @@
+version: "2"
+
+linters:
+  settings:
+    errcheck:
+      # Закрытие ресурсов и откат транзакций в defer — осознанно без проверки ошибки.
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (github.com/jackc/pgx/v5.Tx).Rollback
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -ST1003
+        - -ST1016
+        - -ST1020
+        - -ST1021
+        - -ST1022
+        - -QF*

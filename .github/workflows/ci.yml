@@ -27,7 +27,15 @@ jobs:
         run: go vet ./...
 
       - name: Test
-        run: go test -race -count=1 -coverprofile=coverage.out ./...
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! go test -race -count=1 -coverprofile=coverage.out ./... 2>&1 | tee test.log; then
+            # краткая выжимка упавших тестов в аннотацию, чтобы было видно прямо в PR
+            msg=$(grep -E -- '--- FAIL|_test.go:[0-9]+|Error:|expected|actual|panic|cannot|undefined' test.log | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=go test failed::${msg}"
+            exit 1
+          fi
 
       - name: Coverage summary
         run: go tool cover -func=coverage.out | tail -1
