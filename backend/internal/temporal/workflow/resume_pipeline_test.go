@@ -116,3 +116,21 @@ func TestDomainStatusToProto(t *testing.T) {
 		})
 	}
 }
+
+func TestResumePipeline_ReportsResultToHiring(t *testing.T) {
+	env, a := newPipelineEnv(t)
+
+	env.OnActivity(a.PDFExtract, mock.Anything, mock.Anything).Return(strPtr("text"), nil)
+	env.OnActivity(a.LLMParse, mock.Anything, mock.Anything).
+		Return(&domain.ParseResult{MissingFields: []string{"email"}}, nil)
+	env.OnActivity(a.LLMScore, mock.Anything, mock.Anything).Return(&domain.ScoreResult{}, nil)
+	env.OnActivity(a.LLMEmbed, mock.Anything, mock.Anything).Return(nil)
+	env.OnActivity(a.GRPCCallback, mock.Anything, mock.MatchedBy(func(in activity.GRPCCallbackInput) bool {
+		return in.CandidateID == "cand-1" && in.Status == hiringv1.ParsingStatus_PARSING_STATUS_NEEDS_REVIEW
+	}), mock.Anything).Return(nil).Once()
+
+	env.ExecuteWorkflow(ResumePipelineWorkflow, pipelineInput)
+
+	require.NoError(t, env.GetWorkflowError())
+	env.AssertExpectations(t)
+}
